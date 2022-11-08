@@ -1,13 +1,13 @@
-# ZheJiangLab Brain Science Platform
+# 之江实验室 Brain Science 平台
 
-## Prerequisites
+## 依赖版本
 
 * Python >= 3.10
 * FastAPI >= 0.86
 
-## Startup
+## 启动应用
 
-### Local (Developing)
+### 本地启动（开发）
 
-### Docker (Deployment)
+### Docker Compose（部署）
 
