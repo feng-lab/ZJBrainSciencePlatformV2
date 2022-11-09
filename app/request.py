@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, Field
 
@@ -18,3 +19,13 @@ class AddExperimentRequest(BaseModel):
     subject_type: str = Field(title="被试类型")
     number_of_subjects: int = Field(title="被试数量", ge=0)
     shared: bool = Field(title="是否公开")
+
+
+class GetExperimentsByPageRequest:
+    class SortBy(str, Enum):
+        START_TIME = ("starttime",)
+        TYPE = ("type",)
+
+    class SortOrder(str, Enum):
+        ASC = ("asce",)
+        DESC = "desc"

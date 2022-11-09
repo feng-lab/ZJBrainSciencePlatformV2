@@ -143,3 +143,20 @@ def get_statistic_with_sick():
 def add_experiments(request: AddExperimentRequest):
     op(request)
     return AddExperimentResponse(code=CODE_SUCCESS)
+
+
+@app.get(
+    "/api/getExperimentsByPage",
+    response_model=GetExperimentsByPageResponse,
+    name="获取实验列表",
+    description="根据筛选、排序等条件得到实验列表并分页返回",
+)
+def get_experiments_by_page(
+    sort_by: GetExperimentsByPageRequest.SortBy = Query(title="排序依据"),
+    sort_order: GetExperimentsByPageRequest.SortOrder = Query(title="排序顺序"),
+    offset: int = Query(title="分页起始位置", default=0),
+    limit: int = Query(title="分页大小", default=10),
+    search: Optional[str] = Query(title="搜索内容", default=None),
+):
+    op((sort_by, sort_order, offset, limit, search))
+    return GetExperimentsByPageResponse(code=CODE_SUCCESS, data=[])

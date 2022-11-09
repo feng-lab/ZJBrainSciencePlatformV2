@@ -82,3 +82,8 @@ class GetStatisticWithSickResponse(Response):
 
 class AddExperimentResponse(Response):
     pass
+
+
+# TODO 添加必要字段
+class GetExperimentsByPageResponse(Response):
+    data: list
