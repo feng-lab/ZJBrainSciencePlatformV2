@@ -78,3 +78,7 @@ class GetStatisticWithSickResponse(Response):
         part3: int = Field(title="单位3")
 
     data: list[Data]
+
+
+class AddExperimentResponse(Response):
+    pass

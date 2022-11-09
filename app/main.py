@@ -132,3 +132,14 @@ def get_statistic_with_sick():
             GetStatisticWithSickResponse.Data(sick="其他", part1=2, part2=6, part3=34),
         ],
     )
+
+
+@app.post(
+    "/api/addExperiments",
+    response_model=AddExperimentResponse,
+    name="新增实验",
+    description="新增实验，提交实验表单",
+)
+def add_experiments(request: AddExperimentRequest):
+    op(request)
+    return AddExperimentResponse(code=CODE_SUCCESS)
