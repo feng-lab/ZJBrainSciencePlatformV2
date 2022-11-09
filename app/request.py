@@ -42,3 +42,34 @@ class AddParadigmRequest(BaseModel):
 class DeleteParadigmsRequest(BaseModel):
     experiment_id: str = Field(title="实验编号")
     paradigm_id: str = Field(alias="id", title="实验范式id")
+
+
+class AddHumanSubjectRequest(BaseModel):
+    class Gender(str, Enum):
+        MALE = "男"
+        FEMALE = "女"
+
+    class Flag(str, Enum):
+        TRUE = "是"
+        FALSE = "否"
+
+    class AboBloodType(str, Enum):
+        A = "A"
+        B = "B"
+        AB = "AB"
+        O = "O"
+        OTHER = "其他"
+
+    experiment_id: str = Field(title="实验编号")
+    subject_id: str = Field(title="被试编号")
+    gender: Gender = Field(title="被试性别")
+    birthdate: datetime = Field(title="出生日期")
+    education: str | None = Field(title="教育水平", default=None)
+    occupation: str | None = Field(title="职业", default=None)
+    marriage_status: Flag = Field(title="是否婚配")
+    abo_blood_type: AboBloodType = Field(title="血型")
+    left_hand_flag: Flag = Field(title="是否左撇子")
+    death_date: datetime | None = Field(title="死亡日期", default=None)
+    cellphone_number: str | None = Field(title="电话号码", default=None)
+    email: str | None = Field(title="邮箱", default=None)
+    address: str | None = Field(title="地址", default=None)

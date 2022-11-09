@@ -292,3 +292,14 @@ def get_human_subject_by_page(
 ):
     op((experiment_id, offset, limit))
     return GetHumanSubjectByPageResponse(code=CODE_SUCCESS, data=[Human()])
+
+
+@app.post(
+    "/api/addHumanSubject",
+    response_model=AddHumanSubjectResponse,
+    name="新增人类被试",
+    description="新增一条人类被试记录",
+)
+def add_human_subject(request: AddHumanSubjectRequest):
+    op(request)
+    return AddHumanSubjectResponse(code=CODE_SUCCESS, data=[Human()])

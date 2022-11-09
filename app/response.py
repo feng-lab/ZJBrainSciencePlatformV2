@@ -6,18 +6,9 @@ from .models import *
 
 
 class Response(BaseModel):
-    """API响应体"""
-
-    code: int
-    """状态码，必需
-    1表示成功，0和其他数字表示失败
-    """
-
-    message: Optional[str]
-    """响应消息，可选"""
-
-    data: Optional[Any]
-    """响应数据，可选"""
+    code: int = Field(title="状态码", description="1表示成功，0和其他数字表示失败")
+    message: str | None = Field(title="响应消息", default=None)
+    data: Any | None = Field(title="响应数据", default=None)
 
 
 CODE_FAIL: int = 0
@@ -138,3 +129,7 @@ class AddFileResponse(Response):
 
 class GetHumanSubjectByPageResponse(Response):
     data: list[Human]
+
+
+class AddHumanSubjectResponse(Response):
+    pass
