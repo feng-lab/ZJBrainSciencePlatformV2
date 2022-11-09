@@ -109,3 +109,7 @@ class GetParadigmByIdResponse(Response):
 
 class DeleteParadigmsResponse(Response):
     pass
+
+
+class GetDocTypeResponse(Response):
+    data: list[str]

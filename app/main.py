@@ -218,3 +218,13 @@ def get_paradigm_by_id(
 def delete_paradigms(request: DeleteParadigmsRequest):
     op(request)
     return DeleteParadigmsResponse(code=CODE_SUCCESS)
+
+
+@app.get(
+    "/api/getDocType",
+    response_model=GetDocTypeResponse,
+    name="获取平台可筛选的文件格式",
+    description="获取平台支持的或者已上传的文件格式后缀列表",
+)
+def get_doc_type():
+    return GetDocTypeResponse(code=CODE_SUCCESS, data=["MP4", "BDF", "EEG"])
