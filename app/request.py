@@ -91,3 +91,7 @@ class AddDeviceRequest(BaseModel):
     brand: str = Field(title="设备类型")
     purpose: str | None = Field(title="实验用途", default=None)
     index: str | None = Field(title="序号", default=None)
+
+
+class UpdateDeviceRequest(AddDeviceRequest):
+    pass

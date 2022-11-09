@@ -365,3 +365,14 @@ def get_device_by_id(
 ):
     op((experiment_id, equipment_id))
     return GetDeviceByIdResponse(code=CODE_SUCCESS, data=Device())
+
+
+@app.post(
+    "/api/updateDevice",
+    response_model=UpdateDeviceResponse,
+    name="编辑设备",
+    description="更新设备信息",
+)
+def update_device(request: UpdateDeviceRequest):
+    op(request)
+    return UpdateDeviceResponse(code=CODE_SUCCESS)

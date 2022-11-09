@@ -153,3 +153,7 @@ class AddDeviceResponse(Response):
 
 class GetDeviceByIdResponse(Response):
     data: Device
+
+
+class UpdateDeviceResponse(Response):
+    pass
