@@ -58,3 +58,7 @@ class GetStatisticWithSubjectResponse(Response):
         over_60: int = Field(title="60岁以上", ge=0)
 
     data: Optional[list[Data]]
+
+
+class GetStatisticWithServerResponse(Response):
+    data: float = Field(title="服务器资源利用率", ge=0.0, le=100.0)

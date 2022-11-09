@@ -8,6 +8,7 @@ from .response import (
     CODE_SUCCESS,
     LoginResponse,
     GetStatisticWithSubjectResponse,
+    GetStatisticWithServerResponse,
 )
 
 app = FastAPI()
@@ -61,4 +62,12 @@ def get_statistic_with_subject():
                 over_60=7,
             ),
         ],
+    )
+
+
+@app.get("/api/getStatisticWithServer", response_model=GetStatisticWithServerResponse)
+def get_statistic_with_server():
+    return GetStatisticWithServerResponse(
+        code=CODE_SUCCESS,
+        data=70.53,
     )

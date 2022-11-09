@@ -1,5 +1,6 @@
 ### JetBrains IDEs
 .idea/
+.run/
 
 ### VisualStudioCode template
 .vscode/*
