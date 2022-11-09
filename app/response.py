@@ -93,3 +93,7 @@ class GetExperimentsByPageResponse(Response):
 
 class GetExperimentsByIdResponse(Response):
     data: Experiment
+
+
+class AddParadigmsResponse(Response):
+    pass

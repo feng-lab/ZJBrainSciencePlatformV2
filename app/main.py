@@ -172,3 +172,14 @@ def get_experiments_by_page(
 def get_experiments_by_id(experiment_id: str = Query(title="实验编号")):
     op(experiment_id)
     return GetExperimentsByIdResponse(code=CODE_SUCCESS, data=Experiment())
+
+
+@app.post(
+    "/api/addParadigms",
+    response_model=AddParadigmsResponse,
+    name="新增实验范式",
+    description="新增实验相关的范式描述",
+)
+def add_paradigms(request: AddParadigmsRequest):
+    op(request)
+    return AddParadigmsResponse(code=CODE_SUCCESS)
