@@ -207,3 +207,14 @@ def get_paradigm_by_id(
 ):
     op((experiment_id, paradigm_id))
     return GetParadigmByIdResponse(code=CODE_SUCCESS, data=Paradigm())
+
+
+@app.delete(
+    "/api/deleteParadigms",
+    response_model=DeleteParadigmsResponse,
+    name="删除实验范式",
+    description="删除指定的实验范式",
+)
+def delete_paradigms(request: DeleteParadigmsRequest):
+    op(request)
+    return DeleteParadigmsResponse(code=CODE_SUCCESS)

@@ -37,3 +37,8 @@ class AddParadigmRequest(BaseModel):
     experiment_id: str = Field(title="实验编号")
     creator: str = Field(title="创建者用户名")
     create_time: datetime = Field(title="创建时间")
+
+
+class DeleteParadigmsRequest(BaseModel):
+    experiment_id: str = Field(title="实验编号")
+    paradigm_id: str = Field(alias="id", title="实验范式id")

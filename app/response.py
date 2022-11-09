@@ -105,3 +105,7 @@ class GetParadigmsResponse(Response):
 
 class GetParadigmByIdResponse(Response):
     data: Paradigm
+
+
+class DeleteParadigmsResponse(Response):
+    pass
