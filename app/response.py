@@ -149,3 +149,7 @@ class GetDeviceByPageResponse(Response):
 
 class AddDeviceResponse(Response):
     pass
+
+
+class GetDeviceByIdResponse(Response):
+    data: Device

@@ -351,3 +351,17 @@ def get_device_by_page(
 def add_device(request: AddDeviceRequest):
     op(request)
     return AddDeviceResponse(code=CODE_SUCCESS)
+
+
+@app.get(
+    "/api/getDeviceById",
+    response_model=GetDeviceByIdResponse,
+    name="获取设备详情",
+    description="根据设备ID获取设备详情",
+)
+def get_device_by_id(
+    experiment_id: str = Query(title="实验编号"),
+    equipment_id: str = Query(title="设备编号"),
+):
+    op((experiment_id, equipment_id))
+    return GetDeviceByIdResponse(code=CODE_SUCCESS, data=Device())
