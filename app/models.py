@@ -13,3 +13,7 @@ class Paradigm(BaseModel):
 
 class Human(BaseModel):
     pass
+
+
+class Device(BaseModel):
+    pass

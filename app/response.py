@@ -141,3 +141,7 @@ class UpdateHumanSubjectResponse(Response):
 
 class DeleteHumanSubjectResponse(Response):
     pass
+
+
+class GetDeviceByPageResponse(Response):
+    data: list[Device]

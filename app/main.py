@@ -325,3 +325,18 @@ def update_human_subject(request: UpdateHumanSubjectRequest):
 def delete_human_subject(request: DeleteHumanSubjectRequest):
     op(request)
     return DeleteHumanSubjectResponse(code=CODE_SUCCESS)
+
+
+@app.get(
+    "/api/getDeviceByPage",
+    response_model=GetDeviceByPageResponse,
+    name="获取设备列表",
+    description="分页获取设备列表，默认每页返回10个元素",
+)
+def get_device_by_page(
+    experiment_id: str = Query(title="实验编号"),
+    offset: int = Query(title="分页起始位置", default=0),
+    limit: int = Query(title="分页大小", default=10),
+):
+    op((experiment_id, offset, limit))
+    return GetDeviceByPageResponse(code=CODE_SUCCESS, data=[Device()])
