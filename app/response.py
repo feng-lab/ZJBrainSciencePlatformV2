@@ -39,3 +39,8 @@ class GetStatisticResponse(BaseModel):
     files: int = Field(title="文件数量", ge=0)
     human: int = Field(title="被试数量", ge=0)
     taskmaster: int = Field(title="任务数量", ge=0)
+
+
+class GetStatisticWithDataTypeResponse(BaseModel):
+    name: str = Field(title="类型名")
+    value: float = Field(title="类型占比", ge=0.0, allow_inf_nan=False)
