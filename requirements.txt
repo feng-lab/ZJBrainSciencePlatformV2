@@ -3,4 +3,5 @@ sqlalchemy==1.4.43
 pydantic==1.10.2
 
 # for dev
+black~=22.6.0
 objprint~=0.2.2
