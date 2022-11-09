@@ -77,3 +77,8 @@ class AddHumanSubjectRequest(BaseModel):
 
 class UpdateHumanSubjectRequest(AddHumanSubjectRequest):
     pass
+
+
+class DeleteHumanSubjectRequest(BaseModel):
+    experiment_id: str = Field(title="实验编号")
+    subject_id: str = Field(title="被试编号")

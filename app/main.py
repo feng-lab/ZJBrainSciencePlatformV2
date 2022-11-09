@@ -302,7 +302,7 @@ def get_human_subject_by_page(
 )
 def add_human_subject(request: AddHumanSubjectRequest):
     op(request)
-    return AddHumanSubjectResponse(code=CODE_SUCCESS, data=[Human()])
+    return AddHumanSubjectResponse(code=CODE_SUCCESS)
 
 
 @app.post(
@@ -313,4 +313,15 @@ def add_human_subject(request: AddHumanSubjectRequest):
 )
 def update_human_subject(request: UpdateHumanSubjectRequest):
     op(request)
-    return UpdateHumanSubjectResponse(code=CODE_SUCCESS, data=[Human()])
+    return UpdateHumanSubjectResponse(code=CODE_SUCCESS)
+
+
+@app.delete(
+    "/api/deleteHumanSubject",
+    response_model=DeleteHumanSubjectResponse,
+    name="删除人类被试",
+    description="删除某个实验下的某个人类被试",
+)
+def delete_human_subject(request: DeleteHumanSubjectRequest):
+    op(request)
+    return DeleteHumanSubjectResponse(code=CODE_SUCCESS)

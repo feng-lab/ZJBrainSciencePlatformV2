@@ -137,3 +137,7 @@ class AddHumanSubjectResponse(Response):
 
 class UpdateHumanSubjectResponse(Response):
     pass
+
+
+class DeleteHumanSubjectResponse(Response):
+    pass
