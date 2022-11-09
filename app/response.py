@@ -1,11 +1,9 @@
-import typing
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-T = typing.TypeVar("T")
 
-
-class Response(typing.Generic[T], BaseModel):
+class Response(BaseModel):
     """API响应体"""
 
     code: int
@@ -13,10 +11,10 @@ class Response(typing.Generic[T], BaseModel):
     1表示成功，0和其他数字表示失败
     """
 
-    message: str | None
+    message: Optional[str]
     """响应消息，可选"""
 
-    data: T | None
+    data: Optional[Any]
     """响应数据，可选"""
 
 
@@ -30,17 +28,23 @@ CODE_SESSION_TIMEOUT: int = 2
 """会话超时的失败code"""
 
 
-def response_success(message: str | None = None, data: T | None = None) -> Response[T]:
-    return Response(code=CODE_SUCCESS, message=message, data=data)
+class LoginResponse(Response):
+    pass
 
 
-class GetStatisticResponse(BaseModel):
-    experiments: int = Field(title="实验数量", ge=0)
-    files: int = Field(title="文件数量", ge=0)
-    human: int = Field(title="被试数量", ge=0)
-    taskmaster: int = Field(title="任务数量", ge=0)
+class GetStatisticResponse(Response):
+    class Data(BaseModel):
+        experiments: int = Field(title="实验数量", ge=0)
+        files: int = Field(title="文件数量", ge=0)
+        human: int = Field(title="被试数量", ge=0)
+        taskmaster: int = Field(title="任务数量", ge=0)
+
+    data: Optional[Data]
 
 
-class GetStatisticWithDataTypeResponse(BaseModel):
-    name: str = Field(title="类型名")
-    value: float = Field(title="类型占比", ge=0.0, allow_inf_nan=False)
+class GetStatisticWithDataTypeResponse(Response):
+    class Data(BaseModel):
+        name: str = Field(title="类型名")
+        value: float = Field(title="类型占比", ge=0.0, allow_inf_nan=False)
+
+    data: Optional[list[Data]]

@@ -2,32 +2,33 @@ from fastapi import FastAPI
 from objprint import op
 
 from .request import LoginRequest
-from .response import Response, response_success, GetStatisticResponse, GetStatisticWithDataTypeResponse
+from .response import GetStatisticResponse, GetStatisticWithDataTypeResponse, CODE_SUCCESS, LoginResponse
 
 app = FastAPI()
 
 
-@app.post("/api/login", response_model=Response[None])
+@app.post("/api/login", response_model=LoginResponse)
 def login(request: LoginRequest):
     op(request)
-    return response_success("login success")
+    return LoginResponse(code=CODE_SUCCESS)
 
 
-@app.get("/api/getStatistic", response_model=Response[GetStatisticResponse])
+@app.get("/api/getStatistic", response_model=GetStatisticResponse)
 def get_statistic():
-    return response_success(
-        data=GetStatisticResponse(experiments=1, files=2, human=3, taskmaster=4)
-    )
+    return GetStatisticResponse(code=CODE_SUCCESS, data=GetStatisticResponse.Data(
+        experiments=7, files=8, human=7, taskmaster=8
+    ))
 
 
-@app.get("/api/getStatisticWithDataType", response_model=Response[list[GetStatisticWithDataTypeResponse]])
+@app.get("/api/getStatisticWithDataType", response_model=GetStatisticWithDataTypeResponse)
 def get_statistic_with_data_type():
-    return response_success(
+    return GetStatisticWithDataTypeResponse(
+        code=CODE_SUCCESS,
         data=[
-            GetStatisticWithDataTypeResponse(name="EEG", value=61.41),
-            GetStatisticWithDataTypeResponse(name="spike", value=16.84),
-            GetStatisticWithDataTypeResponse(name="EOG", value=10.85),
-            GetStatisticWithDataTypeResponse(name="iEEG", value=6.67),
-            GetStatisticWithDataTypeResponse(name="MP4", value=15.18),
+            GetStatisticWithDataTypeResponse.Data(name="EEG", value=61.41),
+            GetStatisticWithDataTypeResponse.Data(name="spike", value=16.84),
+            GetStatisticWithDataTypeResponse.Data(name="EOG", value=10.85),
+            GetStatisticWithDataTypeResponse.Data(name="iEEG", value=6.67),
+            GetStatisticWithDataTypeResponse.Data(name="MP4", value=15.18),
         ]
     )
