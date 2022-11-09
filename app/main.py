@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, UploadFile
 from objprint import op
 
 from .request import *
@@ -265,15 +265,15 @@ def delete_doc(
     return DeleteDocResponse(code=CODE_SUCCESS)
 
 
-@app.delete(
-    "/api/deleteDoc",
-    response_model=DeleteDocResponse,
-    name="删除文件",
-    description="删除上传的数据文件",
+@app.post(
+    "/api/addFile",
+    response_model=AddFileResponse,
+    name="批量上传文件",
+    description="从用户本地上传文件到服务端",
 )
-def delete_doc(
-        experiment_id: str = Query(title="实验编号"),
-        file_id: int = Query(title="文件ID"),
-):
-    op((experiment_id, file_id))
-    return DeleteDocResponse(code=CODE_SUCCESS)
+def delete_doc(files: list[UploadFile]):
+    op(files)
+    return AddFileResponse(
+        code=CODE_SUCCESS,
+        data=[AddFileResponse.Data(name="file1", url="http://example.com")],
+    )

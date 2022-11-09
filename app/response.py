@@ -126,3 +126,11 @@ class GetDocByPageResponse(Response):
 
 class DeleteDocResponse(Response):
     pass
+
+
+class AddFileResponse(Response):
+    class Data(BaseModel):
+        name: str = Field(title="文件名称")
+        url: str = Field(title="文件访问地址")
+
+    data: list[Data]
