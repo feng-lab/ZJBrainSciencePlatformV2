@@ -14,7 +14,9 @@ from .response import (
 app = FastAPI()
 
 
-@app.post("/api/login", response_model=LoginResponse, description="用户提交登录表单，进行登录验证")
+@app.post(
+    "/api/login", response_model=LoginResponse, name="登录", description="用户提交登录表单，进行登录验证"
+)
 def login(request: LoginRequest):
     op(request)
     return LoginResponse(code=CODE_SUCCESS)
@@ -23,6 +25,7 @@ def login(request: LoginRequest):
 @app.get(
     "/api/getStatistic",
     response_model=GetStatisticResponse,
+    name="获取统计信息",
     description="获取首页实验、文件、被试、任务四个卡片的统计数据",
 )
 def get_statistic():
@@ -35,6 +38,7 @@ def get_statistic():
 @app.get(
     "/api/getStatisticWithDataType",
     response_model=GetStatisticWithDataTypeResponse,
+    name="获取平台数据量按类型的统计数据",
     description="获取平台已上传的各类型数据的占比统计",
 )
 def get_statistic_with_data_type():
@@ -53,6 +57,7 @@ def get_statistic_with_data_type():
 @app.get(
     "/api/getStatisticWithSubject",
     response_model=GetStatisticWithSubjectResponse,
+    name="获取被试分布的统计数据",
     description="获取平台已记录的被试对象的特性分布统计",
 )
 def get_statistic_with_subject():
@@ -78,6 +83,7 @@ def get_statistic_with_subject():
 @app.get(
     "/api/getStatisticWithServer",
     response_model=GetStatisticWithServerResponse,
+    name="获取计算服务器水位",
     description="返回当前计算服务器资源利用率的百分比数值，精确到小数点后两位",
 )
 def get_statistic_with_server():
