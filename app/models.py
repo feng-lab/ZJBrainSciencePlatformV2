@@ -9,3 +9,7 @@ class Experiment(BaseModel):
 
 class Paradigm(BaseModel):
     pass
+
+
+class Human(BaseModel):
+    pass

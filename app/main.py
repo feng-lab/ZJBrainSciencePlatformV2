@@ -277,3 +277,18 @@ def delete_doc(files: list[UploadFile]):
         code=CODE_SUCCESS,
         data=[AddFileResponse.Data(name="file1", url="http://example.com")],
     )
+
+
+@app.get(
+    "/api/getHumanSubjectByPage",
+    response_model=GetHumanSubjectByPageResponse,
+    name="获取人类被试列表",
+    description="分页获取人类被试列表，默认每页返回10个元素",
+)
+def get_human_subject_by_page(
+    experiment_id: str = Query(title="实验编号"),
+    offset: int = Query(title="分页起始位置", default=0),
+    limit: int = Query(title="分页大小", default=10),
+):
+    op((experiment_id, offset, limit))
+    return GetHumanSubjectByPageResponse(code=CODE_SUCCESS, data=[Human()])

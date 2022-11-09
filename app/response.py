@@ -134,3 +134,7 @@ class AddFileResponse(Response):
         url: str = Field(title="文件访问地址")
 
     data: list[Data]
+
+
+class GetHumanSubjectByPageResponse(Response):
+    data: list[Human]
