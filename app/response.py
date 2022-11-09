@@ -1,8 +1,8 @@
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
-from app.models import Experiment
+from .models import *
 
 
 class Response(BaseModel):
@@ -95,5 +95,13 @@ class GetExperimentsByIdResponse(Response):
     data: Experiment
 
 
-class AddParadigmsResponse(Response):
+class AddParadigmResponse(Response):
     pass
+
+
+class GetParadigmsResponse(Response):
+    data: list[Paradigm]
+
+
+class GetParadigmByIdResponse(Response):
+    data: Paradigm

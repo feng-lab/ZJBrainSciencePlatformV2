@@ -5,7 +5,6 @@ from objprint import op
 
 from .request import *
 from .response import *
-from .models import *
 
 app = FastAPI()
 
@@ -176,10 +175,35 @@ def get_experiments_by_id(experiment_id: str = Query(title="实验编号")):
 
 @app.post(
     "/api/addParadigms",
-    response_model=AddParadigmsResponse,
+    response_model=AddParadigmResponse,
     name="新增实验范式",
     description="新增实验相关的范式描述",
 )
-def add_paradigms(request: AddParadigmsRequest):
+def add_paradigm(request: AddParadigmRequest):
     op(request)
-    return AddParadigmsResponse(code=CODE_SUCCESS)
+    return AddParadigmResponse(code=CODE_SUCCESS)
+
+
+@app.get(
+    "/api/getParadigms",
+    response_model=GetParadigmsResponse,
+    name="获取实验范式",
+    description="根据实验编号获取实验相关的所有范式描述",
+)
+def get_paradigms(experiment_id: str = Query(title="实验编号")):
+    op(experiment_id)
+    return GetParadigmsResponse(code=CODE_SUCCESS, data=[Paradigm()])
+
+
+@app.get(
+    "/api/getParadigmById",
+    response_model=GetParadigmByIdResponse,
+    name="获取具体实验范式详情",
+    description="根据实验范式ID获取单条实验范式的详情",
+)
+def get_paradigm_by_id(
+    experiment_id: str = Query(title="实验编号"),
+    paradigm_id: str = Query(alias="id", title="实验范式id"),
+):
+    op((experiment_id, paradigm_id))
+    return GetParadigmByIdResponse(code=CODE_SUCCESS, data=Paradigm())

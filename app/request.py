@@ -31,7 +31,7 @@ class GetExperimentsByPageRequest:
         DESC = "desc"
 
 
-class AddParadigmsRequest(BaseModel):
+class AddParadigmRequest(BaseModel):
     img_url: list[str] = Field(title="图片地址", default_factory=list)
     desc: str = Field(title="文字描述")
     experiment_id: str = Field(title="实验编号")
