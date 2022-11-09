@@ -95,3 +95,8 @@ class AddDeviceRequest(BaseModel):
 
 class UpdateDeviceRequest(AddDeviceRequest):
     pass
+
+
+class DeleteDeviceRequest(BaseModel):
+    experiment_id: str = Field(title="实验编号")
+    equipment_id: str = Field(title="设备编号")

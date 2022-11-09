@@ -157,3 +157,7 @@ class GetDeviceByIdResponse(Response):
 
 class UpdateDeviceResponse(Response):
     pass
+
+
+class DeleteDeviceResponse(Response):
+    pass

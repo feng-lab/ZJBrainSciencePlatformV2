@@ -376,3 +376,14 @@ def get_device_by_id(
 def update_device(request: UpdateDeviceRequest):
     op(request)
     return UpdateDeviceResponse(code=CODE_SUCCESS)
+
+
+@app.delete(
+    "/api/deleteDevice",
+    response_model=DeleteDeviceResponse,
+    name="删除设备",
+    description="删除某个实验下的某个设备",
+)
+def delete_device(request: DeleteDeviceRequest):
+    op(request)
+    return DeleteDeviceResponse(code=CODE_SUCCESS)
