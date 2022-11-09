@@ -228,3 +228,24 @@ def delete_paradigms(request: DeleteParadigmsRequest):
 )
 def get_doc_type():
     return GetDocTypeResponse(code=CODE_SUCCESS, data=["MP4", "BDF", "EEG"])
+
+
+@app.get(
+    "/api/getDocByPage",
+    response_model=GetDocByPageResponse,
+    name="获取文件列表",
+    description="根据文件格式，分页获取文件列表，默认获取所有文件的前30个",
+)
+def get_doc_by_page(
+    experiment_id: str = Query(title="实验编号"),
+    doc_type: str = Query(title="文档格式"),
+    offset: int = Query(title="分页起始位置", default=0),
+    limit: int = Query(title="分页大小", default=30),
+):
+    op((experiment_id, doc_type, offset, limit))
+    return GetDocByPageResponse(
+        code=CODE_SUCCESS,
+        data=[
+            GetDocByPageResponse.Data(file_id=1, name="file1", url="http://example.com")
+        ],
+    )

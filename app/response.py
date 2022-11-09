@@ -113,3 +113,12 @@ class DeleteParadigmsResponse(Response):
 
 class GetDocTypeResponse(Response):
     data: list[str]
+
+
+class GetDocByPageResponse(Response):
+    class Data(BaseModel):
+        file_id: int = Field(title="文件ID")
+        name: str = Field(title="文件名称")
+        url: str = Field(title="文件访问地址")
+
+    data: list[Data]
