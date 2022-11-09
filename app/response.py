@@ -68,3 +68,13 @@ class GetStatisticWithDataResponse(Response):
     data: list[list[float]] = Field(
         title="每天数据", description="每天数据的格式：[UTC毫秒时间戳，数值(GB)]"
     )
+
+
+class GetStatisticWithSickResponse(Response):
+    class Data(BaseModel):
+        sick: str = Field(title="疾病")
+        part1: int = Field(title="单位1")
+        part2: int = Field(title="单位2")
+        part3: int = Field(title="单位3")
+
+    data: list[Data]

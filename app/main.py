@@ -3,16 +3,8 @@ from datetime import date
 from fastapi import FastAPI, Query
 from objprint import op
 
-from .request import LoginRequest
-from .response import (
-    GetStatisticResponse,
-    GetStatisticWithDataTypeResponse,
-    CODE_SUCCESS,
-    LoginResponse,
-    GetStatisticWithSubjectResponse,
-    GetStatisticWithServerResponse,
-    GetStatisticWithDataResponse,
-)
+from .request import *
+from .response import *
 
 app = FastAPI()
 
@@ -115,5 +107,28 @@ def get_statistic_with_data(
             [1370304000000, 0.7645],
             [1370390400000, 0.7638],
             [1370476800000, 0.7549],
+        ],
+    )
+
+
+@app.get(
+    "/api/getStatisticWithSick",
+    response_model=GetStatisticWithSickResponse,
+    name="获取疾病种类的统计结果",
+    description="获取各种疾病的分布统计",
+)
+def get_statistic_with_sick():
+    return GetStatisticWithSickResponse(
+        code=CODE_SUCCESS,
+        data=[
+            GetStatisticWithSickResponse.Data(
+                sick="癫痫", part1=107, part2=133, part3=93
+            ),
+            GetStatisticWithSickResponse.Data(
+                sick="睡眠障碍", part1=31, part2=156, part3=14
+            ),
+            GetStatisticWithSickResponse.Data(sick="老年痴呆", part1=5, part2=92, part3=14),
+            GetStatisticWithSickResponse.Data(sick="中风", part1=23, part2=48, part3=32),
+            GetStatisticWithSickResponse.Data(sick="其他", part1=2, part2=6, part3=34),
         ],
     )
