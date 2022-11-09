@@ -133,3 +133,7 @@ class GetHumanSubjectByPageResponse(Response):
 
 class AddHumanSubjectResponse(Response):
     pass
+
+
+class UpdateHumanSubjectResponse(Response):
+    pass

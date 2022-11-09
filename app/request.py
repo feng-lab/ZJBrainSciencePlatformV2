@@ -73,3 +73,7 @@ class AddHumanSubjectRequest(BaseModel):
     cellphone_number: str | None = Field(title="电话号码", default=None)
     email: str | None = Field(title="邮箱", default=None)
     address: str | None = Field(title="地址", default=None)
+
+
+class UpdateHumanSubjectRequest(AddHumanSubjectRequest):
+    pass

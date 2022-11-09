@@ -303,3 +303,14 @@ def get_human_subject_by_page(
 def add_human_subject(request: AddHumanSubjectRequest):
     op(request)
     return AddHumanSubjectResponse(code=CODE_SUCCESS, data=[Human()])
+
+
+@app.post(
+    "/api/updateHumanSubject",
+    response_model=UpdateHumanSubjectResponse,
+    name="编辑人类被试",
+    description="更新某一个人类被试的信息",
+)
+def update_human_subject(request: UpdateHumanSubjectRequest):
+    op(request)
+    return UpdateHumanSubjectResponse(code=CODE_SUCCESS, data=[Human()])
