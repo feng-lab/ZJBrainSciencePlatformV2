@@ -122,3 +122,7 @@ class GetDocByPageResponse(Response):
         url: str = Field(title="文件访问地址")
 
     data: list[Data]
+
+
+class DeleteDocResponse(Response):
+    pass

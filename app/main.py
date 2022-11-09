@@ -249,3 +249,31 @@ def get_doc_by_page(
             GetDocByPageResponse.Data(file_id=1, name="file1", url="http://example.com")
         ],
     )
+
+
+@app.delete(
+    "/api/deleteDoc",
+    response_model=DeleteDocResponse,
+    name="删除文件",
+    description="删除上传的数据文件",
+)
+def delete_doc(
+    experiment_id: str = Query(title="实验编号"),
+    file_id: int = Query(title="文件ID"),
+):
+    op((experiment_id, file_id))
+    return DeleteDocResponse(code=CODE_SUCCESS)
+
+
+@app.delete(
+    "/api/deleteDoc",
+    response_model=DeleteDocResponse,
+    name="删除文件",
+    description="删除上传的数据文件",
+)
+def delete_doc(
+        experiment_id: str = Query(title="实验编号"),
+        file_id: int = Query(title="文件ID"),
+):
+    op((experiment_id, file_id))
+    return DeleteDocResponse(code=CODE_SUCCESS)
