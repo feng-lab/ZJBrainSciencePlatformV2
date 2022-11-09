@@ -62,3 +62,9 @@ class GetStatisticWithSubjectResponse(Response):
 
 class GetStatisticWithServerResponse(Response):
     data: float = Field(title="服务器资源利用率", ge=0.0, le=100.0)
+
+
+class GetStatisticWithDataResponse(Response):
+    data: list[list[float]] = Field(
+        title="每天数据", description="每天数据的格式：[UTC毫秒时间戳，数值(GB)]"
+    )

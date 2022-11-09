@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from datetime import date
+
+from fastapi import FastAPI, Query
 from objprint import op
 
 from .request import LoginRequest
@@ -9,6 +11,7 @@ from .response import (
     LoginResponse,
     GetStatisticWithSubjectResponse,
     GetStatisticWithServerResponse,
+    GetStatisticWithDataResponse,
 )
 
 app = FastAPI()
@@ -90,4 +93,27 @@ def get_statistic_with_server():
     return GetStatisticWithServerResponse(
         code=CODE_SUCCESS,
         data=70.53,
+    )
+
+
+@app.get(
+    "/api/getStatisticWithData",
+    response_model=GetStatisticWithDataResponse,
+    name="获取平台上传数据量增长趋势的统计结果",
+    description="获取一定周期内平台上传数据量的按天统计结果，默认周期为一周",
+)
+def get_statistic_with_data(
+    start: date = Query(title="周期起始日期，YYYY-MM-DD"),
+    end: date = Query(title="周期截止日期，YYYY-MM-DD"),
+):
+    op((start, end))
+    return GetStatisticWithDataResponse(
+        code=CODE_SUCCESS,
+        data=[
+            [1370131200000, 0.7695],
+            [1370217600000, 0.7648],
+            [1370304000000, 0.7645],
+            [1370390400000, 0.7638],
+            [1370476800000, 0.7549],
+        ],
     )
