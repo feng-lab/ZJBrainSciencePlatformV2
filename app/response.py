@@ -2,6 +2,8 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
+from app.models import Experiment
+
 
 class Response(BaseModel):
     """API响应体"""
@@ -86,4 +88,8 @@ class AddExperimentResponse(Response):
 
 # TODO 添加必要字段
 class GetExperimentsByPageResponse(Response):
-    data: list
+    data: list[Experiment]
+
+
+class GetExperimentsByIdResponse(Response):
+    data: Experiment

@@ -5,7 +5,7 @@ from .utils import is_debug_mode
 
 if is_debug_mode():
     # 开发环境，使用SQLite
-    SQLALCHEMY_DATABASE_URL = "sqlite///../test-db.sqlite3"
+    SQLALCHEMY_DATABASE_URL = "sqlite:///../test-db.sqlite3"
     SQLALCHEMY_DATABASE_ARGS = {
         "echo": True,
         "future": True,

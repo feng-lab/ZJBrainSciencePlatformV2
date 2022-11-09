@@ -5,6 +5,7 @@ from objprint import op
 
 from .request import *
 from .response import *
+from .models import *
 
 app = FastAPI()
 
@@ -159,4 +160,15 @@ def get_experiments_by_page(
     search: Optional[str] = Query(title="搜索内容", default=None),
 ):
     op((sort_by, sort_order, offset, limit, search))
-    return GetExperimentsByPageResponse(code=CODE_SUCCESS, data=[])
+    return GetExperimentsByPageResponse(code=CODE_SUCCESS, data=[Experiment()])
+
+
+@app.get(
+    "/api/getExperimentsByPage",
+    response_model=GetExperimentsByIdResponse,
+    name="获取实验详情",
+    description="根据实验编号获取实验详细信息",
+)
+def get_experiments_by_id(experiment_id: str = Query(title="实验编号")):
+    op(experiment_id)
+    return GetExperimentsByIdResponse(code=CODE_SUCCESS, data=Experiment())
