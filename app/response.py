@@ -48,3 +48,13 @@ class GetStatisticWithDataTypeResponse(Response):
         value: float = Field(title="类型占比", ge=0.0, allow_inf_nan=False)
 
     data: Optional[list[Data]]
+
+
+class GetStatisticWithSubjectResponse(Response):
+    class Data(BaseModel):
+        type: str = Field(title="性别", description="男性或女性")
+        below_30: int = Field(title="30岁以下", ge=0)
+        between_30_and_60: int = Field(title="30岁到60岁之间", ge=0)
+        over_60: int = Field(title="60岁以上", ge=0)
+
+    data: Optional[list[Data]]
