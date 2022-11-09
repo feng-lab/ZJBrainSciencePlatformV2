@@ -145,3 +145,7 @@ class DeleteHumanSubjectResponse(Response):
 
 class GetDeviceByPageResponse(Response):
     data: list[Device]
+
+
+class AddDeviceResponse(Response):
+    pass

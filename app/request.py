@@ -82,3 +82,12 @@ class UpdateHumanSubjectRequest(AddHumanSubjectRequest):
 class DeleteHumanSubjectRequest(BaseModel):
     experiment_id: str = Field(title="实验编号")
     subject_id: str = Field(title="被试编号")
+
+
+class AddDeviceRequest(BaseModel):
+    experiment_id: str = Field(title="实验编号")
+    equipment_id: str = Field(title="设备编号")
+    name: str = Field(title="设备名称")
+    brand: str = Field(title="设备类型")
+    purpose: str | None = Field(title="实验用途", default=None)
+    index: str | None = Field(title="序号", default=None)

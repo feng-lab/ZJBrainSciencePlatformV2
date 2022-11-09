@@ -340,3 +340,14 @@ def get_device_by_page(
 ):
     op((experiment_id, offset, limit))
     return GetDeviceByPageResponse(code=CODE_SUCCESS, data=[Device()])
+
+
+@app.post(
+    "/api/addDevice",
+    response_model=AddDeviceResponse,
+    name="新增设备",
+    description="新增实验设备",
+)
+def add_device(request: AddDeviceRequest):
+    op(request)
+    return AddDeviceResponse(code=CODE_SUCCESS)
