@@ -173,3 +173,7 @@ class GetFilesResponse(Response):
 
 class GetTaskByPageResponse(Response):
     data: list[Task]
+
+
+class AddTaskResponse(Response):
+    pass

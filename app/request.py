@@ -3,6 +3,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
+from .models import File
+
 
 class LoginRequest(BaseModel):
     account: str = Field(title="用户名")
@@ -107,3 +109,45 @@ class DisplayEEGRequest(BaseModel):
     t: int = Field(title="时间窗口大小")
     i: int = Field(title="当前页数")
     c: str = Field(title="文件类型")
+
+
+class AddTaskRequest(BaseModel):
+    class TaskStep(BaseModel):
+        class Type(str, Enum):
+            FILTER = "filter"
+            ANALYSIS = "analysis"
+
+        type: Type = Field(title="步骤类型")
+
+    class FilterTaskStep(TaskStep):
+        class Method(str, Enum):
+            IIR = "IIR"
+            FIR = "FIR"
+
+        class Window(str, Enum):
+            HANMMING = "hanmming"
+            HANN = "hann"
+            BLACKMAN = "blackman"
+
+        class Design(str, Enum):
+            FIRWIN = "firwin"
+            FIRWIN2 = "firwin2"
+
+        l_freq: int = Field(title="L_freq")
+        h_freq: int = Field(title="H_freq")
+        ch_picks: int = Field(title="CH_picks")
+        methods: Method = Field(title="Methods")
+        params: str | None = Field(title="Params", default=None)
+        length: str | None = Field(title="length", default=None)
+        window: Window | None = Field(title="Window", default=None)
+        design: Design | None = Field(title="Design", default=None)
+        phase: str | None = Field(title="Phase", default=None)
+        i_trans_bandwidth: str | None = Field(title="I_trans_bandwidth", default=None)
+
+    class AnalysisTaskStep(TaskStep):
+        analysis_list: list[str] = Field(title="analysis-list")
+
+    task_name: str = Field(title="任务名称")
+    description: str = Field(title="任务描述")
+    checked_file: File = Field(title="目标文件")
+    task_steps: list[FilterTaskStep | AnalysisTaskStep] = Field(title="任务名称")

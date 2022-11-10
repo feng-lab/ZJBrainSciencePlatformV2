@@ -426,3 +426,14 @@ def get_task_by_page(
 ):
     op((offset, limit, task_name, start_time, task_type, status))
     return GetTaskByPageResponse(code=CODE_SUCCESS, data=[Task()])
+
+
+@app.post(
+    "/api/addTask",
+    response_model=AddTaskResponse,
+    name="新增任务",
+    description="新增任务",
+)
+def add_task(request: AddTaskRequest):
+    op(request)
+    return AddTaskResponse(code=CODE_SUCCESS, data=[Task()])
