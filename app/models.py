@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .database import Base
 
@@ -28,4 +28,7 @@ class File(BaseModel):
 
 
 class Task(BaseModel):
-    pass
+    class Steps(BaseModel):
+        pass
+
+    steps_list: list[Steps] = Field(default_factory=list)

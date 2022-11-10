@@ -448,3 +448,14 @@ def add_task(request: AddTaskRequest):
 def get_task_by_id(task_id: str = Query(title="任务ID")):
     op((task_id,))
     return GetTaskByIDResponse(code=CODE_SUCCESS, data=Task())
+
+
+@app.get(
+    "/api/getTaskStepsByID",
+    response_model=GetTaskStepsByIDResponse,
+    name="获取任务流程的步骤信息",
+    description="获取指定任务的相关信息，包括基础信息和步骤执行信息",
+)
+def get_task_steps_by_id(task_id: str = Query(title="任务ID")):
+    op((task_id,))
+    return GetTaskStepsByIDResponse(code=CODE_SUCCESS, data=[Task.Steps()])

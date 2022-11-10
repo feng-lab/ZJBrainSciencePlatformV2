@@ -1,7 +1,5 @@
 from typing import Any, Optional
 
-from pydantic import Field
-
 from .models import *
 
 
@@ -181,3 +179,7 @@ class AddTaskResponse(Response):
 
 class GetTaskByIDResponse(Response):
     data: Task
+
+
+class GetTaskStepsByIDResponse(Response):
+    data: list[Task.Steps]
