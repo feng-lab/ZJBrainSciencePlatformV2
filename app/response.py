@@ -187,3 +187,7 @@ class GetTaskStepsByIDResponse(Response):
 
 class GetFilterStepResultByIDResponse(Response):
     data: list[list[float]]
+
+
+class GetAnalysisStepResultByIDResponse(Response):
+    data: str

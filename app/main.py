@@ -480,3 +480,20 @@ def get_filter_step_result_by_id(
             [1370304000000, 0.7645],
         ],
     )
+
+
+@app.get(
+    "/api/getAnalysisStepResultByID",
+    response_model=GetAnalysisStepResultByIDResponse,
+    name="获取分析类型步骤的执行结果",
+    description="页面点击分析步骤后，获取分析步骤的执行结果，即生成的png图片路径",
+)
+def get_analysis_step_result_by_id(
+    task_id: str = Query(title="任务ID"),
+    operation_id: str = Query(title="操作步骤ID"),
+):
+    op((task_id, operation_id))
+    return GetAnalysisStepResultByIDResponse(
+        code=CODE_SUCCESS,
+        data="http://xxx.xxx/result_img.png",
+    )
