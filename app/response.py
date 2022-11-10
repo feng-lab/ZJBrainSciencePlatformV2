@@ -191,3 +191,7 @@ class GetFilterStepResultByIDResponse(Response):
 
 class GetAnalysisStepResultByIDResponse(Response):
     data: str
+
+
+class UploadSearchFileResponse(Response):
+    data: SearchFile

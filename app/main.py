@@ -497,3 +497,14 @@ def get_analysis_step_result_by_id(
         code=CODE_SUCCESS,
         data="http://xxx.xxx/result_img.png",
     )
+
+
+@app.post(
+    "/api/search/uploadSearchFile",
+    response_model=UploadSearchFileResponse,
+    name="上传待检索文件",
+    description="将本地EEG数据上传至服务端并解析返回波形图数据",
+)
+def upload_search_file(file: UploadFile):
+    op(file)
+    return UploadSearchFileResponse(code=CODE_SUCCESS, data=SearchFile())

@@ -32,3 +32,7 @@ class Task(BaseModel):
         pass
 
     steps_list: list[Steps] = Field(default_factory=list)
+
+
+class SearchFile(BaseModel):
+    pass
