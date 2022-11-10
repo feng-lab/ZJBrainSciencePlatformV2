@@ -3,7 +3,7 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
-from .models import File
+from app.schemas import File
 
 
 class LoginRequest(BaseModel):

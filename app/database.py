@@ -1,7 +1,7 @@
 import sqlalchemy.ext.declarative
 import sqlalchemy.orm
 
-from .utils import is_debug_mode
+from app.utils import is_debug_mode
 
 if is_debug_mode():
     # 开发环境，使用SQLite

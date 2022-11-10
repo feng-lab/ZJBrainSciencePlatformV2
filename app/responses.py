@@ -1,6 +1,6 @@
-from typing import Any, Optional
+from typing import Any
 
-from .models import *
+from app.schemas import *
 
 
 class Response(BaseModel):
@@ -30,7 +30,7 @@ class GetStatisticResponse(Response):
         human: int = Field(title="被试数量", ge=0)
         taskmaster: int = Field(title="任务数量", ge=0)
 
-    data: Optional[Data]
+    data: Data | None
 
 
 class GetStatisticWithDataTypeResponse(Response):
@@ -38,7 +38,7 @@ class GetStatisticWithDataTypeResponse(Response):
         name: str = Field(title="类型名")
         value: float = Field(title="类型占比", ge=0.0, allow_inf_nan=False)
 
-    data: Optional[list[Data]]
+    data: list[Data] | None
 
 
 class GetStatisticWithSubjectResponse(Response):
@@ -48,7 +48,7 @@ class GetStatisticWithSubjectResponse(Response):
         between_30_and_60: int = Field(title="30岁到60岁之间", ge=0)
         over_60: int = Field(title="60岁以上", ge=0)
 
-    data: Optional[list[Data]]
+    data: list[Data] | None
 
 
 class GetStatisticWithServerResponse(Response):

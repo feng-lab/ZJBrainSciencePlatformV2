@@ -3,8 +3,8 @@ from datetime import date
 from fastapi import FastAPI, Query, UploadFile
 from objprint import op
 
-from .request import *
-from .response import *
+from app.requests import *
+from app.responses import *
 
 app = FastAPI()
 
@@ -156,7 +156,7 @@ def get_experiments_by_page(
     sort_order: GetExperimentsByPageRequest.SortOrder = Query(title="排序顺序"),
     offset: int = Query(title="分页起始位置", default=0),
     limit: int = Query(title="分页大小", default=10),
-    search: Optional[str] = Query(title="搜索内容", default=None),
+    search: str | None = Query(title="搜索内容", default=None),
 ):
     op((sort_by, sort_order, offset, limit, search))
     return GetExperimentsByPageResponse(code=CODE_SUCCESS, data=[Experiment()])
