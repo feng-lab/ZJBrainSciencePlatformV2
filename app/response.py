@@ -199,3 +199,7 @@ class UploadSearchFileResponse(Response):
 
 class GoSearchResponse(Response):
     data: list[SearchResult]
+
+
+class GetNotReadMsgResponse(Response):
+    data: list[Message]

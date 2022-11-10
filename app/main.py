@@ -519,3 +519,14 @@ def upload_search_file(file: UploadFile):
 def go_search(request: GoSearchRequest):
     op(request)
     return GoSearchResponse(code=CODE_SUCCESS, data=[SearchResult()])
+
+
+@app.get(
+    "/api/getNotReadMsg",
+    response_model=GetNotReadMsgResponse,
+    name="获取未读消息",
+    description="根据选择的待检索信号，由服务端检索并返回相似的信号数组",
+)
+def get_not_read_msg(account: str = Field(title="登录用户账号名")):
+    op(account)
+    return GetNotReadMsgResponse(code=CODE_SUCCESS, data=[Message()])

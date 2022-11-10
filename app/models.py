@@ -40,3 +40,7 @@ class SearchFile(BaseModel):
 
 class SearchResult(BaseModel):
     pass
+
+
+class Message(BaseModel):
+    pass
