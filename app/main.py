@@ -1,12 +1,23 @@
 from datetime import date
+from http import HTTPStatus
 
-from fastapi import FastAPI, Query, UploadFile
+from fastapi import FastAPI, Query, UploadFile, HTTPException
 from objprint import op
+from starlette.responses import RedirectResponse
 
 from app.requests import *
 from app.responses import *
+from app.utils import is_debug_mode
 
 app = FastAPI()
+
+
+@app.get("/")
+def index():
+    if is_debug_mode():
+        return RedirectResponse(url="/docs")
+    else:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
 
 
 @app.post(

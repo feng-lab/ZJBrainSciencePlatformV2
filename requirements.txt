@@ -1,6 +1,9 @@
-fastapi[all]==0.86.0
+fastapi==0.86.0
 sqlalchemy==1.4.43
 pydantic==1.10.2
+starlette==0.20.4
+uvicorn==0.18.3
+python-multipart==0.0.5
 
 # for dev
 black~=22.6.0
