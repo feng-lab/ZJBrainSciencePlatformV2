@@ -169,3 +169,7 @@ class DisplayEEGResponse(Response):
 
 class GetFilesResponse(Response):
     data: list[File]
+
+
+class GetTaskByPageResponse(Response):
+    data: list[Task]

@@ -408,3 +408,21 @@ def display_eeg(request: DisplayEEGRequest):
 )
 def get_files():
     return GetFilesResponse(code=CODE_SUCCESS, data=[File()])
+
+
+@app.get(
+    "/api/getTaskByPage",
+    response_model=GetTaskByPageResponse,
+    name="获取任务列表",
+    description="分页获取任务列表，支持按任务名称、开始时间、类型、状态过滤",
+)
+def get_task_by_page(
+    offset: int = Query(title="分页起始位置", default=0),
+    limit: int = Query(title="分页大小", default=20),
+    task_name: str | None = Query(title="任务名称", default=None),
+    start_time: str | None = Query(title="开始时间", default=None),
+    task_type: str | None = Query(title="任务类型", default=None),
+    status: str | None = Query(title="任务状态", default=None),
+):
+    op((offset, limit, task_name, start_time, task_type, status))
+    return GetTaskByPageResponse(code=CODE_SUCCESS, data=[Task()])

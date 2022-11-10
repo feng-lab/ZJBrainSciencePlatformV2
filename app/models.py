@@ -25,3 +25,7 @@ class EEGData(BaseModel):
 
 class File(BaseModel):
     pass
+
+
+class Task(BaseModel):
+    pass
