@@ -177,3 +177,7 @@ class GetTaskByPageResponse(Response):
 
 class AddTaskResponse(Response):
     pass
+
+
+class GetTaskByIDResponse(Response):
+    data: Task

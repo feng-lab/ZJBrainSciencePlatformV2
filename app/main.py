@@ -437,3 +437,14 @@ def get_task_by_page(
 def add_task(request: AddTaskRequest):
     op(request)
     return AddTaskResponse(code=CODE_SUCCESS, data=[Task()])
+
+
+@app.get(
+    "/api/getTaskByID",
+    response_model=GetTaskByIDResponse,
+    name="获取任务详细信息",
+    description="获取指定任务的相关信息，包括基础信息和步骤执行信息",
+)
+def get_task_by_id(task_id: str = Query(title="任务ID")):
+    op((task_id,))
+    return GetTaskByIDResponse(code=CODE_SUCCESS, data=Task())
