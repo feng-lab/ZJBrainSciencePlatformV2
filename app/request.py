@@ -158,3 +158,8 @@ class GoSearchRequest(BaseModel):
     channel: str = Field(title="通道")
     start: int = Field(title="信号起始点")
     end: int = Field(title="信号截止点")
+
+
+class MarkMsgRequest(BaseModel):
+    account: str = Field(title="登录用户账号名")
+    ids: str = Field(title="消息id,多个id则逗号分隔")

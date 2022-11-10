@@ -545,3 +545,14 @@ def get_all_msg(
 ):
     op((account, offset, limit))
     return GetAllMsgResponse(code=CODE_SUCCESS, data=[Message()])
+
+
+@app.post(
+    "/api/markMsg",
+    response_model=MarkMsgResponse,
+    name="获取所有消息",
+    description="按时间倒序，分页获取用户的所有消息",
+)
+def mark_msg(request: MarkMsgRequest):
+    op(request)
+    return MarkMsgResponse(code=CODE_SUCCESS, data="")

@@ -207,3 +207,7 @@ class GetNotReadMsgResponse(Response):
 
 class GetAllMsgResponse(Response):
     data: list[Message]
+
+
+class MarkMsgResponse(Response):
+    data: str
