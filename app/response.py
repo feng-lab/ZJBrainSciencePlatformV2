@@ -203,3 +203,7 @@ class GoSearchResponse(Response):
 
 class GetNotReadMsgResponse(Response):
     data: list[Message]
+
+
+class GetAllMsgResponse(Response):
+    data: list[Message]

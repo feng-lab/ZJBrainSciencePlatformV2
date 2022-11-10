@@ -527,6 +527,21 @@ def go_search(request: GoSearchRequest):
     name="获取未读消息",
     description="根据选择的待检索信号，由服务端检索并返回相似的信号数组",
 )
-def get_not_read_msg(account: str = Field(title="登录用户账号名")):
+def get_not_read_msg(account: str = Query(title="登录用户账号名")):
     op(account)
     return GetNotReadMsgResponse(code=CODE_SUCCESS, data=[Message()])
+
+
+@app.get(
+    "/api/getAllMsg",
+    response_model=GetAllMsgResponse,
+    name="获取所有消息",
+    description="按时间倒序，分页获取用户的所有消息",
+)
+def get_all_msg(
+    account: str = Query(title="登录用户账号名"),
+    offset: int = Query(title="分页起始位置", default=0),
+    limit: int = Query(title="分页大小", default=20),
+):
+    op((account, offset, limit))
+    return GetAllMsgResponse(code=CODE_SUCCESS, data=[Message()])
