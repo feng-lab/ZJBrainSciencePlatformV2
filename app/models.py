@@ -36,3 +36,7 @@ class Task(BaseModel):
 
 class SearchFile(BaseModel):
     pass
+
+
+class SearchResult(BaseModel):
+    pass

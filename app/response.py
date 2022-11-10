@@ -195,3 +195,7 @@ class GetAnalysisStepResultByIDResponse(Response):
 
 class UploadSearchFileResponse(Response):
     data: SearchFile
+
+
+class GoSearchResponse(Response):
+    data: list[SearchResult]

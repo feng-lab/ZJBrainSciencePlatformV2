@@ -508,3 +508,14 @@ def get_analysis_step_result_by_id(
 def upload_search_file(file: UploadFile):
     op(file)
     return UploadSearchFileResponse(code=CODE_SUCCESS, data=SearchFile())
+
+
+@app.post(
+    "/api/search/goSearch",
+    response_model=GoSearchResponse,
+    name="搜索信号",
+    description="根据选择的待检索信号，由服务端检索并返回相似的信号数组",
+)
+def go_search(request: GoSearchRequest):
+    op(request)
+    return GoSearchResponse(code=CODE_SUCCESS, data=[SearchResult()])

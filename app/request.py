@@ -151,3 +151,10 @@ class AddTaskRequest(BaseModel):
     description: str = Field(title="任务描述")
     checked_file: File = Field(title="目标文件")
     task_steps: list[FilterTaskStep | AnalysisTaskStep] = Field(title="任务名称")
+
+
+class GoSearchRequest(BaseModel):
+    filename: str = Field(title="待检索信号文件")
+    channel: str = Field(title="通道")
+    start: int = Field(title="信号起始点")
+    end: int = Field(title="信号截止点")
