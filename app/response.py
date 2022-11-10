@@ -161,3 +161,7 @@ class UpdateDeviceResponse(Response):
 
 class DeleteDeviceResponse(Response):
     pass
+
+
+class DisplayEEGResponse(Response):
+    data: EEGData

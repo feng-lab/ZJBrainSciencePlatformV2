@@ -387,3 +387,14 @@ def update_device(request: UpdateDeviceRequest):
 def delete_device(request: DeleteDeviceRequest):
     op(request)
     return DeleteDeviceResponse(code=CODE_SUCCESS)
+
+
+@app.post(
+    "/api/data/displayEEG",
+    response_model=DisplayEEGResponse,
+    name="查看EEG数据",
+    description="查看EEG数据文件指定段",
+)
+def display_eeg(request: DisplayEEGRequest):
+    op(request)
+    return DisplayEEGResponse(code=CODE_SUCCESS, data=EEGData())

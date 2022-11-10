@@ -17,3 +17,7 @@ class Human(BaseModel):
 
 class Device(BaseModel):
     pass
+
+
+class EEGData(BaseModel):
+    pass

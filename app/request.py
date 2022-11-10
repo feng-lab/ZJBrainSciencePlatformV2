@@ -100,3 +100,10 @@ class UpdateDeviceRequest(AddDeviceRequest):
 class DeleteDeviceRequest(BaseModel):
     experiment_id: str = Field(title="实验编号")
     equipment_id: str = Field(title="设备编号")
+
+
+class DisplayEEGRequest(BaseModel):
+    p1: str = Field(title="文件名称")
+    t: int = Field(title="时间窗口大小")
+    i: int = Field(title="当前页数")
+    c: str = Field(title="文件类型")
