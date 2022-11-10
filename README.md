@@ -48,5 +48,5 @@ python -m uvicorn app.main:app --reload
 ### Docker Compose（部署）
 
 ```shell
-docker compose up -d
+docker-compose up -d
 ```
