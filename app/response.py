@@ -183,3 +183,7 @@ class GetTaskByIDResponse(Response):
 
 class GetTaskStepsByIDResponse(Response):
     data: list[Task.Steps]
+
+
+class GetFilterStepResultByIDResponse(Response):
+    data: list[list[float]]

@@ -459,3 +459,24 @@ def get_task_by_id(task_id: str = Query(title="任务ID")):
 def get_task_steps_by_id(task_id: str = Query(title="任务ID")):
     op((task_id,))
     return GetTaskStepsByIDResponse(code=CODE_SUCCESS, data=[Task.Steps()])
+
+
+@app.get(
+    "/api/getFilterStepResultByID",
+    response_model=GetFilterStepResultByIDResponse,
+    name="获取滤波类型步骤的执行结果",
+    description="页面点击滤波类型步骤后，获取对应步骤的执行结果，即波形图数据",
+)
+def get_filter_step_result_by_id(
+    task_id: str = Query(title="任务ID"),
+    operation_id: str = Query(title="操作步骤ID"),
+):
+    op((task_id, operation_id))
+    return GetFilterStepResultByIDResponse(
+        code=CODE_SUCCESS,
+        data=[
+            [1370131200000, 0.7695],
+            [1370217600000, 0.7648],
+            [1370304000000, 0.7645],
+        ],
+    )
