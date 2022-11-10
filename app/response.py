@@ -165,3 +165,7 @@ class DeleteDeviceResponse(Response):
 
 class DisplayEEGResponse(Response):
     data: EEGData
+
+
+class GetFilesResponse(Response):
+    data: list[File]

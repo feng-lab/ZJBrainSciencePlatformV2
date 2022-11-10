@@ -398,3 +398,13 @@ def delete_device(request: DeleteDeviceRequest):
 def display_eeg(request: DisplayEEGRequest):
     op(request)
     return DisplayEEGResponse(code=CODE_SUCCESS, data=EEGData())
+
+
+@app.get(
+    "/api/getFiles",
+    response_model=GetFilesResponse,
+    name="获取任务可用目标文件列表",
+    description="新建任务时获取任务可用的目标数据文件列表",
+)
+def get_files():
+    return GetFilesResponse(code=CODE_SUCCESS, data=[File()])

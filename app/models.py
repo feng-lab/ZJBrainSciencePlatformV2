@@ -21,3 +21,7 @@ class Device(BaseModel):
 
 class EEGData(BaseModel):
     pass
+
+
+class File(BaseModel):
+    pass
