@@ -1,4 +1,14 @@
-from sqlalchemy import Column, String, BigInteger, Boolean, func, TIMESTAMP, Text, Date
+from sqlalchemy import (
+    Column,
+    String,
+    BigInteger,
+    Boolean,
+    func,
+    TIMESTAMP,
+    Text,
+    Date,
+    Integer,
+)
 from sqlalchemy.sql import expression
 
 from app.database import Base
@@ -323,4 +333,89 @@ class Diagnosis(Base):
             f"outcomes={self.outcomes!r},scale_name={self.scale_name!r},scale_result={self.scale_result!r},"
             f"hospital_name={self.hospital_name!r},gmt_create={self.gmt_create!r},gmt_modified={self.gmt_modified!r},"
             f"is_deleted={self.is_deleted!r})"
+        )
+
+
+class Medication(Base):
+    __tablename__ = "medication"
+
+    id = Column("id", BigInteger, primary_key=True, comment="主键")
+    medication_record_id = Column(
+        "medication_record_id",
+        String(length=255),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="诊断数据的唯一识别编号",
+    )
+    subject_id = Column(
+        "subject_id", String(length=255), nullable=False, comment="关联的实验对象"
+    )
+    diagnosis_id = Column(
+        "diagnosis_id", String(length=255), nullable=False, comment="关联的诊断"
+    )
+    experiment_id = Column(
+        "experiment_id", String(length=255), nullable=False, comment="关联的实验"
+    )
+    long_term_flag = Column("long_term_flag", Boolean, nullable=False, comment="是否长期药嘱")
+    medication_name = Column(
+        "medication_name", String(length=50), nullable=False, comment="药物名称"
+    )
+    medication_code_type = Column(
+        "medication_code_type", String(length=20), comment="药物名称"
+    )
+    dosage = Column("dosage", Integer, comment="单次服用剂量")
+    total_dosage = Column("total_dosage", Integer, comment="药品使用总量")
+    unit = Column("unit", String(length=20), comment="剂量单位")
+    specification = Column(
+        "specification", String(length=50), nullable=False, comment="药品规格"
+    )
+    approach_code = Column("approach_code", String(length=20), comment="给药途径代码")
+    approach = Column("approach", String(length=20), comment="给药途径")
+    plan_start_date = Column("plan_start_date", TIMESTAMP, comment="计划用药开始日期(UTC)")
+    plan_end_date = Column("plan_end_date", TIMESTAMP, comment="计划用药停止日期(UTC)")
+    last_medication_date = Column(
+        "last_medication_date", TIMESTAMP, nullable=False, comment="最近一次服药时间(UTC)"
+    )
+    frequency_description = Column(
+        "frequency_description", String(length=50), comment="用药频率描述"
+    )
+    frequency = Column("frequency", Integer, comment="用药频率次数")
+    interval_unit = Column("interval_unit", String(length=20), comment="用药频率单位")
+    memo = Column("memo", String(length=255), comment="备注")
+    gmt_create = Column(
+        "gmt_create",
+        TIMESTAMP,
+        nullable=False,
+        server_default=func.utcnow(),
+        comment="创建时间(UTC)",
+    )
+    gmt_modified = Column(
+        "gmt_modified",
+        TIMESTAMP,
+        nullable=False,
+        server_default=func.utcnow(),
+        onupdate=func.utcnow(),
+        comment="最近修改时间(UTC)",
+    )
+    is_deleted = Column(
+        "is_deleted",
+        Boolean,
+        nullable=False,
+        server_default=expression.false(),
+        comment="记录是否被删除",
+    )
+
+    def __repr__(self):
+        return (
+            f"Medication(id={self.id!r},medication_record_id={self.medication_record_id!r},"
+            f"subject_id={self.subject_id!r},diagnosis_id={self.diagnosis_id!r},experiment_id={self.experiment_id!r},"
+            f"long_term_flag={self.long_term_flag!r},medication_name={self.medication_name!r},"
+            f"medication_code_type={self.medication_code_type!r},dosage={self.dosage!r},"
+            f"total_dosage={self.total_dosage!r},unit={self.unit!r},specification={self.specification!r},"
+            f"approach_code={self.approach_code!r},approach={self.approach!r},"
+            f"last_medication_date={self.last_medication_date!r},"
+            f"frequency_description={self.frequency_description!r},frequency={self.frequency!r},"
+            f"interval_unit={self.interval_unit!r},memo={self.memo!r},gmt_create={self.gmt_create!r},"
+            f"gmt_modified={self.gmt_modified!r},is_deleted={self.is_deleted!r})"
         )
