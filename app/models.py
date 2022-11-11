@@ -258,3 +258,69 @@ class SubjectAnimal(Base):
             f"death_date={self.death_date!r},gmt_create={self.gmt_create!r},gmt_modified={self.gmt_modified!r},"
             f"is_deleted={self.is_deleted!r})"
         )
+
+
+class Diagnosis(Base):
+    __tablename__ = "diagnosis"
+
+    id = Column("id", BigInteger, primary_key=True, comment="主键")
+    diagnosis_id = Column(
+        "diagnosis_id",
+        String(length=255),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="诊断数据的唯一识别编号",
+    )
+    subject_id = Column(
+        "subject_id", String(length=255), nullable=False, comment="被试对象"
+    )
+    code_type = Column("code_type", String(length=20), comment="编码类型")
+    diagnosis_content = Column(
+        "diagnosis_content", String(length=255), nullable=False, comment="诊断名称"
+    )
+    diagnosis_code = Column("diagnosis_code", String(length=20), comment="诊断代码")
+    diagnosis_time = Column(
+        "diagnosis_time", TIMESTAMP, nullable=False, comment="诊断时间(UTC)"
+    )
+    is_medication_therapy = Column("is_medication_therapy", Boolean, comment="是否药物治疗")
+    is_surgery_therapy = Column(
+        "is_surgery_therapy", Boolean, nullable=False, comment="是否手术治疗"
+    )
+    outcomes = Column("outcomes", String(length=20), nullable=False, comment="治疗结果")
+    scale_name = Column("scale_name", String(length=50), comment="量表名称")
+    scale_result = Column("scale_result", String(length=20), comment="量表评分结果")
+    hospital_name = Column("hospital_name", String(length=50), comment="诊断医院名称")
+    gmt_create = Column(
+        "gmt_create",
+        TIMESTAMP,
+        nullable=False,
+        server_default=func.utcnow(),
+        comment="创建时间(UTC)",
+    )
+    gmt_modified = Column(
+        "gmt_modified",
+        TIMESTAMP,
+        nullable=False,
+        server_default=func.utcnow(),
+        onupdate=func.utcnow(),
+        comment="最近修改时间(UTC)",
+    )
+    is_deleted = Column(
+        "is_deleted",
+        Boolean,
+        nullable=False,
+        server_default=expression.false(),
+        comment="记录是否被删除",
+    )
+
+    def __repr__(self):
+        return (
+            f"Diagnosis(id={self.id!r},diagnosis_id={self.diagnosis_id!r},subject_id={self.subject_id!r},"
+            f"code_type={self.code_type!r},diagnosis_content={self.diagnosis_content!r},"
+            f"diagnosis_code={self.diagnosis_code!r},diagnosis_time={self.diagnosis_time!r},"
+            f"is_medication_therapy={self.is_medication_therapy!r},is_surgery_therapy={self.is_surgery_therapy!r},"
+            f"outcomes={self.outcomes!r},scale_name={self.scale_name!r},scale_result={self.scale_result!r},"
+            f"hospital_name={self.hospital_name!r},gmt_create={self.gmt_create!r},gmt_modified={self.gmt_modified!r},"
+            f"is_deleted={self.is_deleted!r})"
+        )
