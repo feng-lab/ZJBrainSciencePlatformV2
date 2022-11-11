@@ -209,3 +209,52 @@ class SubjectHuman(Base):
             f"cellphone_number={self.cellphone_number!r},email={self.email!r},address={self.address!r},"
             f"gmt_create={self.gmt_create!r},gmt_modified={self.gmt_modified!r},is_deleted={self.is_deleted!r})"
         )
+
+
+class SubjectAnimal(Base):
+    __tablename__ = "subject_animal"
+
+    id = Column("id", BigInteger, primary_key=True, comment="主键")
+    animal_subject_id = Column(
+        "animal_subject_id",
+        String(length=255),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="实验对象的唯一识别编号，系统自动生成",
+    )
+    species = Column("species", String(length=20), nullable=False, comment="物种")
+    gender = Column("gender", String(length=20), nullable=False, comment="生理性别")
+    purchase_date = Column("purchase_date", Date, nullable=False, comment="购买日期")
+    birthdate = Column("birthdate", Date, comment="出生日期")
+    death_date = Column("death_date", Date, comment="死亡日期")
+    gmt_create = Column(
+        "gmt_create",
+        TIMESTAMP,
+        nullable=False,
+        server_default=func.utcnow(),
+        comment="创建时间(UTC)",
+    )
+    gmt_modified = Column(
+        "gmt_modified",
+        TIMESTAMP,
+        nullable=False,
+        server_default=func.utcnow(),
+        onupdate=func.utcnow(),
+        comment="最近修改时间(UTC)",
+    )
+    is_deleted = Column(
+        "is_deleted",
+        Boolean,
+        nullable=False,
+        server_default=expression.false(),
+        comment="记录是否被删除",
+    )
+
+    def __repr__(self):
+        return (
+            f"SubjectAnimal(id={self.id!r},animal_subject_id={self.animal_subject_id!r},species={self.species!r},"
+            f"gender={self.gender!r},purchase_date={self.purchase_date!r},birthdate={self.birthdate!r},"
+            f"death_date={self.death_date!r},gmt_create={self.gmt_create!r},gmt_modified={self.gmt_modified!r},"
+            f"is_deleted={self.is_deleted!r})"
+        )
