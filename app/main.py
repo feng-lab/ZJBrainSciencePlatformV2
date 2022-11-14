@@ -7,14 +7,14 @@ from starlette.responses import RedirectResponse
 
 from app.requests import *
 from app.responses import *
-from app.utils import is_debug_mode
+from app.config import config
 
 app = FastAPI()
 
 
 @app.get("/")
 def index():
-    if is_debug_mode():
+    if config.DEBUG_MODE:
         return RedirectResponse(url="/docs")
     else:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)

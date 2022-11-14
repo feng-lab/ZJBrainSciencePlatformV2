@@ -4,4 +4,29 @@ services:
     build: .
     ports:
       - "80:80"
-    restart: on-failure
+    environment:
+      # 开发环境
+      # DATABASE_URL: sqlite:///../test-db.sqlite3
+      # DATABASE_CONFIG: >-
+      # {
+      #   "echo": True,
+      #   "future": True,
+      #   "connect_args": {
+      #     "check_same_thread": False,
+      #   },
+      # }
+      DATABASE_URL: mysql://root:zj-brain-science-platform@database:3306/zj-brain-science-platform
+      DATABASE_CONFIG: "{}"
+    restart: always
+    depends_on:
+      - database
+
+  database:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: zjlab@2022
+      MYSQL_DATABASE: zj-brain-science-platform
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    restart: always
