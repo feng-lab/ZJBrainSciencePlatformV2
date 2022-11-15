@@ -9,10 +9,10 @@ services:
       # DATABASE_URL: sqlite:///../test-db.sqlite3
       # DATABASE_CONFIG: >-
       # {
-      #   "echo": True,
-      #   "future": True,
+      #   "echo": true,
+      #   "future": true,
       #   "connect_args": {
-      #     "check_same_thread": False,
+      #     "check_same_thread": false,
       #   },
       # }
       DATABASE_URL: mysql://root:zj-brain-science-platform@database:3306/zj-brain-science-platform

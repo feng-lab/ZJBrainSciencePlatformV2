@@ -6,6 +6,13 @@ from pydantic import BaseModel, Field
 from app.schemas import File
 
 
+class CreateUserRequest(BaseModel):
+    username: str = Field(max_length=255)
+    password: str = Field(max_length=50)
+    staff_id: str = Field(max_length=255)
+    account_type: str = Field(max_length=255)
+
+
 class LoginRequest(BaseModel):
     account: str = Field(title="用户名")
     password: str = Field(title="用户密码")

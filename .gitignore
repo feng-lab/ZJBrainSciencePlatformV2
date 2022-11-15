@@ -154,4 +154,4 @@ dmypy.json
 cython_debug/
 
 # test database
-test-db.sqlite3
+test-db.sqlite

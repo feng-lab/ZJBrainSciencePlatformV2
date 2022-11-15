@@ -5,27 +5,38 @@ from fastapi import FastAPI, Query, UploadFile, HTTPException
 from objprint import op
 from starlette.responses import RedirectResponse
 
+from app.config import config
+from app.user import router as login_router
+from app.models import database
 from app.requests import *
 from app.responses import *
-from app.config import config
 
 app = FastAPI()
+app.include_router(login_router)
+
+app.state.database = database
+
+
+@app.on_event("startup")
+async def startup() -> None:
+    database_ = app.state.database
+    if not database_.is_connected:
+        await database_.connect()
+
+
+@app.on_event("shutdown")
+async def shutdown() -> None:
+    database_ = app.state.database
+    if database_.is_connected:
+        await database_.disconnect()
 
 
 @app.get("/")
-def index():
+async def index():
     if config.DEBUG_MODE:
         return RedirectResponse(url="/docs")
     else:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-
-
-@app.post(
-    "/api/login", response_model=LoginResponse, name="登录", description="用户提交登录表单，进行登录验证"
-)
-def login(request: LoginRequest):
-    op(request)
-    return LoginResponse(code=CODE_SUCCESS)
 
 
 @app.get(
