@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Any
 
 from pydantic import BaseSettings
@@ -14,4 +15,6 @@ class Config(BaseSettings):
     DEBUG_MODE: bool = False
 
 
-config = Config()
+@lru_cache
+def get_config():
+    return Config()

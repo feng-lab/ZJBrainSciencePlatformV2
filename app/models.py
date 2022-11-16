@@ -5,10 +5,10 @@ import sqlalchemy
 from ormar import Model, ModelMeta, String, DateTime, Boolean, Integer
 from sqlalchemy import func
 
-from app.config import config
+from app.config import get_config
 
 metadata = sqlalchemy.MetaData()
-database = databases.Database(config.DATABASE_URL)
+database = databases.Database(get_config().DATABASE_URL)
 
 
 class BaseMeta(ModelMeta):
@@ -53,5 +53,7 @@ class User(Model, ModelMixin):
         )
 
 
-engine = sqlalchemy.create_engine(config.DATABASE_URL, **config.DATABASE_CONFIG)
+engine = sqlalchemy.create_engine(
+    get_config().DATABASE_URL, **get_config().DATABASE_CONFIG
+)
 metadata.create_all(engine)

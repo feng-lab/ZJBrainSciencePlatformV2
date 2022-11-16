@@ -8,7 +8,7 @@ from objprint import op
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST
 
-from app.config import config
+from app.config import get_config
 from app.models import database
 from app.requests import *
 from app.responses import *
@@ -52,7 +52,7 @@ async def handle_http_exception(_request: Request, e: RequestValidationError):
 
 @app.get("/")
 async def index():
-    if config.DEBUG_MODE:
+    if get_config().DEBUG_MODE:
         return RedirectResponse(url="/docs")
     else:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
