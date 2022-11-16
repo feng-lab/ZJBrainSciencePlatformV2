@@ -20,7 +20,11 @@ CODE_SESSION_TIMEOUT: int = 2
 
 
 class LoginResponse(Response):
-    pass
+    class Token(BaseModel):
+        access_token: str
+        token_type: str
+
+    data: Token
 
 
 class GetStatisticResponse(Response):

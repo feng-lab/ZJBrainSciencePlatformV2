@@ -42,3 +42,8 @@ class SearchResult(BaseModel):
 
 class Message(BaseModel):
     pass
+
+
+class AccessTokenData(BaseModel):
+    username: str
+    expire_at: float  # timestamp
