@@ -1,15 +1,18 @@
 from datetime import date
 from http import HTTPStatus
 
-from fastapi import FastAPI, Query, UploadFile, HTTPException
+from fastapi import FastAPI, Query, UploadFile, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from objprint import op
 from starlette.responses import RedirectResponse
+from starlette.status import HTTP_400_BAD_REQUEST
 
 from app.config import config
-from app.user import router as login_router
 from app.models import database
 from app.requests import *
 from app.responses import *
+from app.user import router as login_router
 
 app = FastAPI()
 app.include_router(login_router)
@@ -29,6 +32,22 @@ async def shutdown() -> None:
     database_ = app.state.database
     if database_.is_connected:
         await database_.disconnect()
+
+
+@app.exception_handler(HTTPException)
+async def handle_http_exception(_request: Request, e: HTTPException):
+    return JSONResponse(
+        status_code=e.status_code,
+        content=Response(code=CODE_FAIL, message=repr(e)).dict(),
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def handle_http_exception(_request: Request, e: RequestValidationError):
+    return JSONResponse(
+        status_code=HTTP_400_BAD_REQUEST,
+        content=Response(code=CODE_FAIL, message=repr(e)).dict(),
+    )
 
 
 @app.get("/")
