@@ -5,7 +5,7 @@ from fastapi import FastAPI, Query, UploadFile, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from jose import ExpiredSignatureError
-from objprint import op
+from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
@@ -19,6 +19,14 @@ app = FastAPI()
 app.include_router(login_router)
 
 app.state.database = database
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")
@@ -148,7 +156,6 @@ def get_statistic_with_data(
     start: date = Query(title="周期起始日期，YYYY-MM-DD"),
     end: date = Query(title="周期截止日期，YYYY-MM-DD"),
 ):
-    op((start, end))
     return GetStatisticWithDataResponse(
         code=CODE_SUCCESS,
         data=[
@@ -191,7 +198,6 @@ def get_statistic_with_sick():
     description="新增实验，提交实验表单",
 )
 def add_experiments(request: AddExperimentRequest):
-    op(request)
     return AddExperimentResponse(code=CODE_SUCCESS)
 
 
@@ -208,7 +214,6 @@ def get_experiments_by_page(
     limit: int = Query(title="分页大小", default=10),
     search: str | None = Query(title="搜索内容", default=None),
 ):
-    op((sort_by, sort_order, offset, limit, search))
     return GetExperimentsByPageResponse(code=CODE_SUCCESS, data=[Experiment()])
 
 
@@ -219,7 +224,6 @@ def get_experiments_by_page(
     description="根据实验编号获取实验详细信息",
 )
 def get_experiments_by_id(experiment_id: str = Query(title="实验编号")):
-    op(experiment_id)
     return GetExperimentsByIdResponse(code=CODE_SUCCESS, data=Experiment())
 
 
@@ -230,7 +234,6 @@ def get_experiments_by_id(experiment_id: str = Query(title="实验编号")):
     description="新增实验相关的范式描述",
 )
 def add_paradigm(request: AddParadigmRequest):
-    op(request)
     return AddParadigmResponse(code=CODE_SUCCESS)
 
 
@@ -241,7 +244,6 @@ def add_paradigm(request: AddParadigmRequest):
     description="根据实验编号获取实验相关的所有范式描述",
 )
 def get_paradigms(experiment_id: str = Query(title="实验编号")):
-    op(experiment_id)
     return GetParadigmsResponse(code=CODE_SUCCESS, data=[Paradigm()])
 
 
@@ -255,7 +257,6 @@ def get_paradigm_by_id(
     experiment_id: str = Query(title="实验编号"),
     paradigm_id: str = Query(alias="id", title="实验范式id"),
 ):
-    op((experiment_id, paradigm_id))
     return GetParadigmByIdResponse(code=CODE_SUCCESS, data=Paradigm())
 
 
@@ -266,7 +267,6 @@ def get_paradigm_by_id(
     description="删除指定的实验范式",
 )
 def delete_paradigms(request: DeleteParadigmsRequest):
-    op(request)
     return DeleteParadigmsResponse(code=CODE_SUCCESS)
 
 
@@ -292,7 +292,6 @@ def get_doc_by_page(
     offset: int = Query(title="分页起始位置", default=0),
     limit: int = Query(title="分页大小", default=30),
 ):
-    op((experiment_id, doc_type, offset, limit))
     return GetDocByPageResponse(
         code=CODE_SUCCESS,
         data=[
@@ -311,7 +310,6 @@ def delete_doc(
     experiment_id: str = Query(title="实验编号"),
     file_id: int = Query(title="文件ID"),
 ):
-    op((experiment_id, file_id))
     return DeleteDocResponse(code=CODE_SUCCESS)
 
 
@@ -322,7 +320,6 @@ def delete_doc(
     description="从用户本地上传文件到服务端",
 )
 def delete_doc(files: list[UploadFile]):
-    op(files)
     return AddFileResponse(
         code=CODE_SUCCESS,
         data=[AddFileResponse.Data(name="file1", url="http://example.com")],
@@ -340,7 +337,6 @@ def get_human_subject_by_page(
     offset: int = Query(title="分页起始位置", default=0),
     limit: int = Query(title="分页大小", default=10),
 ):
-    op((experiment_id, offset, limit))
     return GetHumanSubjectByPageResponse(code=CODE_SUCCESS, data=[Human()])
 
 
@@ -351,7 +347,6 @@ def get_human_subject_by_page(
     description="新增一条人类被试记录",
 )
 def add_human_subject(request: AddHumanSubjectRequest):
-    op(request)
     return AddHumanSubjectResponse(code=CODE_SUCCESS)
 
 
@@ -362,7 +357,6 @@ def add_human_subject(request: AddHumanSubjectRequest):
     description="更新某一个人类被试的信息",
 )
 def update_human_subject(request: UpdateHumanSubjectRequest):
-    op(request)
     return UpdateHumanSubjectResponse(code=CODE_SUCCESS)
 
 
@@ -373,7 +367,6 @@ def update_human_subject(request: UpdateHumanSubjectRequest):
     description="删除某个实验下的某个人类被试",
 )
 def delete_human_subject(request: DeleteHumanSubjectRequest):
-    op(request)
     return DeleteHumanSubjectResponse(code=CODE_SUCCESS)
 
 
@@ -388,7 +381,6 @@ def get_device_by_page(
     offset: int = Query(title="分页起始位置", default=0),
     limit: int = Query(title="分页大小", default=10),
 ):
-    op((experiment_id, offset, limit))
     return GetDeviceByPageResponse(code=CODE_SUCCESS, data=[Device()])
 
 
@@ -399,7 +391,6 @@ def get_device_by_page(
     description="新增实验设备",
 )
 def add_device(request: AddDeviceRequest):
-    op(request)
     return AddDeviceResponse(code=CODE_SUCCESS)
 
 
@@ -413,7 +404,6 @@ def get_device_by_id(
     experiment_id: str = Query(title="实验编号"),
     equipment_id: str = Query(title="设备编号"),
 ):
-    op((experiment_id, equipment_id))
     return GetDeviceByIdResponse(code=CODE_SUCCESS, data=Device())
 
 
@@ -424,7 +414,6 @@ def get_device_by_id(
     description="更新设备信息",
 )
 def update_device(request: UpdateDeviceRequest):
-    op(request)
     return UpdateDeviceResponse(code=CODE_SUCCESS)
 
 
@@ -435,7 +424,6 @@ def update_device(request: UpdateDeviceRequest):
     description="删除某个实验下的某个设备",
 )
 def delete_device(request: DeleteDeviceRequest):
-    op(request)
     return DeleteDeviceResponse(code=CODE_SUCCESS)
 
 
@@ -446,7 +434,6 @@ def delete_device(request: DeleteDeviceRequest):
     description="查看EEG数据文件指定段",
 )
 def display_eeg(request: DisplayEEGRequest):
-    op(request)
     return DisplayEEGResponse(code=CODE_SUCCESS, data=EEGData())
 
 
@@ -474,7 +461,6 @@ def get_task_by_page(
     task_type: str | None = Query(title="任务类型", default=None),
     status: str | None = Query(title="任务状态", default=None),
 ):
-    op((offset, limit, task_name, start_time, task_type, status))
     return GetTaskByPageResponse(code=CODE_SUCCESS, data=[Task()])
 
 
@@ -485,7 +471,6 @@ def get_task_by_page(
     description="新增任务",
 )
 def add_task(request: AddTaskRequest):
-    op(request)
     return AddTaskResponse(code=CODE_SUCCESS, data=[Task()])
 
 
@@ -496,7 +481,6 @@ def add_task(request: AddTaskRequest):
     description="获取指定任务的相关信息，包括基础信息和步骤执行信息",
 )
 def get_task_by_id(task_id: str = Query(title="任务ID")):
-    op((task_id,))
     return GetTaskByIDResponse(code=CODE_SUCCESS, data=Task())
 
 
@@ -507,7 +491,6 @@ def get_task_by_id(task_id: str = Query(title="任务ID")):
     description="获取指定任务的相关信息，包括基础信息和步骤执行信息",
 )
 def get_task_steps_by_id(task_id: str = Query(title="任务ID")):
-    op((task_id,))
     return GetTaskStepsByIDResponse(code=CODE_SUCCESS, data=[Task.Steps()])
 
 
@@ -521,7 +504,6 @@ def get_filter_step_result_by_id(
     task_id: str = Query(title="任务ID"),
     operation_id: str = Query(title="操作步骤ID"),
 ):
-    op((task_id, operation_id))
     return GetFilterStepResultByIDResponse(
         code=CODE_SUCCESS,
         data=[
@@ -542,7 +524,6 @@ def get_analysis_step_result_by_id(
     task_id: str = Query(title="任务ID"),
     operation_id: str = Query(title="操作步骤ID"),
 ):
-    op((task_id, operation_id))
     return GetAnalysisStepResultByIDResponse(
         code=CODE_SUCCESS,
         data="http://xxx.xxx/result_img.png",
@@ -556,7 +537,6 @@ def get_analysis_step_result_by_id(
     description="将本地EEG数据上传至服务端并解析返回波形图数据",
 )
 def upload_search_file(file: UploadFile):
-    op(file)
     return UploadSearchFileResponse(code=CODE_SUCCESS, data=SearchFile())
 
 
@@ -567,7 +547,6 @@ def upload_search_file(file: UploadFile):
     description="根据选择的待检索信号，由服务端检索并返回相似的信号数组",
 )
 def go_search(request: GoSearchRequest):
-    op(request)
     return GoSearchResponse(code=CODE_SUCCESS, data=[SearchResult()])
 
 
@@ -578,7 +557,6 @@ def go_search(request: GoSearchRequest):
     description="根据选择的待检索信号，由服务端检索并返回相似的信号数组",
 )
 def get_not_read_msg(account: str = Query(title="登录用户账号名")):
-    op(account)
     return GetNotReadMsgResponse(code=CODE_SUCCESS, data=[Message()])
 
 
@@ -593,7 +571,6 @@ def get_all_msg(
     offset: int = Query(title="分页起始位置", default=0),
     limit: int = Query(title="分页大小", default=20),
 ):
-    op((account, offset, limit))
     return GetAllMsgResponse(code=CODE_SUCCESS, data=[Message()])
 
 
@@ -604,5 +581,4 @@ def get_all_msg(
     description="按时间倒序，分页获取用户的所有消息",
 )
 def mark_msg(request: MarkMsgRequest):
-    op(request)
     return MarkMsgResponse(code=CODE_SUCCESS, data="")

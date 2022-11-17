@@ -8,7 +8,7 @@ from sqlalchemy import func
 from app.config import get_config
 
 metadata = sqlalchemy.MetaData()
-database = databases.Database(get_config().DATABASE_URL)
+database = databases.Database(get_config().DATABASE_URL, **get_config().DATABASE_CONFIG)
 
 
 class BaseMeta(ModelMeta):

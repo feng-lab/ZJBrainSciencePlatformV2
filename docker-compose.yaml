@@ -3,20 +3,10 @@ services:
   backend:
     build: .
     ports:
-      - "80:80"
+      - "1919:80"
     environment:
-      # 开发环境
-      # DATABASE_URL: sqlite:///../test-db.sqlite3
-      # DATABASE_CONFIG: >-
-      # {
-      #   "echo": true,
-      #   "future": true,
-      #   "connect_args": {
-      #     "check_same_thread": false,
-      #   },
-      # }
-      DATABASE_URL: mysql://root:zj-brain-science-platform@database:3306/zj-brain-science-platform
-      DATABASE_CONFIG: "{}"
+      DATABASE_URL: mysql://zjlab:zjlab2022@database:19198/zj_brain_science_platform
+      DATABASE_CONFIG: '{"encoding": "UTF-8", "echo": true}'
     restart: always
     depends_on:
       - database
@@ -24,9 +14,16 @@ services:
   database:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: zjlab@2022
-      MYSQL_DATABASE: zj-brain-science-platform
+      MYSQL_ROOT_PASSWORD: zjlab2022root
+      MYSQL_USER: zjlab
+      MYSQL_PASSWORD: zjlab2022
+      MYSQL_DATABASE: zj_brain_science_platform
       TZ: Asia/Shanghai
     ports:
-      - "3306:3306"
+      - "19198:3306"
+    volumes:
+      - ./mysql/initdb.d:/docker-entrypoint-initdb.d
+      - ./mysql/conf.d:/etc/mysql/conf.d
+      - ./mysql/data:/var/lib/mysql
+      - ./log/mysql:/var/log/mysql
     restart: always

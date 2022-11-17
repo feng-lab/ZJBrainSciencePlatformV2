@@ -1,18 +1,11 @@
 fastapi==0.86.0
 sqlalchemy==1.4.41
-pydantic==1.10.2
-starlette==0.20.4
+mysql-python==1.2.5
 uvicorn==0.18.3
 python-multipart==0.0.5
 passlib[bcyrpt]==1.7.4
-ormar~=0.12.0
-databases==0.6.1
-aiosqlite==0.17.0
+ormar[mysql]~=0.12.0
 python-jose==3.3.0
-requests==2.28.1
 loguru==0.6.0
 alembic==1.8.1
-
-# for dev
-black~=22.6.0
-objprint~=0.2.2
+black
