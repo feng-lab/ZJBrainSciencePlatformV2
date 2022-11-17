@@ -25,35 +25,8 @@ SECRET_KEY = "4ebcc6180a124d9f3a618e48d97c32a6d99085d5cfdf25a6368d1e0ff3943bd0"
 ALGORITHM = "HS256"
 
 
-def hash_password(password: str) -> str:
-    hashed_password = crypt_context.hash(password)
-    return hashed_password
-
-
-def verify_password(password: str, hashed_password: str) -> bool:
-    is_valid_password = crypt_context.verify(password, hashed_password)
-    return is_valid_password
-
-
-async def authenticate_user(username: str, password: str) -> User | None:
-    user = await User.objects.get_or_none(username=username, is_deleted=False)
-    if user is None:
-        return None
-    if not verify_password(password, user.hashed_password):
-        return None
-    return user
-
-
-def create_access_token(user_id: int, expire_minutes: int) -> str:
-    sub = str(user_id)
-    expire_at = datetime.utcnow() + timedelta(minutes=expire_minutes)
-    token_data = AccessTokenData(sub=sub, exp=expire_at)
-    token = jwt.encode(token_data.dict(), SECRET_KEY, algorithm=ALGORITHM)
-    return token
-
-
 async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> User:
-    """获取当前用户ID"""
+    """获取当前用户"""
     try:
         # 从token中解码AccessTokenData
         payload_dict = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -61,7 +34,7 @@ async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> User:
         user_id = int(token_data.sub)
 
         # 验证用户存在
-        user = await User.objects.get_or_none(id=user_id, is_deleted=False)
+        user = await crud.get_user_by_id(user_id)
         if user is None:
             raise_unauthorized_exception({"user_id": user_id})
         return user
@@ -80,6 +53,14 @@ async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> User:
         raise_unauthorized_exception({"token": token})
 
 
+def create_access_token(user_id: int, expire_minutes: int) -> str:
+    sub = str(user_id)
+    expire_at = datetime.utcnow() + timedelta(minutes=expire_minutes)
+    token_data = AccessTokenData(sub=sub, exp=expire_at)
+    token = jwt.encode(token_data.dict(), SECRET_KEY, algorithm=ALGORITHM)
+    return token
+
+
 def raise_unauthorized_exception(data: dict) -> NoReturn:
     logger.error(f"unauthorized user, {data=}")
     raise HTTPException(
@@ -92,14 +73,14 @@ def raise_unauthorized_exception(data: dict) -> NoReturn:
 @router.post("/api/createUser", description="创建用户", response_model=Response)
 async def create_user(request: CreateUserRequest):
     # 用户名唯一
-    user = await User.objects.get_or_none(username=request.username, is_deleted=False)
+    user = await crud.get_user_by_username(request.username)
     if user is not None:
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST, detail="User already exists"
         )
 
     # 数据库不能保存密码明文，只能保存密码哈希值
-    hashed_password = hash_password(request.password)
+    hashed_password = crypt_context.hash(request.password)
     await crud.create_user(request, hashed_password)
 
     return Response(code=CODE_SUCCESS, message="Create user success")
@@ -112,8 +93,8 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
     username = form.username
 
     # 验证用户名与密码是否匹配
-    user = await authenticate_user(username, form.password)
-    if user is None:
+    user = await crud.get_user_by_username(username)
+    if user is None or not crypt_context.verify(form.password, user.hashed_password):
         raise_unauthorized_exception({"username": username})
 
     # 创建登录凭证
