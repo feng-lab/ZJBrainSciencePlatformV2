@@ -32,7 +32,7 @@ class User(Model, ModelMixin):
         tablename = "user"
 
     # 用户名
-    username: str = String(max_length=255, index=True, unique=True)
+    username: str = String(max_length=255, index=True)
     # 密码哈希
     hashed_password: str = String(max_length=255)
     # 员工号
@@ -43,6 +43,8 @@ class User(Model, ModelMixin):
     last_login_time: datetime | None = DateTime(timezone=True, nullable=True)
     # 上次下线时间
     last_logout_time: datetime | None = DateTime(timezone=True, nullable=True)
+    # 是否是超级用户
+    is_super_user: bool = Boolean(default=False)
 
     def __repr__(self):
         return (

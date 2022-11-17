@@ -1,5 +1,6 @@
 from typing import Any
 
+from app.models import User
 from app.schemas import *
 
 
@@ -22,6 +23,12 @@ CODE_SESSION_TIMEOUT: int = 2
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str
+
+
+class GetUsersByPageResponse(Response):
+    UserWithoutPassword = User.get_pydantic(exclude={"hashed_password"})
+
+    data: list[UserWithoutPassword]
 
 
 class GetStatisticResponse(Response):
