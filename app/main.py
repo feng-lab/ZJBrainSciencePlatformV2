@@ -4,9 +4,10 @@ from http import HTTPStatus
 from fastapi import FastAPI, Query, UploadFile, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from jose import ExpiredSignatureError
 from objprint import op
 from starlette.responses import RedirectResponse
-from starlette.status import HTTP_400_BAD_REQUEST
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
 from app.config import get_config
 from app.models import database
@@ -38,7 +39,7 @@ async def shutdown() -> None:
 async def handle_http_exception(_request: Request, e: HTTPException):
     return JSONResponse(
         status_code=e.status_code,
-        content=Response(code=CODE_FAIL, message=repr(e)).dict(),
+        content=Response(code=CODE_FAIL, message=e.detail).dict(),
     )
 
 
@@ -47,6 +48,14 @@ async def handle_http_exception(_request: Request, e: RequestValidationError):
     return JSONResponse(
         status_code=HTTP_400_BAD_REQUEST,
         content=Response(code=CODE_FAIL, message=repr(e)).dict(),
+    )
+
+
+@app.exception_handler(ExpiredSignatureError)
+async def handle_expired_token_exception(_request: Request, _e: ExpiredSignatureError):
+    return JSONResponse(
+        status_code=HTTP_401_UNAUTHORIZED,
+        content=Response(code=CODE_SESSION_TIMEOUT, message="session timeout").dict(),
     )
 
 

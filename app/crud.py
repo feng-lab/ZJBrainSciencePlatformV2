@@ -14,5 +14,5 @@ async def create_user(request: CreateUserRequest, hashed_password: str) -> None:
     op(new_user)
 
 
-async def get_user(username: str) -> User:
-    return await User.objects.get_or_none(username=username)
+async def get_user_by_username(username: str) -> User:
+    return await User.objects.get_or_none(username=username, is_deleted=False)

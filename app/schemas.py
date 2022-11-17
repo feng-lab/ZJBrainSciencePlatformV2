@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -45,5 +47,7 @@ class Message(BaseModel):
 
 
 class AccessTokenData(BaseModel):
-    username: str
-    expire_at: float  # timestamp
+    # 用户ID，按照JWT标准存储为string
+    sub: str
+    # 过期时间，UTC
+    exp: datetime

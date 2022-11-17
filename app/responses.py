@@ -19,12 +19,9 @@ CODE_SESSION_TIMEOUT: int = 2
 """会话超时的失败code"""
 
 
-class LoginResponse(Response):
-    class Token(BaseModel):
-        access_token: str
-        token_type: str
-
-    data: Token
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str
 
 
 class GetStatisticResponse(Response):
