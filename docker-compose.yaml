@@ -5,9 +5,13 @@ services:
     ports:
       - "1919:80"
     environment:
-      DATABASE_URL: mysql://zjlab:zjlab2022@database:19198/zj_brain_science_platform
-      DATABASE_CONFIG: '{"encoding": "UTF-8", "echo": true}'
+      DATABASE_URL: mysql://zjlab:zjlab2022@database:3306/zj_brain_science_platform
+      DATABASE_CONFIG: '{}'
+    volumes:
+      - ./log/app:/code/log/app
     restart: always
+    networks:
+      - local-network
     depends_on:
       - database
 
@@ -20,10 +24,16 @@ services:
       MYSQL_DATABASE: zj_brain_science_platform
       TZ: Asia/Shanghai
     ports:
-      - "19198:3306"
+      - "3306:3306"
     volumes:
       - ./mysql/initdb.d:/docker-entrypoint-initdb.d
       - ./mysql/conf.d:/etc/mysql/conf.d
       - ./mysql/data:/var/lib/mysql
       - ./log/mysql:/var/log/mysql
     restart: always
+    networks:
+      - local-network
+
+networks:
+  local-network:
+    driver: bridge

@@ -1,10 +1,16 @@
-from datetime import date
+import json
+import logging
+import logging.handlers
+from datetime import date, timedelta
 from http import HTTPStatus
+from pathlib import Path
+from typing import Callable
 
 from fastapi import FastAPI, Query, UploadFile, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from jose import ExpiredSignatureError
+from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
@@ -17,6 +23,30 @@ from app.user import router as login_router
 
 app = FastAPI()
 app.include_router(login_router)
+
+PROJECT_ROOT_PATH = Path(__file__).parent.parent
+LOG_ROOT_PATH = PROJECT_ROOT_PATH / "log" / "app"
+LOGURU_FORMAT = "{time:YYYY-MM-DD HH:mm:ss.SSS}|{level}|{message}"
+logger.add(
+    LOG_ROOT_PATH / "access.log",
+    format=LOGURU_FORMAT,
+    level="INFO",
+    rotation=timedelta(days=1),
+    backtrace=False,
+    diagnose=False,
+    enqueue=True,
+    colorize=False,
+)
+logger.add(
+    LOG_ROOT_PATH / "error.log",
+    format=LOGURU_FORMAT,
+    level="ERROR",
+    rotation=timedelta(days=1),
+    backtrace=True,
+    diagnose=True,
+    enqueue=True,
+    colorize=False,
+)
 
 app.state.database = database
 
@@ -35,12 +65,37 @@ async def startup() -> None:
     if not database_.is_connected:
         await database_.connect()
 
+    uvicorn_logger = logging.getLogger("uvicorn.access")
+    uvicorn_logger_handler = logging.handlers.TimedRotatingFileHandler(
+        LOG_ROOT_PATH / "uvicorn.log", when="D", backupCount=7, encoding="UTF-8"
+    )
+    uvicorn_logger_handler.setFormatter(
+        logging.Formatter("%(asctime)s|%(levelname)s|%(message)s")
+    )
+    uvicorn_logger.addHandler(uvicorn_logger_handler)
+
 
 @app.on_event("shutdown")
 async def shutdown() -> None:
     database_ = app.state.database
     if database_.is_connected:
         await database_.disconnect()
+
+
+@app.middleware("http")
+async def log_access_api(request: Request, call_next: Callable):
+    start_time = datetime.now()
+    response = await call_next(request)
+    rt = datetime.now() - start_time
+    access_info = {
+        "method": request.method,
+        "url": str(request.url),
+        "client_address": request.client,
+        "rt": int(rt.total_seconds() * 1000),
+        "status_code": response.status_code,
+    }
+    logger.info(json.dumps(access_info))
+    return response
 
 
 @app.exception_handler(HTTPException)
