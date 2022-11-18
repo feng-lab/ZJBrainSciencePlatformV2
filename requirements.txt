@@ -1,8 +1,9 @@
 fastapi==0.86.0
 sqlalchemy==1.4.41
-mysql-python==1.2.5
+mysqlclient==2.1.1
 uvicorn==0.18.3
 python-multipart==0.0.5
+bcrypt==4.0.1
 passlib[bcyrpt]==1.7.4
 ormar[mysql]~=0.12.0
 python-jose==3.3.0
