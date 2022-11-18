@@ -5,7 +5,7 @@ services:
     ports:
       - "1919:80"
     environment:
-      DATABASE_URL: mysql://zjlab:zjlab2022@database:7498/zj_brain_science_platform
+      DATABASE_URL: mysql+pymysql://zjlab:zjlab2022@database:3306/zj_brain_science_platform
       DATABASE_CONFIG: '{}'
     volumes:
       - ./log/app:/code/log/app
@@ -16,7 +16,8 @@ services:
       - database
 
   database:
-    image: mysql:8.0
+    image: mysql:5.7
+    command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: zjlab2022root
       MYSQL_USER: zjlab
@@ -24,7 +25,7 @@ services:
       MYSQL_DATABASE: zj_brain_science_platform
       TZ: Asia/Shanghai
     ports:
-      - "7498:3306"
+      - "3306"
     volumes:
       - ./mysql/initdb.d:/docker-entrypoint-initdb.d
       - ./mysql/conf.d:/etc/mysql/conf.d
