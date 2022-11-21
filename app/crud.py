@@ -3,17 +3,11 @@ from datetime import datetime
 from loguru import logger
 
 from .models import User
-from .requests import CreateUserRequest
 
 
-async def create_user(request: CreateUserRequest, hashed_password: str) -> None:
-    new_user = await User.objects.create(
-        username=request.username,
-        hashed_password=hashed_password,
-        staff_id=request.staff_id,
-        account_type=request.account_type,
-    )
-    logger.info(f"created user, {new_user=}")
+async def create_user(user: User) -> None:
+    await user.save()
+    logger.info(f"created user, {user=}")
 
 
 async def get_user_by_id(user_id: int) -> User | None:

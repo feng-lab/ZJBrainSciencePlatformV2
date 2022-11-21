@@ -24,6 +24,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 SECRET_KEY = "4ebcc6180a124d9f3a618e48d97c32a6d99085d5cfdf25a6368d1e0ff3943bd0"
 ALGORITHM = "HS256"
 
+ROOT_USERNAME = "root"
+ROOT_PASSWORD = "?L09G$7g5*j@.q*4go4d"
+
 
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     """获取当前用户"""
@@ -86,9 +89,27 @@ async def create_user(request: CreateUserRequest):
     if user is None:
         # 数据库不能保存密码明文，只能保存密码哈希值
         hashed_password = crypt_context.hash(request.password)
-        await crud.create_user(request, hashed_password)
+        user = User(
+            **request.dict(exclude={"password"}), hashed_password=hashed_password
+        )
+        await crud.create_user(user)
 
     return {"code": CODE_SUCCESS, "message": "create user success"}
+
+
+async def create_root_user() -> None:
+    root_user_dict = {
+        "username": ROOT_USERNAME,
+        "hashed_password": crypt_context.hash(ROOT_PASSWORD),
+        "staff_id": ROOT_USERNAME,
+        "account_type": ROOT_USERNAME,
+        "is_super_user": True,
+    }
+    root_user = await crud.get_user_by_username(ROOT_USERNAME)
+    if root_user is not None:
+        await crud.update_user(root_user, **root_user_dict)
+    else:
+        await crud.create_user(User(**root_user_dict))
 
 
 @router.post(

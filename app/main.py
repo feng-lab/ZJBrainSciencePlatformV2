@@ -15,6 +15,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
+from app import user
 from app.config import get_config
 from app.models import database
 from app.requests import *
@@ -73,6 +74,8 @@ async def startup() -> None:
         logging.Formatter("%(asctime)s|%(levelname)s|%(message)s")
     )
     uvicorn_logger.addHandler(uvicorn_logger_handler)
+
+    await user.create_root_user()
 
 
 @app.on_event("shutdown")
