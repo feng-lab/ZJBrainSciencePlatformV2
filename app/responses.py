@@ -10,11 +10,11 @@ class Response(BaseModel):
     data: Any | None = Field(title="响应数据", default=None)
 
 
-CODE_FAIL: int = 0
-"""响应失败的code"""
-
-CODE_SUCCESS: int = 1
+CODE_SUCCESS: int = 0
 """请求成功的code"""
+
+CODE_FAIL: int = 1
+"""响应失败的code"""
 
 CODE_SESSION_TIMEOUT: int = 2
 """会话超时的失败code"""
