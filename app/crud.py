@@ -38,6 +38,12 @@ async def update_user(user: int | User, **updates) -> User:
     return user
 
 
+async def create_message(msg: Message) -> Message:
+    msg = await msg.save()
+    logger.info(f"created message, {msg=}")
+    return msg
+
+
 async def list_recent_messages(user_id: int, count: int) -> list[Message]:
     msgs = (
         await Message.objects.filter(receiver=user_id, is_deleted=False)
@@ -48,7 +54,12 @@ async def list_recent_messages(user_id: int, count: int) -> list[Message]:
     return msgs
 
 
-async def create_message(msg: Message) -> Message:
-    msg = await msg.save()
-    logger.info(f"created message, {msg=}")
-    return msg
+async def list_messages(user_id: int, offset: int, limit: int) -> list[Message]:
+    msgs = (
+        await Message.objects.filter(receiver=user_id, is_deleted=False)
+        .order_by("-create_at")
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return msgs

@@ -22,6 +22,9 @@ class Config(BaseSettings):
     # 获取最近消息的数量
     GET_RECENT_MESSAGES_COUNT: int = 10
 
+    # 获取消息列表分页默认大小
+    LIST_MESSAGES_LIMIT: int = 20
+
 
 @lru_cache
 def get_config():

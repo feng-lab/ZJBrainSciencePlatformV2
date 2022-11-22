@@ -3,13 +3,6 @@ from typing import Any
 from app.models import User, Message
 from app.schemas import *
 
-
-class Response(BaseModel):
-    code: int = Field(title="状态码", description="1表示成功，0和其他数字表示失败")
-    message: str | None = Field(title="响应消息", default=None)
-    data: Any | None = Field(title="响应数据", default=None)
-
-
 CODE_SUCCESS: int = 0
 """请求成功的code"""
 
@@ -18,6 +11,14 @@ CODE_FAIL: int = 1
 
 CODE_SESSION_TIMEOUT: int = 2
 """会话超时的失败code"""
+
+MESSAGE_SUCCESS: str = "success"
+
+
+class Response(BaseModel):
+    code: int = Field(title="状态码", description="1表示成功，0和其他数字表示失败", default=CODE_SUCCESS)
+    message: str | None = Field(title="响应消息", default=MESSAGE_SUCCESS)
+    data: Any | None = Field(title="响应数据", default=None)
 
 
 class LoginResponse(BaseModel):
@@ -36,7 +37,7 @@ class GetUsersByPageResponse(Response):
     data: list[UserInfo]
 
 
-class GetRecentUnreadMessagesResponse(Response):
+class ListMessagesResponse(Response):
     data: list[Message]
 
 
