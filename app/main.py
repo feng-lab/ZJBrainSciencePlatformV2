@@ -608,37 +608,3 @@ def upload_search_file(file: UploadFile):
 )
 def go_search(request: GoSearchRequest):
     return GoSearchResponse(code=CODE_SUCCESS, data=[SearchResult()])
-
-
-@app.get(
-    "/api/getNotReadMsg",
-    response_model=GetNotReadMsgResponse,
-    name="获取未读消息",
-    description="根据选择的待检索信号，由服务端检索并返回相似的信号数组",
-)
-def get_not_read_msg(account: str = Query(title="登录用户账号名")):
-    return GetNotReadMsgResponse(code=CODE_SUCCESS, data=[Message()])
-
-
-@app.get(
-    "/api/getAllMsg",
-    response_model=GetAllMsgResponse,
-    name="获取所有消息",
-    description="按时间倒序，分页获取用户的所有消息",
-)
-def get_all_msg(
-    account: str = Query(title="登录用户账号名"),
-    offset: int = Query(title="分页起始位置", default=0),
-    limit: int = Query(title="分页大小", default=20),
-):
-    return GetAllMsgResponse(code=CODE_SUCCESS, data=[Message()])
-
-
-@app.post(
-    "/api/markMsg",
-    response_model=MarkMsgResponse,
-    name="获取所有消息",
-    description="按时间倒序，分页获取用户的所有消息",
-)
-def mark_msg(request: MarkMsgRequest):
-    return MarkMsgResponse(code=CODE_SUCCESS, data="")

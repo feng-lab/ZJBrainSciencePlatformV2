@@ -42,10 +42,6 @@ class SearchResult(BaseModel):
     pass
 
 
-class Message(BaseModel):
-    pass
-
-
 class AccessTokenData(BaseModel):
     # 用户ID，按照JWT标准存储为string
     sub: str

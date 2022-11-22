@@ -2,7 +2,7 @@ from datetime import datetime
 
 from loguru import logger
 
-from .models import User
+from .models import User, Message
 
 
 async def create_user(user: User) -> None:
@@ -36,3 +36,19 @@ async def update_user(user: int | User, **updates) -> User:
         utcnow = datetime.utcnow()
         user = await user.update(**updates, gmt_modified=utcnow)
     return user
+
+
+async def list_recent_messages(user_id: int, count: int) -> list[Message]:
+    msgs = (
+        await Message.objects.filter(receiver=user_id, is_deleted=False)
+        .order_by("-create_at")
+        .limit(count)
+        .all()
+    )
+    return msgs
+
+
+async def create_message(msg: Message) -> Message:
+    msg = await msg.save()
+    logger.info(f"created message, {msg=}")
+    return msg

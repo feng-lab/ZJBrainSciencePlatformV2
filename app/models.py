@@ -1,3 +1,4 @@
+from enum import Enum
 from datetime import datetime
 
 from ormar import Model, String, DateTime, Boolean, Integer, Text
@@ -49,6 +50,10 @@ class Message(Model, ModelMixin):
     class Meta(BaseMeta):
         tablename = "message"
 
+    class Status(Enum):
+        UNREAD = "unread"
+        READ = "read"
+
     # 消息类型
     msg_type: str = String(max_length=20)
     # 消息发送者ID
@@ -59,6 +64,8 @@ class Message(Model, ModelMixin):
     # 该字段指消息发送的时间，gmt_create指数据表记录创建时间
     create_at: datetime = DateTime(timezone=True, index=True)
     # 消息状态
-    status: str = String(max_length=20)
+    status: str = String(
+        max_length=20, choices=list(Status), default=Status.UNREAD.value
+    )
     # 消息内容
     content: str = Text()

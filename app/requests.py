@@ -18,6 +18,13 @@ class LoginRequest(BaseModel):
     password: str = Field(title="用户密码")
 
 
+class SendMessageRequest(BaseModel):
+    msg_type: str = Field(title="消息类型", max_length=20)
+    receiver: int = Field(title="消息接收者ID")
+    content: str = Field(title="消息内容")
+    create_at: datetime = Field(title="消息发送时间")
+
+
 class AddExperimentRequest(BaseModel):
     experiment_title: str = Field(title="实验名称")
     experiment_type: str = Field(title="实验类型")

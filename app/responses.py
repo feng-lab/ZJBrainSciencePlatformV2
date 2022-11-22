@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.models import User
+from app.models import User, Message
 from app.schemas import *
 
 
@@ -34,6 +34,14 @@ class GetCurrentUserInfoResponse(Response):
 
 class GetUsersByPageResponse(Response):
     data: list[UserInfo]
+
+
+class GetRecentUnreadMessagesResponse(Response):
+    data: list[Message]
+
+
+class SendMessageResponse(Response):
+    data: int
 
 
 class GetStatisticResponse(Response):
@@ -212,15 +220,3 @@ class UploadSearchFileResponse(Response):
 
 class GoSearchResponse(Response):
     data: list[SearchResult]
-
-
-class GetNotReadMsgResponse(Response):
-    data: list[Message]
-
-
-class GetAllMsgResponse(Response):
-    data: list[Message]
-
-
-class MarkMsgResponse(Response):
-    data: str
