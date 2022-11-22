@@ -45,9 +45,7 @@ def upgrade() -> None:
     op.create_index(
         op.f("ix_message_create_at"), "message", ["create_at"], unique=False
     )
-    op.create_index(
-        op.f("ix_message_receiver"), "message", ["receiver"], unique=False
-    )
+    op.create_index(op.f("ix_message_receiver"), "message", ["receiver"], unique=False)
     op.create_table(
         "user",
         sa.Column("id", sa.Integer(), nullable=False),
@@ -68,18 +66,12 @@ def upgrade() -> None:
         sa.Column("hashed_password", sa.String(length=255), nullable=False),
         sa.Column("staff_id", sa.String(length=255), nullable=False),
         sa.Column("account_type", sa.String(length=255), nullable=False),
-        sa.Column(
-            "last_login_time", sa.DateTime(timezone=True), nullable=True
-        ),
-        sa.Column(
-            "last_logout_time", sa.DateTime(timezone=True), nullable=True
-        ),
+        sa.Column("last_login_time", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("last_logout_time", sa.DateTime(timezone=True), nullable=True),
         sa.Column("is_super_user", sa.Boolean(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_user_username"), "user", ["username"], unique=False
-    )
+    op.create_index(op.f("ix_user_username"), "user", ["username"], unique=False)
     # ### end Alembic commands ###
 
 

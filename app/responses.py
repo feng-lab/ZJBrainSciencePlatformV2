@@ -25,10 +25,15 @@ class LoginResponse(BaseModel):
     token_type: str
 
 
-class GetUsersByPageResponse(Response):
-    UserWithoutPassword = User.get_pydantic(exclude={"hashed_password"})
+UserInfo = User.get_pydantic(exclude={"hashed_password"})
 
-    data: list[UserWithoutPassword]
+
+class GetCurrentUserInfoResponse(Response):
+    data: UserInfo
+
+
+class GetUsersByPageResponse(Response):
+    data: list[UserInfo]
 
 
 class GetStatisticResponse(Response):

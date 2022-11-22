@@ -12,7 +12,13 @@ from app import crud
 from app.config import get_config
 from app.models import User
 from app.requests import CreateUserRequest
-from app.responses import LoginResponse, CODE_SUCCESS, Response, GetUsersByPageResponse
+from app.responses import (
+    LoginResponse,
+    CODE_SUCCESS,
+    Response,
+    GetUsersByPageResponse,
+    GetCurrentUserInfoResponse,
+)
 from app.schemas import AccessTokenData
 
 router = APIRouter()
@@ -144,6 +150,19 @@ async def logout(user: User = Depends(get_current_user)):
     await crud.update_user(user, last_logout_time=utcnow)
 
     return {"code": CODE_SUCCESS, "message": "logout success"}
+
+
+@router.get(
+    "/api/getCurrentUserInfo",
+    description="获取当前用户信息",
+    response_model=GetCurrentUserInfoResponse,
+)
+async def get_current_user_info(user: User = Depends(get_current_user)):
+    return {
+        "code": CODE_SUCCESS,
+        "message": "get current user info success",
+        "data": user,
+    }
 
 
 @router.get(
