@@ -5,9 +5,10 @@ from loguru import logger
 from .models import User, Message
 
 
-async def create_user(user: User) -> None:
-    await user.save()
+async def create_user(user: User) -> User:
+    user = await user.save()
     logger.info(f"created user, {user=}")
+    return user
 
 
 async def get_user_by_id(user_id: int) -> User | None:

@@ -29,11 +29,15 @@ class LoginResponse(BaseModel):
 UserInfo = User.get_pydantic(exclude={"hashed_password"})
 
 
+class CreateUserResponse(Response):
+    data: int
+
+
 class GetCurrentUserInfoResponse(Response):
     data: UserInfo
 
 
-class GetUsersByPageResponse(Response):
+class ListUsersResponse(Response):
     data: list[UserInfo]
 
 

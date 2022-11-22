@@ -14,10 +14,10 @@ from app.models import User
 from app.requests import CreateUserRequest
 from app.responses import (
     LoginResponse,
-    CODE_SUCCESS,
     Response,
-    GetUsersByPageResponse,
+    ListUsersResponse,
     GetCurrentUserInfoResponse,
+    CreateUserResponse,
 )
 from app.schemas import AccessTokenData
 
@@ -88,7 +88,7 @@ def raise_unauthorized_exception(data: dict) -> NoReturn:
     )
 
 
-@router.post("/api/createUser", description="创建用户", response_model=Response)
+@router.post("/api/createUser", description="创建用户", response_model=CreateUserResponse)
 async def create_user(request: CreateUserRequest):
     # 用户名唯一，幂等处理
     user = await crud.get_user_by_username(request.username)
@@ -98,9 +98,9 @@ async def create_user(request: CreateUserRequest):
         user = User(
             **request.dict(exclude={"password"}), hashed_password=hashed_password
         )
-        await crud.create_user(user)
+        user = await crud.create_user(user)
 
-    return {"code": CODE_SUCCESS, "message": "create user success"}
+    return CreateUserResponse(data=user.id)
 
 
 async def create_root_user() -> None:
@@ -138,18 +138,14 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
     utcnow = datetime.utcnow()
     await crud.update_user(user, last_login_time=utcnow)
 
-    return {
-        "access_token": access_token,
-        "token_type": TOKEN_TYPE,
-    }
+    return LoginResponse(access_token=access_token, token_type=TOKEN_TYPE)
 
 
 @router.post("/api/logout", description="用户登出", response_model=Response)
 async def logout(user: User = Depends(get_current_user)):
     utcnow = datetime.utcnow()
     await crud.update_user(user, last_logout_time=utcnow)
-
-    return {"code": CODE_SUCCESS, "message": "logout success"}
+    return Response()
 
 
 @router.get(
@@ -158,15 +154,11 @@ async def logout(user: User = Depends(get_current_user)):
     response_model=GetCurrentUserInfoResponse,
 )
 async def get_current_user_info(user: User = Depends(get_current_user)):
-    return {
-        "code": CODE_SUCCESS,
-        "message": "get current user info success",
-        "data": user,
-    }
+    return GetCurrentUserInfoResponse(data=user)
 
 
 @router.get(
-    "/api/getUsersByPage", description="获取用户列表", response_model=GetUsersByPageResponse
+    "/api/getUsersByPage", description="获取用户列表", response_model=ListUsersResponse
 )
 async def get_users_by_page(
     _user: User = Depends(get_current_super_user),
@@ -175,11 +167,7 @@ async def get_users_by_page(
     include_deleted: bool = Query(description="是否包括已删除项", default=False),
 ):
     users = await crud.list_users(offset, limit, include_deleted)
-    return {
-        "code": CODE_SUCCESS,
-        "message": f"get users from {offset} to {offset + limit - 1} success",
-        "data": users,
-    }
+    return ListUsersResponse(data=users)
 
 
 @router.delete("/api/deleteUser", description="删除用户", response_model=Response)
@@ -188,5 +176,4 @@ async def delete_user(
     user_id: int = Query(description="用户ID"),
 ):
     await crud.update_user(user_id, is_deleted=True)
-
-    return {"code": CODE_SUCCESS, "message": f"delete user {user_id} success"}
+    return Response()
