@@ -45,16 +45,6 @@ async def create_message(msg: Message) -> Message:
     return msg
 
 
-async def list_recent_messages(user_id: int, count: int) -> list[Message]:
-    msgs = (
-        await Message.objects.filter(receiver=user_id, is_deleted=False)
-        .order_by("-create_at")
-        .limit(count)
-        .all()
-    )
-    return msgs
-
-
 async def list_messages(user_id: int, offset: int, limit: int) -> list[Message]:
     msgs = (
         await Message.objects.filter(receiver=user_id, is_deleted=False)
@@ -64,3 +54,23 @@ async def list_messages(user_id: int, offset: int, limit: int) -> list[Message]:
         .all()
     )
     return msgs
+
+
+async def list_unread_messages(
+    user_id: int, is_all: bool, msg_ids: list[int]
+) -> list[Message]:
+    query = Message.objects.filter(
+        receiver=user_id, is_deleted=False, status=Message.Status.UNREAD.value
+    )
+    if not is_all:
+        query = query.filter(id__in=msg_ids)
+    msgs = await query.all()
+    return msgs
+
+
+async def update_messages_as_read(msgs: list[Message]) -> None:
+    utcnow = datetime.utcnow()
+    for msg in msgs:
+        msg.status = Message.Status.READ.value
+        msg.gmt_modified = utcnow
+    await Message.objects.bulk_update(msgs, columns=["status", "gmt_modified"])

@@ -49,6 +49,10 @@ class SendMessageResponse(Response):
     data: int
 
 
+class MarkMessagesAsReadResponse(Response):
+    data: list[int]
+
+
 class GetStatisticResponse(Response):
     class Data(BaseModel):
         experiments: int = Field(title="实验数量", ge=0)

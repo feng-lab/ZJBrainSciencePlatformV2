@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Query
 
 from app import crud
@@ -7,6 +9,7 @@ from app.requests import SendMessageRequest
 from app.responses import (
     ListMessagesResponse,
     SendMessageResponse,
+    MarkMessagesAsReadResponse,
 )
 from app.user import get_current_user
 
@@ -53,3 +56,24 @@ async def get_messages_by_page(
     user_id = user.id
     recent_msgs = await crud.list_messages(user_id, offset, limit)
     return ListMessagesResponse(data=recent_msgs)
+
+
+@router.post(
+    "/api/markMessagesAsRead",
+    description="批量将消息标记为已读",
+    response_model=MarkMessagesAsReadResponse,
+)
+async def mark_messages_as_read(
+    user: User = Depends(get_current_user),
+    is_all: bool = Query(description="是否标记所有消息", default=False),
+    message_ids: Optional[list[int]] = Query(
+        alias="msg", description="消息ID，可以有多个", default=None
+    ),
+):
+    user_id = user.id
+    message_ids = set(message_ids) if message_ids else set()
+    msgs = await crud.list_unread_messages(user_id, is_all, list(message_ids))
+    if len(msgs) > 0:
+        await crud.update_messages_as_read(msgs)
+    not_marked_msgs = [msg.id for msg in msgs if msg.id not in message_ids]
+    return MarkMessagesAsReadResponse(data=not_marked_msgs)
