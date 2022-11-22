@@ -1,19 +1,9 @@
 from datetime import datetime
 
-import databases
-import sqlalchemy
-from ormar import Model, ModelMeta, String, DateTime, Boolean, Integer
+from ormar import Model, String, DateTime, Boolean, Integer, Text
 from sqlalchemy import func
 
-from app.config import get_config
-
-metadata = sqlalchemy.MetaData()
-database = databases.Database(get_config().DATABASE_URL, **get_config().DATABASE_CONFIG)
-
-
-class BaseMeta(ModelMeta):
-    database = database
-    metadata = metadata
+from app.database import BaseMeta
 
 
 class ModelMixin:
@@ -36,7 +26,7 @@ class User(Model, ModelMixin):
     # 密码哈希
     hashed_password: str = String(max_length=255)
     # 员工号
-    staff_id: str = String(max_length=255, index=True)
+    staff_id: str = String(max_length=255)
     # 账户类别
     account_type: str = String(max_length=255)
     # 上次登录时间
@@ -55,7 +45,20 @@ class User(Model, ModelMixin):
         )
 
 
-engine = sqlalchemy.create_engine(
-    get_config().DATABASE_URL, **get_config().DATABASE_CONFIG
-)
-metadata.create_all(engine)
+class Message(Model, ModelMixin):
+    class Meta(BaseMeta):
+        tablename = "message"
+
+    # 消息类型
+    msg_type: str = String(max_length=20)
+    # 消息发送者ID
+    creator: int = Integer()
+    # 消息接收者ID
+    receiver: int = Integer(index=True)
+    # 消息发送时间
+    # 该字段指消息发送的时间，gmt_create指数据表记录创建时间
+    create_at: datetime = DateTime(timezone=True, index=True)
+    # 消息状态
+    status: str = String(max_length=20)
+    # 消息内容
+    content: str = Text()

@@ -17,13 +17,15 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
 from app import user
 from app.config import get_config
-from app.models import database
+from app.database import database
 from app.requests import *
 from app.responses import *
 from app.user import router as login_router
+from app.message import router as message_router
 
 app = FastAPI()
 app.include_router(login_router)
+app.include_router(message_router)
 
 PROJECT_ROOT_PATH = Path(__file__).parent.parent
 LOG_ROOT_PATH = PROJECT_ROOT_PATH / "log" / "app"

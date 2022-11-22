@@ -3,13 +3,14 @@
 ## 依赖版本
 
 * Python >= 3.10
-* FastAPI >= 0.86
+
+其他依赖版本见 requirements.txt 文件
 
 ## 启动应用
 
-### 本地启动（开发）
+### 1 配置开发环境
 
-#### 1. 创建虚拟环境
+#### 1.1 创建虚拟环境
 
 方法1：Anaconda / Miniconda
 
@@ -31,32 +32,56 @@ source ./.venv/bin/activate
 .\.venv\Scripts\Activate.ps1
 ```
 
-#### 2. 安装依赖
+### 1.2 安装依赖
 
 ```shell
 python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 ```
 
-#### 3. 启动应用
+### 2 启动 MySQL 数据库
+
+#### 2.1 设置启动参数
 
 ```shell
 # Linux bash
-export DEBUG_MODE=True
-export DATABASE_URL='sqlite:///./test-db.sqlite'
-export DATABASE_CONFIG='{"echo":true,"future":true,"connect_args":{"check_same_thread":false}}'
+export DEBUG_MODE='True'
+export DATABASE_URL='mysql+pymysql://zjlab:zjlab2022@localhost:8100/zj_brain_science_platform'
+export DATABASE_CONFIG='{}'
+```
 
+```shell
 # Windows PowerShell
-$env:DEBUG_MODE=True
-$env:DATABASE_URL='sqlite:///./test-db.sqlite'
-$env:DATABASE_CONFIG='{"echo":true,"future":true,"connect_args":{"check_same_thread":false}}'
+$env:DEBUG_MODE='True'
+$env:DATABASE_URL='mysql+pymysql://zjlab:zjlab2022@localhost:8100/zj_brain_science_platform'
+$env:DATABASE_CONFIG='{}'
+```
 
+#### 2.2 启动数据库
+
+建议使用 Docker
+
+```shell
+docker compose up -d --build database
+```
+
+#### 2.3 迁移数据库
+
+```shell
+alembic upgrade head
+```
+
+### 3 启动应用
+
+#### 3.1 开发环境
+
+```shell
 python -m uvicorn app.main:app --reload
 ```
 
 在浏览器中打开链接 http://127.0.0.1:8000 
 
-### Docker Compose（部署）
+#### 3.2 Docker Compose 部署
 
 ```shell
-docker-compose up -d
+docker-compose up -d --build
 ```
