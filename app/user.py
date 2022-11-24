@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import NoReturn
 
 from fastapi import APIRouter, HTTPException, Depends, Query
@@ -10,7 +10,7 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 
 from app import crud
 from app.config import get_config
-from app.models import User
+from app.models import User, utc_now
 from app.requests import CreateUserRequest
 from app.responses import (
     LoginResponse,
@@ -73,7 +73,7 @@ async def get_current_super_user(user: User = Depends(get_current_user)) -> User
 
 def create_access_token(user_id: int, expire_minutes: int) -> str:
     sub = str(user_id)
-    expire_at = datetime.utcnow() + timedelta(minutes=expire_minutes)
+    expire_at = utc_now() + timedelta(minutes=expire_minutes)
     token_data = AccessTokenData(sub=sub, exp=expire_at)
     token = jwt.encode(token_data.dict(), SECRET_KEY, algorithm=ALGORITHM)
     return token
@@ -135,16 +135,14 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
     )
 
     # 更新最近登录时间
-    utcnow = datetime.utcnow()
-    await crud.update_user(user, last_login_time=utcnow)
+    await crud.update_user(user, last_login_time=utc_now())
 
     return LoginResponse(access_token=access_token, token_type=TOKEN_TYPE)
 
 
 @router.post("/api/logout", description="用户登出", response_model=Response)
 async def logout(user: User = Depends(get_current_user)):
-    utcnow = datetime.utcnow()
-    await crud.update_user(user, last_logout_time=utcnow)
+    await crud.update_user(user, last_logout_time=utc_now())
     return Response()
 
 

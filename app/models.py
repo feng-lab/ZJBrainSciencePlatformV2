@@ -1,19 +1,19 @@
-from enum import Enum
 from datetime import datetime
+from enum import Enum
 
 from ormar import Model, String, DateTime, Boolean, Integer, Text
-from sqlalchemy import func
 
 from app.database import BaseMeta
+from app.utils import utc_now
 
 
 class ModelMixin:
     # 主键
     id: int = Integer(primary_key=True)
     # 创建时间
-    gmt_create: datetime = DateTime(timezone=True, server_default=func.now())
+    gmt_create: datetime = DateTime(timezone=True, default=utc_now)
     # 修改时间
-    gmt_modified: datetime = DateTime(timezone=True, server_default=func.now())
+    gmt_modified: datetime = DateTime(timezone=True, default=utc_now)
     # 该行是否被删除
     is_deleted: bool = Boolean(default=False)
 

@@ -25,6 +25,11 @@ class SendMessageRequest(BaseModel):
     create_at: datetime = Field(title="消息发送时间")
 
 
+class MarkMessagesAsReadRequest(BaseModel):
+    is_all: bool = Field(description="是否标记所有消息", default=False)
+    message_ids: list[int] = Field(description="消息ID，可以有多个", default_factory=list)
+
+
 class AddExperimentRequest(BaseModel):
     experiment_title: str = Field(title="实验名称")
     experiment_type: str = Field(title="实验类型")
