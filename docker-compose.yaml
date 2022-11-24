@@ -15,6 +15,8 @@ services:
 
   database:
     image: mysql:8.0
+    command:
+      - --default_authentication_plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: zjlab2022root
       MYSQL_USER: zjlab
@@ -25,7 +27,6 @@ services:
       - "8100:3306"
     volumes:
       - ./mysql/initdb.d:/docker-entrypoint-initdb.d
-      - ./mysql/conf.d:/etc/mysql/conf.d
       - ./mysql/data:/var/lib/mysql
       - ./log/mysql:/var/log/mysql
     restart: always
