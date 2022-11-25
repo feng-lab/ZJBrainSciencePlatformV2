@@ -1,7 +1,19 @@
 from typing import Any
 
-from app.models import User, Message
-from app.schemas import *
+from pydantic import BaseModel, Field
+
+from model.schemas import (
+    Experiment,
+    Paradigm,
+    Human,
+    Device,
+    EEGData,
+    File,
+    Task,
+    SearchFile,
+    SearchResult,
+)
+from model.models import User, Message
 
 CODE_SUCCESS: int = 0
 """请求成功的code"""

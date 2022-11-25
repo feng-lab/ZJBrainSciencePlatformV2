@@ -1,7 +1,7 @@
 from loguru import logger
 
-from .models import User, Message
-from .utils import convert_timezone_to_cst, list_convert_timezone_to_cst, utc_now
+from model.models import User, Message
+from utils import convert_timezone_to_cst, list_convert_timezone_to_cst, utc_now
 
 
 async def create_user(user: User) -> User:

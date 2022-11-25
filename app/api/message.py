@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Depends, Query
 
-from app import crud
-from app.config import get_config
-from app.models import User, Message
-from app.requests import SendMessageRequest, MarkMessagesAsReadRequest
-from app.responses import (
+from api.user import get_current_user
+from config import get_config
+from db import crud
+from model.models import User, Message
+from model.requests import SendMessageRequest, MarkMessagesAsReadRequest
+from model.responses import (
     ListMessagesResponse,
     SendMessageResponse,
     MarkMessagesAsReadResponse,
 )
-from app.user import get_current_user
-from app.utils import convert_timezone_to_cst
+from utils import convert_timezone_to_cst
 
 router = APIRouter()
 

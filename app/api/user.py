@@ -8,18 +8,18 @@ from loguru import logger
 from passlib.context import CryptContext
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from app import crud
-from app.config import get_config
-from app.models import User, utc_now
-from app.requests import CreateUserRequest
-from app.responses import (
+from config import get_config
+from db import crud
+from model.models import User, utc_now
+from model.requests import CreateUserRequest
+from model.responses import (
     LoginResponse,
     Response,
     ListUsersResponse,
     GetCurrentUserInfoResponse,
     CreateUserResponse,
 )
-from app.schemas import AccessTokenData
+from model.schemas import AccessTokenData
 
 router = APIRouter()
 

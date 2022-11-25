@@ -3,7 +3,7 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
-from app.schemas import File
+from model.schemas import File
 
 
 class CreateUserRequest(BaseModel):

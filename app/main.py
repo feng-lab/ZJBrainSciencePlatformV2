@@ -1,7 +1,7 @@
 import json
 import logging
 import logging.handlers
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from http import HTTPStatus
 from pathlib import Path
 from typing import Callable
@@ -15,13 +15,79 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
-from app import user
-from app.config import get_config
-from app.database import database
-from app.requests import *
-from app.responses import *
-from app.user import router as login_router
-from app.message import router as message_router
+from api import user
+from api.message import router as message_router
+from api.user import router as login_router
+from config import get_config
+from db.database import database
+from model.requests import (
+    AddExperimentRequest,
+    GetExperimentsByPageRequest,
+    AddParadigmRequest,
+    DeleteParadigmsRequest,
+    AddHumanSubjectRequest,
+    UpdateHumanSubjectRequest,
+    DeleteHumanSubjectRequest,
+    AddDeviceRequest,
+    UpdateDeviceRequest,
+    DeleteDeviceRequest,
+    DisplayEEGRequest,
+    AddTaskRequest,
+    GoSearchRequest,
+)
+from model.responses import (
+    Response,
+    CODE_FAIL,
+    CODE_SESSION_TIMEOUT,
+    GetStatisticResponse,
+    CODE_SUCCESS,
+    GetStatisticWithDataTypeResponse,
+    GetStatisticWithSubjectResponse,
+    GetStatisticWithServerResponse,
+    GetStatisticWithDataResponse,
+    GetStatisticWithSickResponse,
+    AddExperimentResponse,
+    GetExperimentsByPageResponse,
+    GetExperimentsByIdResponse,
+    AddParadigmResponse,
+    GetParadigmsResponse,
+    GetParadigmByIdResponse,
+    DeleteParadigmsResponse,
+    GetDocTypeResponse,
+    GetDocByPageResponse,
+    DeleteDocResponse,
+    AddFileResponse,
+    GetHumanSubjectByPageResponse,
+    AddHumanSubjectResponse,
+    UpdateHumanSubjectResponse,
+    DeleteHumanSubjectResponse,
+    GetDeviceByPageResponse,
+    AddDeviceResponse,
+    GetDeviceByIdResponse,
+    UpdateDeviceResponse,
+    DeleteDeviceResponse,
+    DisplayEEGResponse,
+    GetFilesResponse,
+    GetTaskByPageResponse,
+    AddTaskResponse,
+    GetTaskByIDResponse,
+    GetTaskStepsByIDResponse,
+    GetFilterStepResultByIDResponse,
+    GetAnalysisStepResultByIDResponse,
+    UploadSearchFileResponse,
+    GoSearchResponse,
+)
+from model.schemas import (
+    Experiment,
+    Paradigm,
+    Human,
+    Device,
+    EEGData,
+    File,
+    Task,
+    SearchFile,
+    SearchResult,
+)
 
 app = FastAPI()
 app.include_router(login_router)
