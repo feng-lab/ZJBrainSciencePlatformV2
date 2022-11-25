@@ -17,7 +17,7 @@ router = APIRouter()
 
 @router.post("/api/sendMessage", description="发消息", response_model=SendMessageResponse)
 async def send_message(
-        request: SendMessageRequest, user: User = Depends(get_current_user)
+    request: SendMessageRequest, user: User = Depends(get_current_user)
 ):
     request = convert_timezone_to_cst(request)
     msg_create = Message(**request.dict(), creator=user.id)
@@ -31,10 +31,10 @@ async def send_message(
     response_model=ListMessagesResponse,
 )
 async def get_recent_unread_messages(
-        user: User = Depends(get_current_user),
-        count: int = Query(
-            description="数量", default=get_config().GET_RECENT_MESSAGES_COUNT, ge=0
-        ),
+    user: User = Depends(get_current_user),
+    count: int = Query(
+        description="数量", default=get_config().GET_RECENT_MESSAGES_COUNT, ge=0
+    ),
 ):
     user_id = user.id
     recent_msgs = await crud.list_messages(user_id, offset=0, limit=count)
@@ -47,11 +47,11 @@ async def get_recent_unread_messages(
     response_model=ListMessagesResponse,
 )
 async def get_messages_by_page(
-        user: User = Depends(get_current_user),
-        offset: int = Query(description="分页起始位置", default=0, ge=0),
-        limit: int = Query(
-            description="分页大小", default=get_config().LIST_MESSAGES_LIMIT, ge=0
-        ),
+    user: User = Depends(get_current_user),
+    offset: int = Query(description="分页起始位置", default=0, ge=0),
+    limit: int = Query(
+        description="分页大小", default=get_config().LIST_MESSAGES_LIMIT, ge=0
+    ),
 ):
     user_id = user.id
     recent_msgs = await crud.list_messages(user_id, offset, limit)
@@ -64,7 +64,7 @@ async def get_messages_by_page(
     response_model=MarkMessagesAsReadResponse,
 )
 async def mark_messages_as_read(
-        request: MarkMessagesAsReadRequest, user: User = Depends(get_current_user)
+    request: MarkMessagesAsReadRequest, user: User = Depends(get_current_user)
 ):
     user_id = user.id
     message_ids = set(request.message_ids)

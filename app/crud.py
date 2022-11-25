@@ -55,7 +55,7 @@ async def list_messages(user_id: int, offset: int, limit: int) -> list[Message]:
 
 
 async def list_unread_messages(
-        user_id: int, is_all: bool, msg_ids: list[int]
+    user_id: int, is_all: bool, msg_ids: list[int]
 ) -> list[Message]:
     query = Message.objects.filter(
         receiver=user_id, is_deleted=False, status=Message.Status.UNREAD.value

@@ -57,6 +57,13 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+
+    def process_revision_directives(_ctx, _revision, directives):
+        if config.cmd_opts.autogenerate:
+            script = directives[0]
+            if script.upgrade_ops.is_empty():
+                directives[:] = []
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section),
         prefix="sqlalchemy.",
@@ -64,7 +71,11 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            process_revision_directives=process_revision_directives,
+        )
 
         with context.begin_transaction():
             context.run_migrations()
