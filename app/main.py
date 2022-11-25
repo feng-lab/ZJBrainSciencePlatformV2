@@ -15,12 +15,12 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
-from api import user
-from api.message import router as message_router
-from api.user import router as login_router
-from config import get_config
-from db.database import database
-from model.requests import (
+from app.api import user
+from app.api.message import router as message_router
+from app.api.user import router as login_router
+from app.config import get_config
+from app.db.database import database
+from app.model.requests import (
     AddExperimentRequest,
     GetExperimentsByPageRequest,
     AddParadigmRequest,
@@ -35,7 +35,7 @@ from model.requests import (
     AddTaskRequest,
     GoSearchRequest,
 )
-from model.responses import (
+from app.model.responses import (
     Response,
     CODE_FAIL,
     CODE_SESSION_TIMEOUT,
@@ -77,7 +77,7 @@ from model.responses import (
     UploadSearchFileResponse,
     GoSearchResponse,
 )
-from model.schemas import (
+from app.model.schemas import (
     Experiment,
     Paradigm,
     Human,

@@ -3,8 +3,8 @@ from enum import Enum
 
 from ormar import Model, String, DateTime, Boolean, Integer, Text
 
-from db.database import BaseMeta
-from utils import utc_now
+from app.db.database import BaseMeta
+from app.utils import utc_now
 
 
 class ModelMixin:

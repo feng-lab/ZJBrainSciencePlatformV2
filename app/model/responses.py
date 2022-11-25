@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from model.schemas import (
+from app.model.schemas import (
     Experiment,
     Paradigm,
     Human,
@@ -13,7 +13,7 @@ from model.schemas import (
     SearchFile,
     SearchResult,
 )
-from model.models import User, Message
+from app.model.models import User, Message
 
 CODE_SUCCESS: int = 0
 """请求成功的code"""

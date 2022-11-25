@@ -12,6 +12,8 @@ services:
     restart: always
     depends_on:
       - database
+    profiles:
+      - serve
 
   database:
     image: mysql:8.0
@@ -30,3 +32,13 @@ services:
       - ./mysql/data:/var/lib/mysql
       - ./log/mysql:/var/log/mysql
     restart: always
+
+  alembic:
+    build:
+      context: .
+      dockerfile: alembic.Dockerfile
+    restart: "no"
+    depends_on:
+      - database
+    profiles:
+      - alembic
