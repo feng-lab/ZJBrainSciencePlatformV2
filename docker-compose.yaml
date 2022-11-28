@@ -38,6 +38,7 @@ services:
     restart: "no"
     volumes:
       - ./alembic:/code/alembic
+      - ./app:/code/app
     depends_on:
       - database
     profiles:

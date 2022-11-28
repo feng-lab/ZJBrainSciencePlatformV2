@@ -16,8 +16,9 @@ from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
 from app.api import user
+from app.api.auth import router as auth_router
 from app.api.notification import router as notification_router
-from app.api.user import router as login_router
+from app.api.user import router as user_router
 from app.config import get_config
 from app.db.database import database
 from app.model.request import (
@@ -90,7 +91,8 @@ from app.model.schema import (
 )
 
 app = FastAPI()
-app.include_router(login_router)
+app.include_router(auth_router)
+app.include_router(user_router)
 app.include_router(notification_router)
 
 PROJECT_ROOT_PATH = Path(__file__).parent.parent

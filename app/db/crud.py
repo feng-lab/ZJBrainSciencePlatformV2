@@ -43,7 +43,9 @@ async def create_notification(msg: Notification) -> Notification:
     return convert_timezone_to_cst(msg)
 
 
-async def list_notifications(user_id: int, offset: int, limit: int) -> list[Notification]:
+async def list_notifications(
+    user_id: int, offset: int, limit: int
+) -> list[Notification]:
     msgs = (
         await Notification.objects.filter(receiver=user_id, is_deleted=False)
         .order_by("-create_at")

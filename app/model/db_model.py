@@ -35,8 +35,8 @@ class User(Model, ModelMixin):
     last_login_time: datetime | None = DateTime(timezone=True, nullable=True)
     # 上次下线时间
     last_logout_time: datetime | None = DateTime(timezone=True, nullable=True)
-    # 是否是超级用户
-    is_super_user: bool = Boolean(default=False)
+    # 权限级别
+    access_level: int = Integer(minimum=0)
 
     def __repr__(self):
         return (
