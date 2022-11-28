@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
-from app.api.auth import get_current_user, get_current_user_as_human_subject
+from app.api.auth import get_current_user_as_human_subject
 from app.config import get_config
 from app.db import crud
 from app.model.db_model import User, Notification
@@ -10,7 +10,7 @@ from app.model.response import (
     SendNotificationResponse,
     MarkNotificationsAsReadResponse,
 )
-from app.utils import convert_timezone_to_cst
+from app.utils import add_cst_timezone, custom_json_response
 
 router = APIRouter()
 
@@ -22,7 +22,7 @@ async def send_notification(
     request: SendNotificationRequest,
     user: User = Depends(get_current_user_as_human_subject()),
 ):
-    request = convert_timezone_to_cst(request)
+    request = add_cst_timezone(request)
     notification = Notification(**request.dict(), creator=user.id)
     notification = await crud.create_notification(notification)
     return SendNotificationResponse(data=notification.id)
@@ -33,6 +33,7 @@ async def send_notification(
     description="获取最近未读通知",
     response_model=ListNotificationsResponse,
 )
+@custom_json_response
 async def get_recent_unread_notifications(
     user: User = Depends(get_current_user_as_human_subject()),
     count: int = Query(
@@ -49,6 +50,7 @@ async def get_recent_unread_notifications(
     description="分页获取未读通知",
     response_model=ListNotificationsResponse,
 )
+@custom_json_response
 async def get_notifications_by_page(
     user: User = Depends(get_current_user_as_human_subject()),
     offset: int = Query(description="分页起始位置", default=0, ge=0),

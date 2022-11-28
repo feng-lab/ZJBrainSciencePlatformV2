@@ -15,6 +15,7 @@ from app.model.response import (
     GetCurrentUserInfoResponse,
     CreateUserResponse,
 )
+from app.utils import custom_json_response
 
 router = APIRouter()
 
@@ -57,6 +58,7 @@ async def create_root_user() -> None:
     description="获取当前用户信息",
     response_model=GetCurrentUserInfoResponse,
 )
+@custom_json_response
 async def get_current_user_info(user: User = Depends(get_current_user)):
     return GetCurrentUserInfoResponse(data=user)
 
@@ -64,6 +66,7 @@ async def get_current_user_info(user: User = Depends(get_current_user)):
 @router.get(
     "/api/getUsersByPage", description="获取用户列表", response_model=ListUsersResponse
 )
+@custom_json_response
 async def get_users_by_page(
     _user: User = Depends(get_current_user_as_administrator()),
     offset: int = Query(description="列表起始位置", default=0),
