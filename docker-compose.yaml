@@ -12,8 +12,6 @@ services:
     restart: always
     depends_on:
       - database
-    profiles:
-      - serve
 
   database:
     image: mysql:8.0
@@ -38,6 +36,8 @@ services:
       context: .
       dockerfile: alembic.Dockerfile
     restart: "no"
+    volumes:
+      - ./alembic:/code/alembic
     depends_on:
       - database
     profiles:

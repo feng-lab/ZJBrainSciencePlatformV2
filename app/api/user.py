@@ -10,16 +10,16 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 
 from app.config import get_config
 from app.db import crud
-from app.model.models import User, utc_now
-from app.model.requests import CreateUserRequest
-from app.model.responses import (
+from app.model.db_model import User, utc_now
+from app.model.request import CreateUserRequest
+from app.model.response import (
     LoginResponse,
     Response,
     ListUsersResponse,
     GetCurrentUserInfoResponse,
     CreateUserResponse,
 )
-from app.model.schemas import AccessTokenData
+from app.model.schema import AccessTokenData
 
 router = APIRouter()
 

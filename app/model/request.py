@@ -3,7 +3,7 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
-from app.model.schemas import File
+from app.model.schema import File
 
 
 class CreateUserRequest(BaseModel):
@@ -18,16 +18,16 @@ class LoginRequest(BaseModel):
     password: str = Field(title="用户密码")
 
 
-class SendMessageRequest(BaseModel):
-    msg_type: str = Field(title="消息类型", max_length=20)
-    receiver: int = Field(title="消息接收者ID")
-    content: str = Field(title="消息内容")
-    create_at: datetime = Field(title="消息发送时间")
+class SendNotificationRequest(BaseModel):
+    type: str = Field(title="通知类型", max_length=20)
+    receiver: int = Field(title="通知接收者ID")
+    content: str = Field(title="通知内容")
+    create_at: datetime = Field(title="通知发送时间")
 
 
-class MarkMessagesAsReadRequest(BaseModel):
-    is_all: bool = Field(description="是否标记所有消息", default=False)
-    message_ids: list[int] = Field(description="消息ID，可以有多个", default_factory=list)
+class MarkNotificationsAsReadRequest(BaseModel):
+    is_all: bool = Field(description="是否标记所有通知", default=False)
+    notification_ids: list[int] = Field(description="通知ID，可以有多个", default_factory=list)
 
 
 class AddExperimentRequest(BaseModel):

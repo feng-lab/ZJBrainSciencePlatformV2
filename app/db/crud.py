@@ -1,6 +1,6 @@
 from loguru import logger
 
-from app.model.models import User, Message
+from app.model.db_model import User, Notification
 from app.utils import convert_timezone_to_cst, list_convert_timezone_to_cst, utc_now
 
 
@@ -37,15 +37,15 @@ async def update_user(user: int | User, **updates) -> User:
     return convert_timezone_to_cst(user)
 
 
-async def create_message(msg: Message) -> Message:
+async def create_notification(msg: Notification) -> Notification:
     msg = await msg.save()
     logger.info(f"created message, {msg=}")
     return convert_timezone_to_cst(msg)
 
 
-async def list_messages(user_id: int, offset: int, limit: int) -> list[Message]:
+async def list_notifications(user_id: int, offset: int, limit: int) -> list[Notification]:
     msgs = (
-        await Message.objects.filter(receiver=user_id, is_deleted=False)
+        await Notification.objects.filter(receiver=user_id, is_deleted=False)
         .order_by("-create_at")
         .offset(offset)
         .limit(limit)
@@ -54,11 +54,11 @@ async def list_messages(user_id: int, offset: int, limit: int) -> list[Message]:
     return list_convert_timezone_to_cst(msgs)
 
 
-async def list_unread_messages(
+async def list_unread_notifications(
     user_id: int, is_all: bool, msg_ids: list[int]
-) -> list[Message]:
-    query = Message.objects.filter(
-        receiver=user_id, is_deleted=False, status=Message.Status.UNREAD.value
+) -> list[Notification]:
+    query = Notification.objects.filter(
+        receiver=user_id, is_deleted=False, status=Notification.Status.UNREAD.value
     )
     if not is_all:
         query = query.filter(id__in=msg_ids)
@@ -66,9 +66,9 @@ async def list_unread_messages(
     return list_convert_timezone_to_cst(msgs)
 
 
-async def update_messages_as_read(msgs: list[Message]) -> None:
+async def update_notifications_as_read(msgs: list[Notification]) -> None:
     now = utc_now()
     for msg in msgs:
-        msg.status = Message.Status.READ.value
+        msg.status = Notification.Status.READ.value
         msg.gmt_modified = now
-    await Message.objects.bulk_update(msgs, columns=["status", "gmt_modified"])
+    await Notification.objects.bulk_update(msgs, columns=["status", "gmt_modified"])

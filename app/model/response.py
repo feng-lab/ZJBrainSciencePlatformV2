@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from app.model.schemas import (
+from app.model.schema import (
     Experiment,
     Paradigm,
     Human,
@@ -13,7 +13,7 @@ from app.model.schemas import (
     SearchFile,
     SearchResult,
 )
-from app.model.models import User, Message
+from app.model.db_model import User, Notification
 
 CODE_SUCCESS: int = 0
 """请求成功的code"""
@@ -53,15 +53,15 @@ class ListUsersResponse(Response):
     data: list[UserInfo]
 
 
-class ListMessagesResponse(Response):
-    data: list[Message]
+class ListNotificationsResponse(Response):
+    data: list[Notification]
 
 
-class SendMessageResponse(Response):
+class SendNotificationResponse(Response):
     data: int
 
 
-class MarkMessagesAsReadResponse(Response):
+class MarkNotificationsAsReadResponse(Response):
     data: list[int]
 
 

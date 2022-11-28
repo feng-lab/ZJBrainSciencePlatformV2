@@ -13,7 +13,10 @@ def utc_now() -> datetime:
 
 
 # 将数据库中取出的无时区datetime对象转换为CST时区对象
-def convert_timezone_to_cst(model: Model) -> Model:
+def convert_timezone_to_cst(model: Model | None) -> Model | None:
+    if model is None:
+        return None
+
     new_dict = {
         name: value.replace(tzinfo=timezone.utc).astimezone(CST_TIMEZONE)
         if isinstance(value, datetime) and value.tzinfo is None

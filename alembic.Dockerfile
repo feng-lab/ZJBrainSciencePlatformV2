@@ -7,7 +7,6 @@ RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --no-cache-dir --req
     pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --no-cache-dir --requirement /code/requirements.alembic.txt
 
 COPY ./alembic.ini /code/alembic.ini
-COPY ./alembic /code/alembic
 COPY ./app /code/app
 
 CMD ["alembic", "upgrade", "head"]

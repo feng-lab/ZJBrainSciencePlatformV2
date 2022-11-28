@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 
 from ormar import Model, String, DateTime, Boolean, Integer, Text
+from pydantic import BaseModel
 
 from app.db.database import BaseMeta
 from app.utils import utc_now
@@ -46,16 +47,24 @@ class User(Model, ModelMixin):
         )
 
 
-class Message(Model, ModelMixin):
+class Notification(Model, ModelMixin):
     class Meta(BaseMeta):
-        tablename = "message"
+        tablename = "notification"
 
     class Status(Enum):
         UNREAD = "unread"
         READ = "read"
 
+    class Type(Enum):
+        TASK_STEP_STATUS = "task_step_status"
+
+    class TaskStepNotification(BaseModel):
+        task_id: int
+        task_name: str
+        task_status: int
+
     # 消息类型
-    msg_type: str = String(max_length=20)
+    type: str = String(max_length=20, choices=list(Type))
     # 消息发送者ID
     creator: int = Integer()
     # 消息接收者ID

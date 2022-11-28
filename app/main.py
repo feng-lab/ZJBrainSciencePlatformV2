@@ -16,11 +16,11 @@ from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
 from app.api import user
-from app.api.message import router as message_router
+from app.api.notification import router as notification_router
 from app.api.user import router as login_router
 from app.config import get_config
 from app.db.database import database
-from app.model.requests import (
+from app.model.request import (
     AddExperimentRequest,
     GetExperimentsByPageRequest,
     AddParadigmRequest,
@@ -35,7 +35,7 @@ from app.model.requests import (
     AddTaskRequest,
     GoSearchRequest,
 )
-from app.model.responses import (
+from app.model.response import (
     Response,
     CODE_FAIL,
     CODE_SESSION_TIMEOUT,
@@ -77,7 +77,7 @@ from app.model.responses import (
     UploadSearchFileResponse,
     GoSearchResponse,
 )
-from app.model.schemas import (
+from app.model.schema import (
     Experiment,
     Paradigm,
     Human,
@@ -91,7 +91,7 @@ from app.model.schemas import (
 
 app = FastAPI()
 app.include_router(login_router)
-app.include_router(message_router)
+app.include_router(notification_router)
 
 PROJECT_ROOT_PATH = Path(__file__).parent.parent
 LOG_ROOT_PATH = PROJECT_ROOT_PATH / "log" / "app"
