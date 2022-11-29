@@ -19,7 +19,7 @@ from app.api import user
 from app.api.auth import router as auth_router
 from app.api.notification import router as notification_router
 from app.api.user import router as user_router
-from app.config import get_config
+from app.config import config
 from app.db.database import database
 from app.model.request import (
     AddExperimentRequest,
@@ -197,7 +197,7 @@ async def handle_expired_token_exception(_request: Request, _e: ExpiredSignature
 
 @app.get("/")
 async def index():
-    if get_config().DEBUG_MODE:
+    if config.DEBUG_MODE:
         return RedirectResponse(url="/docs")
     else:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
@@ -281,8 +281,8 @@ def get_statistic_with_server():
     description="获取一定周期内平台上传数据量的按天统计结果，默认周期为一周",
 )
 def get_statistic_with_data(
-    start: date = Query(title="周期起始日期，YYYY-MM-DD"),
-    end: date = Query(title="周期截止日期，YYYY-MM-DD"),
+        start: date = Query(title="周期起始日期，YYYY-MM-DD"),
+        end: date = Query(title="周期截止日期，YYYY-MM-DD"),
 ):
     return GetStatisticWithDataResponse(
         code=CODE_SUCCESS,
@@ -336,11 +336,11 @@ def add_experiments(request: AddExperimentRequest):
     description="根据筛选、排序等条件得到实验列表并分页返回",
 )
 def get_experiments_by_page(
-    sort_by: GetExperimentsByPageRequest.SortBy = Query(title="排序依据"),
-    sort_order: GetExperimentsByPageRequest.SortOrder = Query(title="排序顺序"),
-    offset: int = Query(title="分页起始位置", default=0),
-    limit: int = Query(title="分页大小", default=10),
-    search: str | None = Query(title="搜索内容", default=None),
+        sort_by: GetExperimentsByPageRequest.SortBy = Query(title="排序依据"),
+        sort_order: GetExperimentsByPageRequest.SortOrder = Query(title="排序顺序"),
+        offset: int = Query(title="分页起始位置", default=0),
+        limit: int = Query(title="分页大小", default=10),
+        search: str | None = Query(title="搜索内容", default=None),
 ):
     return GetExperimentsByPageResponse(code=CODE_SUCCESS, data=[Experiment()])
 
@@ -382,8 +382,8 @@ def get_paradigms(experiment_id: str = Query(title="实验编号")):
     description="根据实验范式ID获取单条实验范式的详情",
 )
 def get_paradigm_by_id(
-    experiment_id: str = Query(title="实验编号"),
-    paradigm_id: str = Query(alias="id", title="实验范式id"),
+        experiment_id: str = Query(title="实验编号"),
+        paradigm_id: str = Query(alias="id", title="实验范式id"),
 ):
     return GetParadigmByIdResponse(code=CODE_SUCCESS, data=Paradigm())
 
@@ -415,10 +415,10 @@ def get_doc_type():
     description="根据文件格式，分页获取文件列表，默认获取所有文件的前30个",
 )
 def get_doc_by_page(
-    experiment_id: str = Query(title="实验编号"),
-    doc_type: str = Query(title="文档格式"),
-    offset: int = Query(title="分页起始位置", default=0),
-    limit: int = Query(title="分页大小", default=30),
+        experiment_id: str = Query(title="实验编号"),
+        doc_type: str = Query(title="文档格式"),
+        offset: int = Query(title="分页起始位置", default=0),
+        limit: int = Query(title="分页大小", default=30),
 ):
     return GetDocByPageResponse(
         code=CODE_SUCCESS,
@@ -435,8 +435,8 @@ def get_doc_by_page(
     description="删除上传的数据文件",
 )
 def delete_doc(
-    experiment_id: str = Query(title="实验编号"),
-    file_id: int = Query(title="文件ID"),
+        experiment_id: str = Query(title="实验编号"),
+        file_id: int = Query(title="文件ID"),
 ):
     return DeleteDocResponse(code=CODE_SUCCESS)
 
@@ -461,9 +461,9 @@ def delete_doc(files: list[UploadFile]):
     description="分页获取人类被试列表，默认每页返回10个元素",
 )
 def get_human_subject_by_page(
-    experiment_id: str = Query(title="实验编号"),
-    offset: int = Query(title="分页起始位置", default=0),
-    limit: int = Query(title="分页大小", default=10),
+        experiment_id: str = Query(title="实验编号"),
+        offset: int = Query(title="分页起始位置", default=0),
+        limit: int = Query(title="分页大小", default=10),
 ):
     return GetHumanSubjectByPageResponse(code=CODE_SUCCESS, data=[Human()])
 
@@ -505,9 +505,9 @@ def delete_human_subject(request: DeleteHumanSubjectRequest):
     description="分页获取设备列表，默认每页返回10个元素",
 )
 def get_device_by_page(
-    experiment_id: str = Query(title="实验编号"),
-    offset: int = Query(title="分页起始位置", default=0),
-    limit: int = Query(title="分页大小", default=10),
+        experiment_id: str = Query(title="实验编号"),
+        offset: int = Query(title="分页起始位置", default=0),
+        limit: int = Query(title="分页大小", default=10),
 ):
     return GetDeviceByPageResponse(code=CODE_SUCCESS, data=[Device()])
 
@@ -529,8 +529,8 @@ def add_device(request: AddDeviceRequest):
     description="根据设备ID获取设备详情",
 )
 def get_device_by_id(
-    experiment_id: str = Query(title="实验编号"),
-    equipment_id: str = Query(title="设备编号"),
+        experiment_id: str = Query(title="实验编号"),
+        equipment_id: str = Query(title="设备编号"),
 ):
     return GetDeviceByIdResponse(code=CODE_SUCCESS, data=Device())
 
@@ -582,12 +582,12 @@ def get_files():
     description="分页获取任务列表，支持按任务名称、开始时间、类型、状态过滤",
 )
 def get_task_by_page(
-    offset: int = Query(title="分页起始位置", default=0),
-    limit: int = Query(title="分页大小", default=20),
-    task_name: str | None = Query(title="任务名称", default=None),
-    start_time: str | None = Query(title="开始时间", default=None),
-    task_type: str | None = Query(title="任务类型", default=None),
-    status: str | None = Query(title="任务状态", default=None),
+        offset: int = Query(title="分页起始位置", default=0),
+        limit: int = Query(title="分页大小", default=20),
+        task_name: str | None = Query(title="任务名称", default=None),
+        start_time: str | None = Query(title="开始时间", default=None),
+        task_type: str | None = Query(title="任务类型", default=None),
+        status: str | None = Query(title="任务状态", default=None),
 ):
     return GetTaskByPageResponse(code=CODE_SUCCESS, data=[Task()])
 
@@ -629,8 +629,8 @@ def get_task_steps_by_id(task_id: str = Query(title="任务ID")):
     description="页面点击滤波类型步骤后，获取对应步骤的执行结果，即波形图数据",
 )
 def get_filter_step_result_by_id(
-    task_id: str = Query(title="任务ID"),
-    operation_id: str = Query(title="操作步骤ID"),
+        task_id: str = Query(title="任务ID"),
+        operation_id: str = Query(title="操作步骤ID"),
 ):
     return GetFilterStepResultByIDResponse(
         code=CODE_SUCCESS,
@@ -649,8 +649,8 @@ def get_filter_step_result_by_id(
     description="页面点击分析步骤后，获取分析步骤的执行结果，即生成的png图片路径",
 )
 def get_analysis_step_result_by_id(
-    task_id: str = Query(title="任务ID"),
-    operation_id: str = Query(title="操作步骤ID"),
+        task_id: str = Query(title="任务ID"),
+        operation_id: str = Query(title="操作步骤ID"),
 ):
     return GetAnalysisStepResultByIDResponse(
         code=CODE_SUCCESS,

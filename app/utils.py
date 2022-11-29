@@ -1,19 +1,23 @@
 import functools
 import json
-from datetime import timezone, datetime, timedelta
+from datetime import timezone, datetime
 from json import JSONEncoder
-from typing import TypeVar, Any, Callable
+from typing import TypeVar, Callable, Any
 
+from dateutil import tz
 from pydantic import BaseModel
 from starlette.responses import JSONResponse
 
+from app.config import config
+
 Model = TypeVar("Model", bound=BaseModel)
 
-CST_TIMEZONE = timezone(timedelta(hours=8), "中国标准时间")
+current_timezone = tz.gettz(config.TIMEZONE)
+current_timezone_offset = datetime.now(tz=current_timezone).utcoffset()
 
 
 def utc_now() -> datetime:
-    return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=tz.UTC)
 
 
 # 将数据库中取出的无时区datetime对象转换为CST时区对象
@@ -24,10 +28,10 @@ def db_model_add_timezone(func: Callable[..., Model | list[Model]]):
         if result is None:
             return None
         if isinstance(result, BaseModel):
-            return add_timezone(result, utc_to_cst)
+            return add_timezone(result, utc_to_current_timezone)
         if isinstance(result, list):
             return [
-                add_timezone(model, utc_to_cst)
+                add_timezone(model, utc_to_current_timezone)
                 if isinstance(model, BaseModel)
                 else model
                 for model in result
@@ -37,28 +41,29 @@ def db_model_add_timezone(func: Callable[..., Model | list[Model]]):
     return wrapper
 
 
+def request_add_timezone(model: Model | None) -> Model | None:
+    if model is None:
+        return None
+    return add_timezone(model, add_current_timezone)
+
+
 def add_timezone(model: Model, adder: Callable[[datetime], datetime]) -> Model:
     new_dict = {
         name: adder(value)
-        if isinstance(value, datetime) and value.tzinfo is None
+        if isinstance(value, datetime) and value.utcoffset() != current_timezone_offset
         else value
         for name, value in model.dict().items()
+
     }
     return model.construct(**new_dict)
 
 
-def utc_to_cst(time: datetime) -> datetime:
-    return time.replace(tzinfo=timezone.utc).astimezone(CST_TIMEZONE)
+def utc_to_current_timezone(time: datetime) -> datetime:
+    return time.replace(tzinfo=timezone.utc).astimezone(current_timezone)
 
 
-def add_cst(time: datetime) -> datetime:
-    return time.replace(tzinfo=CST_TIMEZONE)
-
-
-def add_cst_timezone(model: Model | None) -> Model | None:
-    if model is None:
-        return None
-    return add_timezone(model, add_cst)
+def add_current_timezone(time: datetime) -> datetime:
+    return time.replace(tzinfo=current_timezone)
 
 
 class JsonEncoder(JSONEncoder):

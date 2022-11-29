@@ -2,12 +2,12 @@ import databases
 import sqlalchemy
 from ormar import ModelMeta
 
-from app.config import get_config
+from app.config import config
 
 metadata = sqlalchemy.MetaData()
-database = databases.Database(get_config().DATABASE_URL, **get_config().DATABASE_CONFIG)
+database = databases.Database(config.DATABASE_URL, **config.DATABASE_CONFIG)
 engine = sqlalchemy.create_engine(
-    get_config().DATABASE_URL, **get_config().DATABASE_CONFIG
+    config.DATABASE_URL, **config.DATABASE_CONFIG
 )
 
 

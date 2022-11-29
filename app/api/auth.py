@@ -9,7 +9,7 @@ from loguru import logger
 from passlib.context import CryptContext
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from app.config import get_config
+from app.config import config
 from app.db import crud
 from app.model.db_model import User
 from app.model.response import LoginResponse, Response
@@ -119,7 +119,7 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
 
     # 创建登录凭证
     access_token = create_access_token(
-        user.id, get_config().ACCESS_TOKEN_EXPIRE_MINUTES
+        user.id, config.ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
     # 更新最近登录时间
