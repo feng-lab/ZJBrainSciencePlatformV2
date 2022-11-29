@@ -36,14 +36,6 @@ class User(Model, ModelMixin):
     # 权限级别
     access_level: int = Integer(minimum=0)
 
-    def __repr__(self):
-        return (
-            f"User(id={self.id!r},username={self.username!r},hashed_password={self.hashed_password!r},"
-            f"staff_id={self.staff_id!r},account_type={self.account_type!r},last_login_time={self.last_login_time!r},"
-            f"last_logout_time={self.last_logout_time!r},gmt_create={self.gmt_create!r},"
-            f"gmt_modified={self.gmt_modified!r},is_deleted={self.is_deleted!r})"
-        )
-
 
 class Notification(Model, ModelMixin):
     class Meta(BaseMeta):

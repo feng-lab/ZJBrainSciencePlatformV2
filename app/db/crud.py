@@ -1,7 +1,21 @@
+from typing import TypeVar
+
+import ormar
 from loguru import logger
 
 from app.model.db_model import User, Notification
 from app.utils import utc_now, db_model_add_timezone
+
+DBModel = TypeVar("DBModel", bound=ormar.Model)
+
+
+@db_model_add_timezone
+async def update(model: DBModel, **updates) -> DBModel:
+    if model is not None:
+        updates["gmt_modified"] = utc_now()
+        columns = list(updates.keys())
+        model = await model.update(_columns=columns, **updates)
+    return model
 
 
 @db_model_add_timezone
@@ -36,10 +50,7 @@ async def list_users(offset: int, limit: int, include_deleted: bool) -> list[Use
 async def update_user(user: int | User, **updates) -> User:
     if isinstance(user, int):
         user = await get_user_by_id(user)
-
-    if user is not None:
-        user = await user.update(**updates, gmt_modified=utc_now())
-    return user
+    return await update(user, **updates)
 
 
 @db_model_add_timezone
