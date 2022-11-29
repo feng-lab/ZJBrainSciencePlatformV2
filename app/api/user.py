@@ -24,7 +24,7 @@ ROOT_PASSWORD = "?L09G$7g5*j@.q*4go4d"
 
 
 @router.post("/api/createUser", description="创建用户", response_model=CreateUserResponse)
-async def create_user(request: CreateUserRequest):
+async def create_user(request: CreateUserRequest, _user: User = Depends(get_current_user_as_administrator())):
     # 用户名唯一，幂等处理
     user = await crud.get_user_by_username(request.username)
     if user is None:

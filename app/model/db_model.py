@@ -58,7 +58,7 @@ class Notification(Model, ModelMixin):
     class Type(Enum):
         TASK_STEP_STATUS = "task_step_status"
 
-    class TaskStepNotification(BaseModel):
+    class TaskStepStatusNotification(BaseModel):
         task_id: int
         task_name: str
         task_status: int

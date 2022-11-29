@@ -27,6 +27,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 
 class AccessLevel(Enum):
+    MINIMUM = 0
     HUMAN_SUBJECT = 10
     RESEARCHER = 100
     ADMINISTRATOR = 1000

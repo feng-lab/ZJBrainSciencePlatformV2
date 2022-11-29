@@ -65,7 +65,7 @@ async def get_notifications_by_page(
 
 @router.post(
     "/api/markNotificationsAsRead",
-    description="批量将消息标记为已读",
+    description="批量将通知标记为已读",
     response_model=MarkNotificationsAsReadResponse,
 )
 async def mark_notifications_as_read(
