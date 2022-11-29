@@ -29,8 +29,6 @@ class User(Model, ModelMixin):
     hashed_password: str = String(max_length=255)
     # 员工号
     staff_id: str = String(max_length=255)
-    # 账户类别
-    account_type: str = String(max_length=255)
     # 上次登录时间
     last_login_time: datetime | None = DateTime(timezone=True, nullable=True)
     # 上次下线时间
