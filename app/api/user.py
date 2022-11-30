@@ -86,17 +86,24 @@ async def get_user_info(
 
 
 @router.get(
-    "/api/getUsersByPage", description="获取用户列表", response_model=ListUsersResponse
+    "/api/get_users_by_page", description="获取用户列表", response_model=ListUsersResponse
 )
 @custom_json_response
 async def get_users_by_page(
     _user: User = Depends(get_current_user_as_administrator()),
+    username: str | None = Query(description="用户名，模糊查询", max_length=255, default=None),
+    staff_id: str | None = Query(description="员工号，模糊查询", max_length=255, default=None),
+    access_level: int | None = Query(description="权限级别", ge=0, default=None),
     offset: int = Query(description="列表起始位置", default=0),
     limit: int = Query(description="列表大小", default=10),
     include_deleted: bool = Query(description="是否包括已删除项", default=False),
 ):
-    users = await crud.list_users(offset, limit, include_deleted)
-    return ListUsersResponse(data=users)
+    total_count, users = await crud.search_users(
+        username, staff_id, access_level, offset, limit, include_deleted
+    )
+    return ListUsersResponse(
+        data=ListUsersResponse.Data(total_count=total_count, users=users)
+    )
 
 
 @router.post(

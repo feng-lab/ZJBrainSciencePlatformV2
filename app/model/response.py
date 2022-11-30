@@ -2,6 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.model.db_model import User, Notification
 from app.model.schema import (
     Experiment,
     Paradigm,
@@ -13,7 +14,6 @@ from app.model.schema import (
     SearchFile,
     SearchResult,
 )
-from app.model.db_model import User, Notification
 
 CODE_SUCCESS: int = 0
 """请求成功的code"""
@@ -50,7 +50,11 @@ class GetUserInfoResponse(Response):
 
 
 class ListUsersResponse(Response):
-    data: list[UserInfo]
+    class Data(BaseModel):
+        total_count: int = Field(title="总数", ge=0)
+        users: list[UserInfo] = Field(title="用户列表")
+
+    data: Data
 
 
 class ListNotificationsResponse(Response):

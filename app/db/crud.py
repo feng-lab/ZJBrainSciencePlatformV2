@@ -1,7 +1,9 @@
+import asyncio
 from typing import TypeVar
 
 import ormar
 from loguru import logger
+from ormar import QuerySet
 
 from app.model.db_model import User, Notification
 from app.utils import utc_now, db_model_add_timezone
@@ -38,12 +40,28 @@ async def get_user_by_username(username: str) -> User | None:
 
 
 @db_model_add_timezone
-async def list_users(offset: int, limit: int, include_deleted: bool) -> list[User]:
-    query = User.objects.order_by("id")
+async def search_users(
+    username: str | None,
+    staff_id: str | None,
+    access_level: int | None,
+    offset: int,
+    limit: int,
+    include_deleted: bool,
+) -> (int, list[User]):
+    query: QuerySet = User.objects
+    if username is not None:
+        query = query.filter(username__icontains=username)
+    if staff_id is not None:
+        query = query.filter(staff_id__icontains=staff_id)
+    if access_level is not None:
+        query = query.filter(access_level=access_level)
     if not include_deleted:
         query = query.filter(is_deleted=False)
-    users = await query.offset(offset).limit(limit).all()
-    return users
+
+    total_count, users = await asyncio.gather(
+        query.count(), query.offset(offset).limit(limit).order_by("id").all()
+    )
+    return total_count, users
 
 
 async def update_user(user: int | User, **updates) -> User:
