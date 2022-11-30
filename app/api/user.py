@@ -86,7 +86,7 @@ async def get_user_info(
 
 
 @router.get(
-    "/api/get_users_by_page", description="获取用户列表", response_model=ListUsersResponse
+    "/api/getUsersByPage", description="获取用户列表", response_model=ListUsersResponse
 )
 @custom_json_response
 async def get_users_by_page(
