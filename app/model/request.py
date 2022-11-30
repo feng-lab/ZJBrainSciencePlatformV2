@@ -10,7 +10,11 @@ class CreateUserRequest(BaseModel):
     username: str = Field(max_length=255)
     password: str = Field(max_length=50)
     staff_id: str = Field(max_length=255)
-    account_type: str = Field(max_length=255)
+    access_level: int = Field(ge=0)
+
+
+class UpdateUserAccessLevelRequest(BaseModel):
+    user_id: int = Field(ge=0)
     access_level: int = Field(ge=0)
 
 

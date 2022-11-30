@@ -46,7 +46,6 @@ async def list_users(offset: int, limit: int, include_deleted: bool) -> list[Use
     return users
 
 
-@db_model_add_timezone
 async def update_user(user: int | User, **updates) -> User:
     if isinstance(user, int):
         user = await get_user_by_id(user)

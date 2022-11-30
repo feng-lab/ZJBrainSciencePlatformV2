@@ -53,7 +53,6 @@ def add_timezone(model: Model, adder: Callable[[datetime], datetime]) -> Model:
         if isinstance(value, datetime) and value.utcoffset() != current_timezone_offset
         else value
         for name, value in model.dict().items()
-
     }
     return model.construct(**new_dict)
 

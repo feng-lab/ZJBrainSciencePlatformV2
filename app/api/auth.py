@@ -118,9 +118,7 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
         raise_unauthorized_exception({"username": username})
 
     # 创建登录凭证
-    access_token = create_access_token(
-        user.id, config.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+    access_token = create_access_token(user.id, config.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     # 更新最近登录时间
     await crud.update_user(user, last_login_time=utc_now())

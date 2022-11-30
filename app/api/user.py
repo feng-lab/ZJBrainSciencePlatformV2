@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
+from starlette.status import HTTP_404_NOT_FOUND
 
 from app.api.auth import (
     get_current_user,
@@ -8,7 +9,7 @@ from app.api.auth import (
 )
 from app.db import crud
 from app.model.db_model import User
-from app.model.request import CreateUserRequest
+from app.model.request import CreateUserRequest, UpdateUserAccessLevelRequest
 from app.model.response import (
     Response,
     ListUsersResponse,
@@ -24,7 +25,10 @@ ROOT_PASSWORD = "?L09G$7g5*j@.q*4go4d"
 
 
 @router.post("/api/createUser", description="创建用户", response_model=CreateUserResponse)
-async def create_user(request: CreateUserRequest, _user: User = Depends(get_current_user_as_administrator())):
+async def create_user(
+    request: CreateUserRequest,
+    _user: User = Depends(get_current_user_as_administrator()),
+):
     # 用户名唯一，幂等处理
     user = await crud.get_user_by_username(request.username)
     if user is None:
@@ -43,7 +47,6 @@ async def create_root_user() -> None:
         "username": ROOT_USERNAME,
         "hashed_password": hash_password(ROOT_PASSWORD),
         "staff_id": ROOT_USERNAME,
-        "account_type": ROOT_USERNAME,
         "access_level": AccessLevel.ADMINISTRATOR.value,
     }
     root_user = await crud.get_user_by_username(ROOT_USERNAME)
@@ -75,6 +78,20 @@ async def get_users_by_page(
 ):
     users = await crud.list_users(offset, limit, include_deleted)
     return ListUsersResponse(data=users)
+
+
+@router.post(
+    "/api/updateUserAccessLevel", description="修改用户权限", response_model=Response
+)
+async def update_user_access_level(
+    request: UpdateUserAccessLevelRequest,
+    _user: User = Depends(get_current_user_as_administrator()),
+):
+    update_user = await crud.get_user_by_id(request.user_id)
+    if update_user is None:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="用户不存在")
+    await crud.update_user(update_user, access_level=request.access_level)
+    return Response()
 
 
 @router.delete("/api/deleteUser", description="删除用户", response_model=Response)
