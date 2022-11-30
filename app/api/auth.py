@@ -68,7 +68,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         # 验证用户存在
         user = await crud.get_user_by_id(user_id)
         if user is None:
-            raise_unauthorized_exception({"user_id": user_id})
+            raise_unauthorized_exception(user_id=user_id)
         return user
     except ExpiredSignatureError as e:
         # token过期
@@ -82,7 +82,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         raise e
     except JWTError:
         logger.exception(f"invalid token")
-        raise_unauthorized_exception({"token": token})
+        raise_unauthorized_exception(token=token)
 
 
 def create_access_token(user_id: int, expire_minutes: int) -> str:
@@ -97,7 +97,7 @@ def hash_password(password: str) -> str:
     return crypt_context.hash(password)
 
 
-def raise_unauthorized_exception(data: dict) -> NoReturn:
+def raise_unauthorized_exception(**data) -> NoReturn:
     logger.error(f"unauthorized user, {data=}")
     raise HTTPException(
         status_code=HTTP_401_UNAUTHORIZED,
@@ -106,16 +106,21 @@ def raise_unauthorized_exception(data: dict) -> NoReturn:
     )
 
 
+async def verify_password(username: str, password: str) -> User | None:
+    user = await crud.get_user_by_username(username)
+    if user is not None and crypt_context.verify(password, user.hashed_password):
+        return user
+    return None
+
+
 @router.post(
     "/api/login", description="用户登录，获取AccessToken", response_model=LoginResponse
 )
 async def login(form: OAuth2PasswordRequestForm = Depends()):
-    username = form.username
-
     # 验证用户名与密码是否匹配
-    user = await crud.get_user_by_username(username)
-    if user is None or not crypt_context.verify(form.password, user.hashed_password):
-        raise_unauthorized_exception({"username": username})
+    user = await verify_password(form.username, form.password)
+    if user is None:
+        raise_unauthorized_exception(username=form.username)
 
     # 创建登录凭证
     access_token = create_access_token(user.id, config.ACCESS_TOKEN_EXPIRE_MINUTES)

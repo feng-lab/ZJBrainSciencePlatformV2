@@ -1,15 +1,20 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
-from starlette.status import HTTP_404_NOT_FOUND
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_401_UNAUTHORIZED
 
 from app.api.auth import (
     get_current_user,
     hash_password,
     get_current_user_as_administrator,
     AccessLevel,
+    verify_password,
 )
 from app.db import crud
 from app.model.db_model import User
-from app.model.request import CreateUserRequest, UpdateUserAccessLevelRequest
+from app.model.request import (
+    CreateUserRequest,
+    UpdateUserAccessLevelRequest,
+    UpdatePasswordRequest,
+)
 from app.model.response import (
     Response,
     ListUsersResponse,
@@ -91,6 +96,18 @@ async def update_user_access_level(
     if update_user is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="用户不存在")
     await crud.update_user(update_user, access_level=request.access_level)
+    return Response()
+
+
+@router.post("/api/updatePassword", description="用户修改密码", response_model=Response)
+async def update_password(
+    request: UpdatePasswordRequest, user: User = Depends(get_current_user)
+):
+    db_user = await verify_password(user.username, request.old_password)
+    if db_user is None or db_user.id != user.id or db_user.username != user.username:
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="原密码错误")
+    hashed_new_password = hash_password(request.new_password)
+    await crud.update_user(db_user, hashed_password=hashed_new_password)
     return Response()
 
 

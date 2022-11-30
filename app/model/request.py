@@ -18,6 +18,11 @@ class UpdateUserAccessLevelRequest(BaseModel):
     access_level: int = Field(ge=0)
 
 
+class UpdatePasswordRequest(BaseModel):
+    old_password: str = Field(max_length=50)
+    new_password: str = Field(max_length=50)
+
+
 class LoginRequest(BaseModel):
     account: str = Field(title="用户名")
     password: str = Field(title="用户密码")
