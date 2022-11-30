@@ -101,9 +101,7 @@ async def get_users_by_page(
     total_count, users = await crud.search_users(
         username, staff_id, access_level, offset, limit, include_deleted
     )
-    return ListUsersResponse(
-        data=ListUsersResponse.Data(total_count=total_count, users=users)
-    )
+    return ListUsersResponse(data=ListUsersResponse.Data(total=total_count, items=users))
 
 
 @router.post(
@@ -135,7 +133,7 @@ async def update_password(
 @router.delete("/api/deleteUser", description="删除用户", response_model=Response)
 async def delete_user(
     _user: User = Depends(get_current_user_as_administrator()),
-    user_id: int = Query(description="用户ID"),
+    user_id: int = Query(alias="id", description="用户ID"),
 ):
     await crud.update_user(user_id, is_deleted=True)
     return Response()

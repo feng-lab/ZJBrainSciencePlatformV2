@@ -51,8 +51,8 @@ class GetUserInfoResponse(Response):
 
 class ListUsersResponse(Response):
     class Data(BaseModel):
-        total_count: int = Field(title="总数", ge=0)
-        users: list[UserInfo] = Field(title="用户列表")
+        total: int = Field(title="总数", ge=0)
+        items: list[UserInfo] = Field(title="数据列表")
 
     data: Data
 
