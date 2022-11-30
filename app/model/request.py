@@ -14,7 +14,7 @@ class CreateUserRequest(BaseModel):
 
 
 class UpdateUserAccessLevelRequest(BaseModel):
-    user_id: int = Field(ge=0)
+    id: int = Field(ge=0)
     access_level: int = Field(ge=0)
 
 

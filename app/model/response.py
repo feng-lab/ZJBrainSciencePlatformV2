@@ -45,7 +45,7 @@ class CreateUserResponse(Response):
     data: int
 
 
-class GetCurrentUserInfoResponse(Response):
+class GetUserInfoResponse(Response):
     data: UserInfo
 
 

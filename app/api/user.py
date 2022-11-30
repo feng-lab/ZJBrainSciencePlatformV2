@@ -18,7 +18,7 @@ from app.model.request import (
 from app.model.response import (
     Response,
     ListUsersResponse,
-    GetCurrentUserInfoResponse,
+    GetUserInfoResponse,
     CreateUserResponse,
 )
 from app.utils import custom_json_response
@@ -64,11 +64,25 @@ async def create_root_user() -> None:
 @router.get(
     "/api/getCurrentUserInfo",
     description="获取当前用户信息",
-    response_model=GetCurrentUserInfoResponse,
+    response_model=GetUserInfoResponse,
 )
 @custom_json_response
 async def get_current_user_info(user: User = Depends(get_current_user)):
-    return GetCurrentUserInfoResponse(data=user)
+    return GetUserInfoResponse(data=user)
+
+
+@router.get(
+    "/api/getUserInfo", description="获取用户信息", response_model=GetUserInfoResponse
+)
+@custom_json_response
+async def get_user_info(
+    _admin: User = Depends(get_current_user_as_administrator()),
+    user_id: int = Query(alias="id", description="用户ID", ge=0),
+):
+    user = await crud.get_user_by_id(user_id)
+    if user is None:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="用户不存在")
+    return GetUserInfoResponse(data=user)
 
 
 @router.get(
@@ -92,7 +106,7 @@ async def update_user_access_level(
     request: UpdateUserAccessLevelRequest,
     _user: User = Depends(get_current_user_as_administrator()),
 ):
-    update_user = await crud.get_user_by_id(request.user_id)
+    update_user = await crud.get_user_by_id(request.id)
     if update_user is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="用户不存在")
     await crud.update_user(update_user, access_level=request.access_level)
