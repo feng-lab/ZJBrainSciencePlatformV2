@@ -1,12 +1,14 @@
 import asyncio
+import logging
 from typing import TypeVar
 
 import ormar
-from loguru import logger
 from ormar import QuerySet
 
 from app.model.db_model import User, Notification
 from app.utils import utc_now, db_model_add_timezone
+
+logger = logging.getLogger(__name__)
 
 DBModel = TypeVar("DBModel", bound=ormar.Model)
 
@@ -64,6 +66,7 @@ async def search_users(
     return total_count, users
 
 
+@db_model_add_timezone
 async def update_user(user: int | User, **updates) -> User:
     if isinstance(user, int):
         user = await get_user_by_id(user)

@@ -101,7 +101,9 @@ async def get_users_by_page(
     total_count, users = await crud.search_users(
         username, staff_id, access_level, offset, limit, include_deleted
     )
-    return ListUsersResponse(data=ListUsersResponse.Data(total=total_count, items=users))
+    return ListUsersResponse(
+        data=ListUsersResponse.Data(total=total_count, items=users)
+    )
 
 
 @router.post(

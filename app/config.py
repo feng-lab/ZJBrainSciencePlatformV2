@@ -1,6 +1,9 @@
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseSettings
+
+PROJECT_ROOT = Path(__file__).parent.parent
 
 
 class Config(BaseSettings):
@@ -17,6 +20,12 @@ class Config(BaseSettings):
 
     # 数据库配置，JSON格式
     DATABASE_CONFIG: dict[str, Any] = {}
+
+    # 日志路径
+    LOG_ROOT: Path = PROJECT_ROOT / "log" / "app"
+
+    # 日志轮换天数
+    LOG_ROTATING_DAYS: int = 7
 
     # 用户AccessToken有效期，默认7天
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7

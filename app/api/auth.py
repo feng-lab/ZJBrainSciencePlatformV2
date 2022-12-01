@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from enum import Enum
 from typing import NoReturn
@@ -5,7 +6,6 @@ from typing import NoReturn
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, ExpiredSignatureError, JWTError
-from loguru import logger
 from passlib.context import CryptContext
 from starlette.status import HTTP_401_UNAUTHORIZED
 
@@ -15,6 +15,8 @@ from app.model.db_model import User
 from app.model.response import LoginResponse, Response
 from app.model.schema import AccessTokenData
 from app.utils import utc_now
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

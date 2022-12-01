@@ -1,16 +1,12 @@
-import json
 import logging
-import logging.handlers
-from datetime import date, timedelta, datetime
+from datetime import date, datetime
 from http import HTTPStatus
-from pathlib import Path
 from typing import Callable
 
 from fastapi import FastAPI, Query, UploadFile, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from jose import ExpiredSignatureError
-from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
@@ -21,6 +17,7 @@ from app.api.notification import router as notification_router
 from app.api.user import router as user_router
 from app.config import config
 from app.db.database import database
+from app.log import log_queue_listener, ACCESS_LOGGER_NAME
 from app.model.request import (
     AddExperimentRequest,
     GetExperimentsByPageRequest,
@@ -90,34 +87,13 @@ from app.model.schema import (
     SearchResult,
 )
 
+app_logger = logging.getLogger(__name__)
+access_logger = logging.getLogger(ACCESS_LOGGER_NAME)
+
 app = FastAPI()
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(notification_router)
-
-PROJECT_ROOT_PATH = Path(__file__).parent.parent
-LOG_ROOT_PATH = PROJECT_ROOT_PATH / "log" / "app"
-LOGURU_FORMAT = "{time:YYYY-MM-DD HH:mm:ss.SSS}|{level}|{message}"
-logger.add(
-    LOG_ROOT_PATH / "access.log",
-    format=LOGURU_FORMAT,
-    level="INFO",
-    rotation=timedelta(days=1),
-    backtrace=False,
-    diagnose=False,
-    enqueue=True,
-    colorize=False,
-)
-logger.add(
-    LOG_ROOT_PATH / "error.log",
-    format=LOGURU_FORMAT,
-    level="ERROR",
-    rotation=timedelta(days=1),
-    backtrace=True,
-    diagnose=True,
-    enqueue=True,
-    colorize=False,
-)
 
 app.state.database = database
 
@@ -132,19 +108,11 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup() -> None:
+    log_queue_listener.start()
+
     database_ = app.state.database
     if not database_.is_connected:
         await database_.connect()
-
-    uvicorn_logger = logging.getLogger("uvicorn.access")
-    uvicorn_logger_handler = logging.handlers.TimedRotatingFileHandler(
-        LOG_ROOT_PATH / "uvicorn.log", when="D", backupCount=7, encoding="UTF-8"
-    )
-    uvicorn_logger_handler.setFormatter(
-        logging.Formatter("%(asctime)s|%(levelname)s|%(message)s")
-    )
-    uvicorn_logger.addHandler(uvicorn_logger_handler)
-
     await user.create_root_user()
 
 
@@ -154,20 +122,29 @@ async def shutdown() -> None:
     if database_.is_connected:
         await database_.disconnect()
 
+    log_queue_listener.stop()
+
 
 @app.middleware("http")
 async def log_access_api(request: Request, call_next: Callable):
     start_time = datetime.now()
-    response = await call_next(request)
-    rt = datetime.now() - start_time
-    access_info = {
+    request.state.access_info = {
         "method": request.method,
-        "url": str(request.url),
-        "client_address": request.client,
-        "rt": int(rt.total_seconds() * 1000),
-        "status_code": response.status_code,
+        "api": request.url.path,
     }
-    logger.info(json.dumps(access_info))
+
+    response = await call_next(request)
+
+    rt = datetime.now() - start_time
+    request.state.access_info.update(
+        code=response.status_code,
+        rt=int(rt.total_seconds() * 1000),
+    )
+    log_message = ";".join(
+        f"{key}={value}" for key, value in request.state.access_info.items()
+    )
+    access_logger.info(log_message)
+
     return response
 
 
