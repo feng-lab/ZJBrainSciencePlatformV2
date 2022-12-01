@@ -19,6 +19,7 @@ class ModelMixin:
     is_deleted: bool = Boolean(default=False)
 
 
+# 用户
 class User(Model, ModelMixin):
     class Meta(BaseMeta):
         tablename = "user"
@@ -37,6 +38,7 @@ class User(Model, ModelMixin):
     access_level: int = Integer(minimum=0)
 
 
+# 通知
 class Notification(Model, ModelMixin):
     class Meta(BaseMeta):
         tablename = "notification"
@@ -68,3 +70,54 @@ class Notification(Model, ModelMixin):
     )
     # 消息内容
     content: str = Text()
+
+
+# 实验
+class Experiment(Model, ModelMixin):
+    class Meta(BaseMeta):
+        tablename = "experiment"
+
+    class ExperimentType(Enum):
+        SSVEP = "SSVEP"
+        MI = "MI"
+        NEURON = "neuron"
+
+    # 实验名称
+    name: str = String(max_length=255)
+    # 实验类型
+    type: str = String(max_length=50, choices=list(ExperimentType))
+    # 实验地点
+    location: str = String(max_length=255)
+    # 实验开始时间
+    start_at: datetime = DateTime(timezone=True)
+    # 实验结束时间
+    end_at: datetime = DateTime(timezone=True)
+    # 是否为无创实验
+    is_non_invasive: bool | None = Boolean(nullable=True)
+    # 被试类型
+    subject_type: str | None = String(max_length=50, nullable=True)
+    # 被试数量
+    subject_num: int | None = Integer(minimum=0, nullable=True)
+    # 神经元细胞来源部位
+    neuron_source: str | None = String(max_length=50, nullable=True)
+    # 刺激类型
+    stimulation_type: str | None = String(max_length=50, nullable=True)
+    # 实验session数量
+    session_num: int | None = Integer(minimum=0, nullable=True)
+    # 实验trail数量
+    trail_num: int | None = Integer(minimum=0, nullable=True)
+    # 实验数据是否公开
+    is_shared: bool | None = Boolean(nullable=True)
+
+
+# 实验操作者
+class ExperimentOperator(Model, ModelMixin):
+    class Meta(BaseMeta):
+        tablename = "experiment_operator"
+
+    # 用户ID
+    user_id: int = Integer(minimum=0)
+    # 实验ID
+    experiment_id: int = Integer(minimum=0)
+    # 是否是主操作员
+    is_main_operator: bool = Boolean()
