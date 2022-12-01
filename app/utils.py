@@ -65,6 +65,10 @@ def add_current_timezone(time: datetime) -> datetime:
     return time.replace(tzinfo=current_timezone)
 
 
+def current_time_tuple(_second, _what):
+    return datetime.now(current_timezone).timetuple()
+
+
 class JsonEncoder(JSONEncoder):
     def default(self, o: Any) -> Any:
         if isinstance(o, datetime):
