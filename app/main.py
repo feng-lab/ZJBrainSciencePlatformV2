@@ -2,6 +2,7 @@ import logging
 from datetime import date, datetime
 from http import HTTPStatus
 from typing import Callable
+from urllib.parse import parse_qsl, urlencode
 
 from fastapi import FastAPI, Query, UploadFile, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -146,6 +147,21 @@ async def log_access_api(request: Request, call_next: Callable):
     access_logger.info(log_message)
 
     return response
+
+
+@app.middleware("http")
+async def filter_blank_query_params(request: Request, call_next: Callable):
+    """去除空的参数，避免非str的可选参数解析失败"""
+    query_string_key = "query_string"
+    latin_1_encoding = "latin-1"
+    if (scope := request.scope) and scope.get(query_string_key):
+        filtered_query_params = parse_qsl(
+            qs=scope[query_string_key].decode(latin_1_encoding), keep_blank_values=False
+        )
+        scope[query_string_key] = urlencode(filtered_query_params).encode(
+            latin_1_encoding
+        )
+    return await call_next(request)
 
 
 @app.exception_handler(HTTPException)
