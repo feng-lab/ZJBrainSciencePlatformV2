@@ -118,41 +118,41 @@ class ExperimentOperator(Model, ModelMixin):
     # 用户ID
     user_id: int = Integer(minimum=0)
     # 实验ID
-    experiment_id: int = Integer(minimum=0)
+    experiment_id: int = Integer(minimum=0, index=True)
     # 是否是主操作员
     is_main_operator: bool = Boolean()
 
 
 # 文件
 class File(Model, ModelMixin):
-    class Meta(BaseModel):
+    class Meta(BaseMeta):
         tablename = "file"
 
     # 实验ID
-    experiment_id: int = Integer(ge=0)
+    experiment_id: int = Integer(ge=0, index=True)
     # 逻辑路径
-    path: str = String(max_length=255)
+    path: str = String(max_length=255, index=True)
     # 实际存储在服务器文件系统中的路径
     store_path: str = String(max_length=511)
 
 
 # 实验范式
 class Paradigm(Model, ModelMixin):
-    class Meta(BaseModel):
+    class Meta(BaseMeta):
         tablename = "paradigm"
 
     # 实验ID
-    experiment_id: int = Integer(ge=0)
+    experiment_id: int = Integer(ge=0, index=True)
     # 描述文字
     description: str = Text()
 
 
 # 实验范式文件
 class ParadigmFile(Model, ModelMixin):
-    class Meta(BaseModel):
+    class Meta(BaseMeta):
         tablename = "paradigm_file"
 
     # 实验范式ID
-    paradigm_id: int = Integer(ge=0)
+    paradigm_id: int = Integer(ge=0, index=True)
     # 文件ID
-    file_id: int = Integer(ge=0)
+    file_id: int = Integer(ge=0, index=True)
