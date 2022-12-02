@@ -10,7 +10,8 @@ from app.model.response import (
     SendNotificationResponse,
     MarkNotificationsAsReadResponse,
 )
-from app.utils import request_add_timezone, custom_json_response
+from app.timezone_util import convert_timezone_before_handle_request
+from app.utils import custom_json_response
 
 router = APIRouter()
 
@@ -22,9 +23,9 @@ async def send_notification(
     request: SendNotificationRequest,
     user: User = Depends(get_current_user_as_human_subject()),
 ):
-    request = request_add_timezone(request)
+    request = convert_timezone_before_handle_request(request)
     notification = Notification(**request.dict(), creator=user.id)
-    notification = await crud.create_notification(notification)
+    notification = await crud.create_model(notification)
     return SendNotificationResponse(data=notification.id)
 
 

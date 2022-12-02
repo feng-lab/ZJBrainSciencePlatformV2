@@ -56,16 +56,6 @@ class CreateExperimentRequest(BaseModel):
     is_shared: bool | None = Field(title="实验数据是否公开", default=None)
 
 
-class GetExperimentsByPageRequest:
-    class SortBy(str, Enum):
-        START_TIME = ("starttime",)
-        TYPE = ("type",)
-
-    class SortOrder(str, Enum):
-        ASC = ("asce",)
-        DESC = "desc"
-
-
 class AddParadigmRequest(BaseModel):
     img_url: list[str] = Field(title="图片地址", default_factory=list)
     desc: str = Field(title="文字描述")

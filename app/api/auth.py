@@ -68,7 +68,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         user_id = int(token_data.sub)
 
         # 验证用户存在
-        user = await crud.get_user_by_id(user_id)
+        user = await crud.get_model_by_id(User, user_id)
         if user is None:
             raise_unauthorized_exception(user_id=user_id)
         return user
@@ -128,12 +128,12 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
     access_token = create_access_token(user.id, config.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     # 更新最近登录时间
-    await crud.update_user(user, last_login_time=utc_now())
+    await crud.update_model(user, last_login_time=utc_now())
 
     return LoginResponse(access_token=access_token, token_type=TOKEN_TYPE)
 
 
 @router.post("/api/logout", description="用户登出", response_model=Response)
 async def logout(user: User = Depends(get_current_user)):
-    await crud.update_user(user, last_logout_time=utc_now())
+    await crud.update_model(user, last_logout_time=utc_now())
     return Response()

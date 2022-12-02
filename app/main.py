@@ -21,7 +21,6 @@ from app.config import config
 from app.db.database import database
 from app.log import log_queue_listener, ACCESS_LOGGER_NAME
 from app.model.request import (
-    GetExperimentsByPageRequest,
     AddParadigmRequest,
     DeleteParadigmsRequest,
     AddHumanSubjectRequest,
@@ -45,8 +44,6 @@ from app.model.response import (
     GetStatisticWithServerResponse,
     GetStatisticWithDataResponse,
     GetStatisticWithSickResponse,
-    GetExperimentsByPageResponse,
-    GetExperimentsByIdResponse,
     AddParadigmResponse,
     GetParadigmsResponse,
     GetParadigmByIdResponse,
@@ -76,7 +73,6 @@ from app.model.response import (
     GoSearchResponse,
 )
 from app.model.schema import (
-    Experiment,
     Paradigm,
     Human,
     Device,
@@ -310,32 +306,6 @@ def get_statistic_with_sick():
             GetStatisticWithSickResponse.Data(sick="其他", part1=2, part2=6, part3=34),
         ],
     )
-
-
-@app.get(
-    "/api/getExperimentsByPage",
-    response_model=GetExperimentsByPageResponse,
-    name="获取实验列表",
-    description="根据筛选、排序等条件得到实验列表并分页返回",
-)
-def get_experiments_by_page(
-    sort_by: GetExperimentsByPageRequest.SortBy = Query(title="排序依据"),
-    sort_order: GetExperimentsByPageRequest.SortOrder = Query(title="排序顺序"),
-    offset: int = Query(title="分页起始位置", default=0),
-    limit: int = Query(title="分页大小", default=10),
-    search: str | None = Query(title="搜索内容", default=None),
-):
-    return GetExperimentsByPageResponse(code=CODE_SUCCESS, data=[Experiment()])
-
-
-@app.get(
-    "/api/getExperimentsByPage",
-    response_model=GetExperimentsByIdResponse,
-    name="获取实验详情",
-    description="根据实验编号获取实验详细信息",
-)
-def get_experiments_by_id(experiment_id: str = Query(title="实验编号")):
-    return GetExperimentsByIdResponse(code=CODE_SUCCESS, data=Experiment())
 
 
 @app.post(

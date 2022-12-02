@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from logging import LogRecord, Formatter, Handler, getLogger, ERROR, Logger, INFO
 from logging.handlers import TimedRotatingFileHandler, QueueHandler, QueueListener
 from pathlib import Path
@@ -6,7 +7,7 @@ from queue import Queue
 from typing import Callable
 
 from app.config import config
-from app.utils import current_time_tuple
+from app.utils import current_timezone
 
 ACCESS_LOGGER_NAME = "access"
 UVICORN_LOGGER_NAME = "uvicorn.access"
@@ -14,6 +15,11 @@ LOGGER_NAMES = {ACCESS_LOGGER_NAME, UVICORN_LOGGER_NAME}
 
 DEFAULT_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(pathname)s:%(lineno)d|%(message)s"
 ACCESS_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(message)s"
+
+
+def current_time_tuple(_second, _what):
+    return datetime.now(current_timezone).timetuple()
+
 
 logging.Formatter.converter = current_time_tuple
 

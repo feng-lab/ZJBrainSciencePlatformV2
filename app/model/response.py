@@ -2,9 +2,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from app.model.db_model import User, Notification
+from app.model.db_model import User, Notification, Experiment
 from app.model.schema import (
-    Experiment,
     Paradigm,
     Human,
     Device,
@@ -73,6 +72,13 @@ class CreateExperimentResponse(Response):
     data: int
 
 
+ExperimentInfo = Experiment.get_pydantic()
+
+
+class GetExperimentInfoResponse(Response):
+    data: ExperimentInfo
+
+
 class GetStatisticResponse(Response):
     class Data(BaseModel):
         experiments: int = Field(title="实验数量", ge=0)
@@ -119,15 +125,6 @@ class GetStatisticWithSickResponse(Response):
         part3: int = Field(title="单位3")
 
     data: list[Data]
-
-
-# TODO 添加必要字段
-class GetExperimentsByPageResponse(Response):
-    data: list[Experiment]
-
-
-class GetExperimentsByIdResponse(Response):
-    data: Experiment
 
 
 class AddParadigmResponse(Response):

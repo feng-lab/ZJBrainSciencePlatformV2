@@ -3,10 +3,6 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-class Experiment(BaseModel):
-    pass
-
-
 class Paradigm(BaseModel):
     pass
 

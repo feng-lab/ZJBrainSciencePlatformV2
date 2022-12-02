@@ -5,16 +5,17 @@ from typing import TypeVar
 import ormar
 from ormar import QuerySet
 
-from app.model.db_model import User, Notification, Experiment
-from app.utils import utc_now, db_model_add_timezone
+from app.model.db_model import User, Notification
+from app.timezone_util import convert_db_model_timezone, convert_timezone_before_save
+from app.utils import utc_now
 
 logger = logging.getLogger(__name__)
 
-DBModel = TypeVar("DBModel", bound=ormar.Model)
+DBModel = TypeVar("DBModel", bound=ormar.Model, contravariant=True)
 
 
-@db_model_add_timezone
-async def update(model: DBModel, **updates) -> DBModel:
+@convert_db_model_timezone
+async def update_model(model: DBModel, **updates) -> DBModel:
     if model is not None:
         updates["gmt_modified"] = utc_now()
         columns = list(updates.keys())
@@ -22,26 +23,32 @@ async def update(model: DBModel, **updates) -> DBModel:
     return model
 
 
-@db_model_add_timezone
-async def create_user(user: User) -> User:
-    user = await user.save()
-    logger.info(f"created user, {user=}")
-    return user
+@convert_db_model_timezone
+async def create_model(model: DBModel) -> DBModel:
+    model = convert_timezone_before_save(model)
+    model = await model.save()
+    logger.info(f"created model {type(model).__name__}: {repr(model)}")
+    return model
 
 
-@db_model_add_timezone
-async def get_user_by_id(user_id: int) -> User | None:
-    user = await User.objects.get_or_none(id=user_id, is_deleted=False)
-    return user
+@convert_db_model_timezone
+async def get_model_by_id(model_type: type[DBModel], model_id: int) -> DBModel | None:
+    model = await model_type.objects.get_or_none(id=model_id, is_deleted=False)
+    return model
 
 
-@db_model_add_timezone
+@convert_db_model_timezone
+async def get_model(model_type: type[DBModel], **queries) -> DBModel | None:
+    model = await model_type.objects.get_or_none(**queries, is_deleted=False)
+    return model
+
+
+@convert_db_model_timezone
 async def get_user_by_username(username: str) -> User | None:
-    user = await User.objects.get_or_none(username=username, is_deleted=False)
-    return user
+    return await get_model(User, username=username)
 
 
-@db_model_add_timezone
+@convert_db_model_timezone
 async def search_users(
     username: str | None,
     staff_id: str | None,
@@ -66,21 +73,7 @@ async def search_users(
     return total_count, users
 
 
-@db_model_add_timezone
-async def update_user(user: int | User, **updates) -> User:
-    if isinstance(user, int):
-        user = await get_user_by_id(user)
-    return await update(user, **updates)
-
-
-@db_model_add_timezone
-async def create_notification(msg: Notification) -> Notification:
-    msg = await msg.save()
-    logger.info(f"created message, {msg=}")
-    return msg
-
-
-@db_model_add_timezone
+@convert_db_model_timezone
 async def list_notifications(
     user_id: int, offset: int, limit: int
 ) -> list[Notification]:
@@ -94,7 +87,7 @@ async def list_notifications(
     return msgs
 
 
-@db_model_add_timezone
+@convert_db_model_timezone
 async def list_unread_notifications(
     user_id: int, is_all: bool, msg_ids: list[int]
 ) -> list[Notification]:
@@ -113,10 +106,3 @@ async def update_notifications_as_read(msgs: list[Notification]) -> None:
         msg.status = Notification.Status.READ.value
         msg.gmt_modified = now
     await Notification.objects.bulk_update(msgs, columns=["status", "gmt_modified"])
-
-
-@db_model_add_timezone
-async def create_experiment(experiment: Experiment) -> Experiment:
-    experiment = await experiment.save()
-    logger.info(f"created experiment, {experiment=}")
-    return experiment

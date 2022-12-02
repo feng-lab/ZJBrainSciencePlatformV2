@@ -42,7 +42,7 @@ async def create_user(
         user = User(
             **request.dict(exclude={"password"}), hashed_password=hashed_password
         )
-        user = await crud.create_user(user)
+        user = await crud.create_model(user)
 
     return CreateUserResponse(data=user.id)
 
@@ -56,9 +56,9 @@ async def create_root_user() -> None:
     }
     root_user = await crud.get_user_by_username(ROOT_USERNAME)
     if root_user is not None:
-        await crud.update_user(root_user, **root_user_dict)
+        await crud.update_model(root_user, **root_user_dict)
     else:
-        await crud.create_user(User(**root_user_dict))
+        await crud.create_model(User(**root_user_dict))
 
 
 @router.get(
@@ -79,7 +79,7 @@ async def get_user_info(
     _admin: User = Depends(get_current_user_as_administrator()),
     user_id: int = Query(alias="id", description="用户ID", ge=0),
 ):
-    user = await crud.get_user_by_id(user_id)
+    user = await crud.get_model_by_id(User, user_id)
     if user is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="用户不存在")
     return GetUserInfoResponse(data=user)
@@ -113,10 +113,10 @@ async def update_user_access_level(
     request: UpdateUserAccessLevelRequest,
     _user: User = Depends(get_current_user_as_administrator()),
 ):
-    update_user = await crud.get_user_by_id(request.id)
+    update_user = await crud.get_model_by_id(User, request.id)
     if update_user is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="用户不存在")
-    await crud.update_user(update_user, access_level=request.access_level)
+    await crud.update_model(update_user, access_level=request.access_level)
     return Response()
 
 
@@ -128,7 +128,7 @@ async def update_password(
     if db_user is None or db_user.id != user.id or db_user.username != user.username:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="原密码错误")
     hashed_new_password = hash_password(request.new_password)
-    await crud.update_user(db_user, hashed_password=hashed_new_password)
+    await crud.update_model(db_user, hashed_password=hashed_new_password)
     return Response()
 
 
@@ -137,5 +137,6 @@ async def delete_user(
     _user: User = Depends(get_current_user_as_administrator()),
     user_id: int = Query(alias="id", description="用户ID"),
 ):
-    await crud.update_user(user_id, is_deleted=True)
+    user = await crud.get_model_by_id(User, user_id)
+    await crud.update_model(user, is_deleted=True)
     return Response()
