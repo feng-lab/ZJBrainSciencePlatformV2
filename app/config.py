@@ -3,8 +3,6 @@ from typing import Any
 
 from pydantic import BaseSettings
 
-PROJECT_ROOT = Path(__file__).parent.parent
-
 
 class Config(BaseSettings):
     # 是否处于开发环境
@@ -22,7 +20,7 @@ class Config(BaseSettings):
     DATABASE_CONFIG: dict[str, Any] = {}
 
     # 日志路径
-    LOG_ROOT: Path = PROJECT_ROOT / "log" / "app"
+    LOG_ROOT: Path = Path.home() / "log" / "ZJBrainSciencePlatform" / "app"
 
     # 日志轮换天数
     LOG_ROTATING_DAYS: int = 7
