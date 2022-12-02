@@ -69,6 +69,10 @@ class MarkNotificationsAsReadResponse(Response):
     data: list[int]
 
 
+class CreateExperimentResponse(Response):
+    data: int
+
+
 class GetStatisticResponse(Response):
     class Data(BaseModel):
         experiments: int = Field(title="实验数量", ge=0)
@@ -115,10 +119,6 @@ class GetStatisticWithSickResponse(Response):
         part3: int = Field(title="单位3")
 
     data: list[Data]
-
-
-class AddExperimentResponse(Response):
-    pass
 
 
 # TODO 添加必要字段

@@ -40,16 +40,20 @@ class MarkNotificationsAsReadRequest(BaseModel):
     notification_ids: list[int] = Field(description="通知ID，可以有多个", default_factory=list)
 
 
-class AddExperimentRequest(BaseModel):
-    experiment_title: str = Field(title="实验名称")
-    experiment_type: str = Field(title="实验类型")
-    non_invasive_flag: bool = Field(title="是否无创")
-    location: str = Field(title="实验地点")
-    start_date: datetime = Field(title="实验开始日期")
-    end_date: datetime = Field(title="实验结束日期")
-    subject_type: str = Field(title="被试类型")
-    number_of_subjects: int = Field(title="被试数量", ge=0)
-    shared: bool = Field(title="是否公开")
+class CreateExperimentRequest(BaseModel):
+    name: str = Field(title="实验名称", max_length=255)
+    type: str = Field(title="实验类型", max_length=50)
+    location: str = Field(title="实验地点", max_length=255)
+    start_at: datetime = Field(title="实验开始时间")
+    end_at: datetime = Field(title="实验结束时间")
+    is_non_invasive: bool | None = Field(title="是否为无创实验", default=None)
+    subject_type: str | None = Field(title="被试类型", default=None)
+    subject_num: int | None = Field(title="被试数量", default=None)
+    neuron_source: str | None = Field(title="神经元细胞来源部位", default=None)
+    stimulation_type: str | None = Field(title="刺激类型", default=None)
+    session_num: int | None = Field(title="实验session数量", default=None)
+    trail_num: int | None = Field(title="实验trail数量", default=None)
+    is_shared: bool | None = Field(title="实验数据是否公开", default=None)
 
 
 class GetExperimentsByPageRequest:

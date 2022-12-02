@@ -5,7 +5,7 @@ from typing import TypeVar
 import ormar
 from ormar import QuerySet
 
-from app.model.db_model import User, Notification
+from app.model.db_model import User, Notification, Experiment
 from app.utils import utc_now, db_model_add_timezone
 
 logger = logging.getLogger(__name__)
@@ -113,3 +113,10 @@ async def update_notifications_as_read(msgs: list[Notification]) -> None:
         msg.status = Notification.Status.READ.value
         msg.gmt_modified = now
     await Notification.objects.bulk_update(msgs, columns=["status", "gmt_modified"])
+
+
+@db_model_add_timezone
+async def create_experiment(experiment: Experiment) -> Experiment:
+    experiment = await experiment.save()
+    logger.info(f"created experiment, {experiment=}")
+    return experiment
