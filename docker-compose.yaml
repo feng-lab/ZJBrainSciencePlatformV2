@@ -10,7 +10,7 @@ services:
       DATABASE_URL: mysql+pymysql://zjlab:zjlab2022@database:3306/zj_brain_science_platform
       DATABASE_CONFIG: '{}'
     volumes:
-      - ./log/app:/code/log/app
+      - ~/log/ZJBrainSciencePlatform/app:/code/log/app
     restart: always
     depends_on:
       - database
@@ -29,8 +29,8 @@ services:
       - "8100:3306"
     volumes:
       - ./mysql/initdb.d:/docker-entrypoint-initdb.d
-      - ./mysql/data:/var/lib/mysql
-      - ./log/mysql:/var/log/mysql
+      - ~/mysql/ZJBrainSciencePlatform/data:/var/lib/mysql
+      - ~/log/ZJBrainSciencePlatform/mysql:/var/log/mysql
     restart: always
 
   alembic:
