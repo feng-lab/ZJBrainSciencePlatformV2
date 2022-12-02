@@ -121,3 +121,38 @@ class ExperimentOperator(Model, ModelMixin):
     experiment_id: int = Integer(minimum=0)
     # 是否是主操作员
     is_main_operator: bool = Boolean()
+
+
+# 文件
+class File(Model, ModelMixin):
+    class Meta(BaseModel):
+        tablename = "file"
+
+    # 实验ID
+    experiment_id: int = Integer(ge=0)
+    # 逻辑路径
+    path: str = String(max_length=255)
+    # 实际存储在服务器文件系统中的路径
+    store_path: str = String(max_length=511)
+
+
+# 实验范式
+class Paradigm(Model, ModelMixin):
+    class Meta(BaseModel):
+        tablename = "paradigm"
+
+    # 实验ID
+    experiment_id: int = Integer(ge=0)
+    # 描述文字
+    description: str = Text()
+
+
+# 实验范式文件
+class ParadigmFile(Model, ModelMixin):
+    class Meta(BaseModel):
+        tablename = "paradigm_file"
+
+    # 实验范式ID
+    paradigm_id: int = Integer(ge=0)
+    # 文件ID
+    file_id: int = Integer(ge=0)
