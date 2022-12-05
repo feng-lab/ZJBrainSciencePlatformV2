@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
+from fastapi import Query
 from pydantic import BaseModel, Field
 
 from app.model.schema import File
@@ -58,6 +59,16 @@ class CreateExperimentRequest(BaseModel):
     session_num: int | None = Field(title="实验session数量", default=None)
     trail_num: int | None = Field(title="实验trail数量", default=None)
     is_shared: bool | None = Field(title="实验数据是否公开", default=None)
+
+
+class GetExperimentsByPageSortBy(Enum):
+    START_TIME = "start_time"
+    TYPE = "type"
+
+
+class GetExperimentsByPageSortOrder(Enum):
+    ASC = "asc"
+    DESC = "desc"
 
 
 class AddParadigmRequest(BaseModel):
@@ -190,3 +201,17 @@ class GoSearchRequest(BaseModel):
 class MarkMsgRequest(BaseModel):
     account: str = Field(title="登录用户账号名")
     ids: str = Field(title="消息id,多个id则逗号分隔")
+
+
+class GetModelsByPageParam(BaseModel):
+    offset: int
+    limit: int
+    include_deleted: bool
+
+
+def get_models_by_page(
+    offset: int = Query(description="分页起始位置", default=0, ge=0),
+    limit: int = Query(description="分页大小", default=10, ge=0),
+    include_deleted: bool = Query(description="是否包括已删除项", default=False),
+) -> GetModelsByPageParam:
+    return GetModelsByPageParam(offset=offset, limit=limit, include_deleted=include_deleted)

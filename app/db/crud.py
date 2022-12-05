@@ -10,7 +10,8 @@ import ormar
 from ormar import QuerySet
 
 from app.config import config
-from app.model.db_model import Notification, User
+from app.model.db_model import Experiment, Notification, User
+from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 from app.timezone_util import convert_timezone_after_get_db, convert_timezone_before_save, utc_now
 from app.util import get_module_defined_members
 
@@ -101,6 +102,37 @@ async def update_notifications_as_read(msgs: list[Notification]) -> None:
         msg.status = Notification.Status.READ.value
         msg.gmt_modified = now
     await Notification.objects.bulk_update(msgs, columns=["status", "gmt_modified"])
+
+
+async def search_experiments(
+    search: str,
+    sort_by: GetExperimentsByPageSortBy,
+    sort_order: GetExperimentsByPageSortOrder,
+    offset: int,
+    limit: int,
+    include_deleted: bool,
+) -> list[Experiment]:
+    query: QuerySet = Experiment.objects.offset(offset).limit(limit)
+
+    if sort_by is GetExperimentsByPageSortBy.START_TIME:
+        order_key = "start_at"
+    elif sort_by is GetExperimentsByPageSortBy.TYPE:
+        order_key = "type"
+    else:
+        raise ValueError("invalid sort_by")
+    if sort_order is GetExperimentsByPageSortOrder.ASC:
+        pass
+    elif sort_order is GetExperimentsByPageSortOrder.DESC:
+        order_key = "-" + order_key
+    else:
+        raise ValueError("invalid sort_order")
+    query = query.order_by(order_key)
+    if search:
+        query = query.filter(name__icontains=search)
+    if not include_deleted:
+        query = query.filter(is_deleted=False)
+
+    return await query.all()
 
 
 def add_common_stuff() -> None:

@@ -13,8 +13,10 @@ from app.model.db_model import User
 from app.model.request import (
     CreateUserRequest,
     DeleteUserRequest,
+    GetModelsByPageParam,
     UpdatePasswordRequest,
     UpdateUserAccessLevelRequest,
+    get_models_by_page,
 )
 from app.model.response import ListUserData, NoneResponse, Response, UserInfo, wrap_api_response
 from app.util import convert_models
@@ -79,12 +81,15 @@ async def get_users_by_page(
     username: str | None = Query(description="用户名，模糊查询", max_length=255, default=None),
     staff_id: str | None = Query(description="员工号，模糊查询", max_length=255, default=None),
     access_level: int | None = Query(description="权限级别", ge=0, default=None),
-    offset: int = Query(description="列表起始位置", default=0),
-    limit: int = Query(description="列表大小", default=10),
-    include_deleted: bool = Query(description="是否包括已删除项", default=False),
+    page_param: GetModelsByPageParam = Depends(get_models_by_page),
 ) -> ListUserData:
     total_count, users = await crud.search_users(
-        username, staff_id, access_level, offset, limit, include_deleted
+        username,
+        staff_id,
+        access_level,
+        page_param.offset,
+        page_param.limit,
+        page_param.include_deleted,
     )
     return ListUserData(total=total_count, items=convert_models(users, UserInfo))
 
