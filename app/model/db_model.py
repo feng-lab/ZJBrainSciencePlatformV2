@@ -87,7 +87,7 @@ class Experiment(Model, ModelMixin):
     # 实验地点
     location: str = String(max_length=255)
     # 实验开始时间
-    start_at: datetime = DateTime(timezone=True)
+    start_at: datetime = DateTime(timezone=True, index=True)
     # 实验结束时间
     end_at: datetime = DateTime(timezone=True)
     # 是否为无创实验
