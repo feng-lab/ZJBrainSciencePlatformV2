@@ -10,7 +10,7 @@ services:
       DATABASE_URL: mysql+pymysql://zjlab:zjlab2022@database:3306/zj_brain_science_platform
       DATABASE_CONFIG: '{}'
     volumes:
-      - ~/log/ZJBrainSciencePlatform/app:/code/log/app
+      - ~/log/ZJBrainSciencePlatform/app:/root/log/ZJBrainSciencePlatform/app
     restart: always
     depends_on:
       - database
