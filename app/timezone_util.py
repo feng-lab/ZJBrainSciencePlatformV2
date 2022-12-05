@@ -1,11 +1,8 @@
 # db -> (UTC none->current) -> backend -> (format) -> response
 # request -> (none->current) -> backend -> (current->UTC) -> db
-import functools
 from datetime import datetime, timezone, tzinfo, timedelta
-from typing import Callable
 
 from dateutil.tz import gettz
-from pydantic import BaseModel
 
 from app.utils import modify_model_field_by_type
 from app.config import config
@@ -39,23 +36,3 @@ def convert_timezone_before_handle_request(model: Model):
     return modify_model_field_by_type(
         model, datetime, lambda dt: dt.replace(tzinfo=CURRENT_TIMEZONE)
     )
-
-
-def convert_db_model_timezone(func: Callable[..., Model | list[Model]]):
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs) -> Model | list[Model] | None:
-        result = await func(*args, **kwargs)
-        if result is None:
-            return None
-        if isinstance(result, BaseModel):
-            return convert_timezone_after_get_db(result)
-        if isinstance(result, list):
-            return [
-                convert_timezone_after_get_db(model)
-                if isinstance(model, BaseModel)
-                else model
-                for model in result
-            ]
-        return result
-
-    return wrapper

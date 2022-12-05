@@ -1,14 +1,18 @@
 import asyncio
+import functools
 import inspect
 import logging
 import sys
-from typing import TypeVar
+from typing import TypeVar, Callable
 
 import ormar
 from ormar import QuerySet
 
 from app.model.db_model import User, Notification
-from app.timezone_util import convert_db_model_timezone, convert_timezone_before_save
+from app.timezone_util import (
+    convert_timezone_after_get_db,
+    convert_timezone_before_save,
+)
 from app.utils import utc_now
 
 logger = logging.getLogger(__name__)
@@ -110,6 +114,26 @@ def set_convert_db_model_timezone():
         ):
             new_func = convert_db_model_timezone(member)
             setattr(current_module, name, new_func)
+
+
+def convert_db_model_timezone(func: Callable[..., DBModel | list[DBModel]]):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs) -> DBModel | list[DBModel] | None:
+        result = await func(*args, **kwargs)
+        if result is None:
+            return None
+        if isinstance(result, ormar.Model):
+            return convert_timezone_after_get_db(result)
+        if isinstance(result, list):
+            return [
+                convert_timezone_after_get_db(model)
+                if isinstance(model, ormar.Model)
+                else model
+                for model in result
+            ]
+        return result
+
+    return wrapper
 
 
 set_convert_db_model_timezone()
