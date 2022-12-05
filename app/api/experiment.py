@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.api.auth import get_current_user_as_human_subject, get_current_user_as_researcher
 from app.db import crud
-from app.model.db_model import Experiment, User
+from app.model.db_model import Experiment, ExperimentAssistant, User
 from app.model.request import (
     CreateExperimentRequest,
     GetExperimentsByPageSortBy,
@@ -25,6 +25,11 @@ async def create_experiment(
     request = convert_timezone_before_handle_request(request)
     experiment = Experiment(**request.dict())
     experiment = await crud.create_model(experiment)
+    assistants = [
+        ExperimentAssistant(user_id=assistant_id, experiment_id=experiment.id)
+        for assistant_id in request.assistants
+    ]
+    await crud.bulk_create_models(assistants)
     return experiment.id
 
 
@@ -35,6 +40,8 @@ async def get_experiment_info(
     experiment_id: int = Query(description="实验ID"),
 ) -> ExperimentInfo:
     experiment = await crud.get_model_by_id(Experiment, experiment_id)
+    assistants = await crud.search_models(ExperimentAssistant, experiment_id=experiment_id)
+    experiment.assistants = [assistant.user_id for assistant in assistants]
     return ExperimentInfo(**experiment.dict())
 
 
@@ -56,4 +63,9 @@ async def get_experiments_by_page(
     experiments = await crud.search_experiments(
         search, sort_by, sort_order, page_param.offset, page_param.limit, page_param.include_deleted
     )
+    assistant_lists = await crud.bulk_search_models_by_key(
+        ExperimentAssistant, [experiment.id for experiment in experiments], "experiment_id"
+    )
+    for experiment, assistants in zip(experiments, assistant_lists):
+        experiment.assistants = [assistant.id for assistant in assistants]
     return convert_models(experiments, ExperimentInfo)

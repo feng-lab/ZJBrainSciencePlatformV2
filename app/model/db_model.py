@@ -90,6 +90,10 @@ class Experiment(Model, ModelMixin):
     start_at: datetime = DateTime(timezone=True, index=True)
     # 实验结束时间
     end_at: datetime = DateTime(timezone=True)
+    # 主操作者，experiment_operator.id
+    main_operator: int = Integer(ge=0)
+    # 助手，experiment_operator.id
+    assistants: list[int] | None
     # 是否为无创实验
     is_non_invasive: bool | None = Boolean(nullable=True)
     # 被试类型
@@ -109,16 +113,14 @@ class Experiment(Model, ModelMixin):
 
 
 # 实验操作者
-class ExperimentOperator(Model, ModelMixin):
+class ExperimentAssistant(Model, ModelMixin):
     class Meta(BaseMeta):
-        tablename = "experiment_operator"
+        tablename = "experiment_assistant"
 
     # 用户ID
     user_id: int = Integer(minimum=0)
     # 实验ID
     experiment_id: int = Integer(minimum=0, index=True)
-    # 是否是主操作员
-    is_main_operator: bool = Boolean()
 
 
 # 文件

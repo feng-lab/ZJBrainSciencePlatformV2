@@ -4,7 +4,7 @@ import inspect
 import itertools
 import logging
 import sys
-from typing import Awaitable, Callable, TypeVar
+from typing import Any, Awaitable, Callable, TypeVar
 
 import ormar
 from ormar import QuerySet
@@ -35,6 +35,11 @@ async def create_model(model: DBModel) -> DBModel:
     return model
 
 
+async def bulk_create_models(models: list[DBModel]) -> None:
+    model_type = type(models[0])
+    await model_type.objects.bulk_create(models)
+
+
 async def get_model_by_id(model_type: type[DBModel], model_id: int) -> DBModel | None:
     model = await model_type.objects.get_or_none(id=model_id, is_deleted=False)
     return model
@@ -43,6 +48,21 @@ async def get_model_by_id(model_type: type[DBModel], model_id: int) -> DBModel |
 async def get_model(model_type: type[DBModel], **queries) -> DBModel | None:
     model = await model_type.objects.get_or_none(**queries, is_deleted=False)
     return model
+
+
+async def search_models(model_type: type[DBModel], **queries) -> list[DBModel]:
+    models = await model_type.objects.filter(**queries, is_deleted=False).all()
+    return models
+
+
+async def bulk_search_models_by_key(
+    model_type: type[DBModel], keys: list[Any], key_name: str
+) -> list[list[DBModel]]:
+    tasks = [
+        model_type.objects.filter(**{key_name: key, "is_deleted": False}).all() for key in keys
+    ]
+    result = await asyncio.gather(*tasks)
+    return result
 
 
 async def get_user_by_username(username: str) -> User | None:

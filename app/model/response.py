@@ -4,6 +4,7 @@ from datetime import datetime
 from json import JSONEncoder
 from typing import Any, Awaitable, Callable, Generic, TypeVar
 
+import pydantic
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 from starlette.responses import JSONResponse
@@ -80,7 +81,7 @@ class ListUserData(BaseModel):
 
 NotificationInfo = Notification.get_pydantic()
 
-ExperimentInfo = Experiment.get_pydantic()
+ExperimentInfo = pydantic.create_model("ExperimentInfo", __base__=Experiment, assistants=(list[int] | None, None))
 
 
 class GetExperimentInfoResponse(Response):

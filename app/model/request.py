@@ -51,6 +51,8 @@ class CreateExperimentRequest(BaseModel):
     location: str = Field(title="实验地点", max_length=255)
     start_at: datetime = Field(title="实验开始时间")
     end_at: datetime = Field(title="实验结束时间")
+    main_operator: int = Field(title="主操作员ID")
+    assistants: list[int] = Field(title="助手ID列表", default_factory=list)
     is_non_invasive: bool | None = Field(title="是否为无创实验", default=None)
     subject_type: str | None = Field(title="被试类型", default=None)
     subject_num: int | None = Field(title="被试数量", default=None)
