@@ -125,17 +125,13 @@ async def shutdown() -> None:
 @app.middleware("http")
 async def log_access_api(request: Request, call_next: Callable):
     start_time = datetime.now()
-    request.state.access_info = {
-        "method": request.method,
-        "api": request.url.path,
-    }
+    request.state.access_info = {"method": request.method, "api": request.url.path}
 
     response = await call_next(request)
 
     rt = datetime.now() - start_time
     request.state.access_info.update(
-        code=response.status_code,
-        rt=int(rt.total_seconds() * 1000),
+        code=response.status_code, rt=int(rt.total_seconds() * 1000)
     )
     log_message = ";".join(
         f"{key}={value}" for key, value in request.state.access_info.items()
@@ -235,16 +231,10 @@ def get_statistic_with_subject():
         code=CODE_SUCCESS,
         data=[
             GetStatisticWithSubjectResponse.Data(
-                type="男性",
-                below_30=5,
-                between_30_and_60=5,
-                over_60=3,
+                type="男性", below_30=5, between_30_and_60=5, over_60=3
             ),
             GetStatisticWithSubjectResponse.Data(
-                type="女性",
-                below_30=9,
-                between_30_and_60=5,
-                over_60=7,
+                type="女性", below_30=9, between_30_and_60=5, over_60=7
             ),
         ],
     )
@@ -257,10 +247,7 @@ def get_statistic_with_subject():
     description="返回当前计算服务器资源利用率的百分比数值，精确到小数点后两位",
 )
 def get_statistic_with_server():
-    return GetStatisticWithServerResponse(
-        code=CODE_SUCCESS,
-        data=70.53,
-    )
+    return GetStatisticWithServerResponse(code=CODE_SUCCESS, data=70.53)
 
 
 @app.get(
@@ -388,8 +375,7 @@ def get_doc_by_page(
     description="删除上传的数据文件",
 )
 def delete_doc(
-    experiment_id: str = Query(title="实验编号"),
-    file_id: int = Query(title="文件ID"),
+    experiment_id: str = Query(title="实验编号"), file_id: int = Query(title="文件ID")
 ):
     return DeleteDocResponse(code=CODE_SUCCESS)
 
@@ -482,8 +468,7 @@ def add_device(request: AddDeviceRequest):
     description="根据设备ID获取设备详情",
 )
 def get_device_by_id(
-    experiment_id: str = Query(title="实验编号"),
-    equipment_id: str = Query(title="设备编号"),
+    experiment_id: str = Query(title="实验编号"), equipment_id: str = Query(title="设备编号")
 ):
     return GetDeviceByIdResponse(code=CODE_SUCCESS, data=Device())
 
@@ -546,10 +531,7 @@ def get_task_by_page(
 
 
 @app.post(
-    "/api/addTask",
-    response_model=AddTaskResponse,
-    name="新增任务",
-    description="新增任务",
+    "/api/addTask", response_model=AddTaskResponse, name="新增任务", description="新增任务"
 )
 def add_task(request: AddTaskRequest):
     return AddTaskResponse(code=CODE_SUCCESS, data=[Task()])
@@ -582,8 +564,7 @@ def get_task_steps_by_id(task_id: str = Query(title="任务ID")):
     description="页面点击滤波类型步骤后，获取对应步骤的执行结果，即波形图数据",
 )
 def get_filter_step_result_by_id(
-    task_id: str = Query(title="任务ID"),
-    operation_id: str = Query(title="操作步骤ID"),
+    task_id: str = Query(title="任务ID"), operation_id: str = Query(title="操作步骤ID")
 ):
     return GetFilterStepResultByIDResponse(
         code=CODE_SUCCESS,
@@ -602,12 +583,10 @@ def get_filter_step_result_by_id(
     description="页面点击分析步骤后，获取分析步骤的执行结果，即生成的png图片路径",
 )
 def get_analysis_step_result_by_id(
-    task_id: str = Query(title="任务ID"),
-    operation_id: str = Query(title="操作步骤ID"),
+    task_id: str = Query(title="任务ID"), operation_id: str = Query(title="操作步骤ID")
 ):
     return GetAnalysisStepResultByIDResponse(
-        code=CODE_SUCCESS,
-        data="http://xxx.xxx/result_img.png",
+        code=CODE_SUCCESS, data="http://xxx.xxx/result_img.png"
     )
 
 

@@ -1,5 +1,7 @@
 import asyncio
+import inspect
 import logging
+import sys
 from typing import TypeVar
 
 import ormar
@@ -14,7 +16,6 @@ logger = logging.getLogger(__name__)
 DBModel = TypeVar("DBModel", bound=ormar.Model, contravariant=True)
 
 
-@convert_db_model_timezone
 async def update_model(model: DBModel, **updates) -> DBModel:
     if model is not None:
         updates["gmt_modified"] = utc_now()
@@ -23,7 +24,6 @@ async def update_model(model: DBModel, **updates) -> DBModel:
     return model
 
 
-@convert_db_model_timezone
 async def create_model(model: DBModel) -> DBModel:
     model = convert_timezone_before_save(model)
     model = await model.save()
@@ -31,24 +31,20 @@ async def create_model(model: DBModel) -> DBModel:
     return model
 
 
-@convert_db_model_timezone
 async def get_model_by_id(model_type: type[DBModel], model_id: int) -> DBModel | None:
     model = await model_type.objects.get_or_none(id=model_id, is_deleted=False)
     return model
 
 
-@convert_db_model_timezone
 async def get_model(model_type: type[DBModel], **queries) -> DBModel | None:
     model = await model_type.objects.get_or_none(**queries, is_deleted=False)
     return model
 
 
-@convert_db_model_timezone
 async def get_user_by_username(username: str) -> User | None:
     return await get_model(User, username=username)
 
 
-@convert_db_model_timezone
 async def search_users(
     username: str | None,
     staff_id: str | None,
@@ -73,7 +69,6 @@ async def search_users(
     return total_count, users
 
 
-@convert_db_model_timezone
 async def list_notifications(
     user_id: int, offset: int, limit: int
 ) -> list[Notification]:
@@ -87,7 +82,6 @@ async def list_notifications(
     return msgs
 
 
-@convert_db_model_timezone
 async def list_unread_notifications(
     user_id: int, is_all: bool, msg_ids: list[int]
 ) -> list[Notification]:
@@ -106,3 +100,16 @@ async def update_notifications_as_read(msgs: list[Notification]) -> None:
         msg.status = Notification.Status.READ.value
         msg.gmt_modified = now
     await Notification.objects.bulk_update(msgs, columns=["status", "gmt_modified"])
+
+
+def set_convert_db_model_timezone():
+    current_module = sys.modules[__name__]
+    for name, member in inspect.getmembers(current_module):
+        if inspect.getmodule(member) == current_module and inspect.iscoroutinefunction(
+            member
+        ):
+            new_func = convert_db_model_timezone(member)
+            setattr(current_module, name, new_func)
+
+
+set_convert_db_model_timezone()
