@@ -1,8 +1,14 @@
-from typing import Any
+import functools
+import json
+from datetime import datetime
+from json import JSONEncoder
+from typing import TypeVar, Generic, Any, Callable, Awaitable
 
 from pydantic import BaseModel, Field
+from pydantic.generics import GenericModel
+from starlette.responses import JSONResponse
 
-from app.model.db_model import User, Notification, Experiment
+from app.model.db_model import User, Experiment, Notification
 from app.model.schema import Paradigm, Human, Device, EEGData, File, Task, SearchFile, SearchResult
 
 CODE_SUCCESS: int = 0
@@ -16,11 +22,42 @@ CODE_SESSION_TIMEOUT: int = 2
 
 MESSAGE_SUCCESS: str = "success"
 
+Data = TypeVar("Data")
 
-class Response(BaseModel):
+
+class Response(GenericModel, Generic[Data]):
     code: int = Field(title="状态码", description="1表示成功，0和其他数字表示失败", default=CODE_SUCCESS)
     message: str | None = Field(title="响应消息", default=MESSAGE_SUCCESS)
-    data: Any | None = Field(title="响应数据", default=None)
+    data: Data = Field(title="响应数据")
+
+
+class NoneResponse(Response[type(None)]):
+    data: type(None) = None
+
+
+class JsonEncoder(JSONEncoder):
+    def default(self, o: Any) -> Any:
+        if isinstance(o, datetime):
+            return o.strftime("%Y-%m-%d %H:%M:%S")
+        return super().default(o)
+
+
+class JsonResponse(JSONResponse):
+    def render(self, content: Any) -> bytes:
+        return json.dumps(
+            content, ensure_ascii=False, allow_nan=False, indent=None, separators=(",", ":"), cls=JsonEncoder
+        ).encode("UTF-8")
+
+
+def wrap_api_response(func: Callable[..., Awaitable[Data]]):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs) -> JsonResponse:
+        response_data = await func(*args, **kwargs)
+        response = Response[Data](data=response_data)
+        json_response = JsonResponse(response.dict())
+        return json_response
+
+    return wrapper
 
 
 class LoginResponse(BaseModel):
@@ -31,37 +68,12 @@ class LoginResponse(BaseModel):
 UserInfo = User.get_pydantic(exclude={"hashed_password"})
 
 
-class CreateUserResponse(Response):
-    data: int
+class ListUserData(BaseModel):
+    total: int = Field(title="总数", ge=0)
+    items: list[UserInfo] = Field(title="数据列表")
 
 
-class GetUserInfoResponse(Response):
-    data: UserInfo
-
-
-class ListUsersResponse(Response):
-    class Data(BaseModel):
-        total: int = Field(title="总数", ge=0)
-        items: list[UserInfo] = Field(title="数据列表")
-
-    data: Data
-
-
-class ListNotificationsResponse(Response):
-    data: list[Notification]
-
-
-class SendNotificationResponse(Response):
-    data: int
-
-
-class MarkNotificationsAsReadResponse(Response):
-    data: list[int]
-
-
-class CreateExperimentResponse(Response):
-    data: int
-
+NotificationInfo = Notification.get_pydantic()
 
 ExperimentInfo = Experiment.get_pydantic()
 
@@ -231,3 +243,10 @@ class UploadSearchFileResponse(Response):
 
 class GoSearchResponse(Response):
     data: list[SearchResult]
+
+
+class AccessTokenData(BaseModel):
+    # 用户ID，按照JWT标准存储为string
+    sub: str
+    # 过期时间，UTC
+    exp: datetime

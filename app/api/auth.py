@@ -12,9 +12,9 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 from app.config import config
 from app.db import crud
 from app.model.db_model import User
-from app.model.response import LoginResponse, Response
-from app.model.schema import AccessTokenData
-from app.utils import utc_now
+from app.model.response import LoginResponse, NoneResponse, wrap_api_response
+from model.response import AccessTokenData
+from app.timezone_util import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,7 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
     return LoginResponse(access_token=access_token, token_type=TOKEN_TYPE)
 
 
-@router.post("/api/logout", description="用户登出", response_model=Response)
-async def logout(user: User = Depends(get_current_user)):
+@router.post("/api/logout", description="用户登出", response_model=NoneResponse)
+@wrap_api_response
+async def logout(user: User = Depends(get_current_user)) -> None:
     await crud.update_model(user, last_logout_time=utc_now())
-    return Response()

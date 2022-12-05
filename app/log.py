@@ -7,7 +7,7 @@ from queue import Queue
 from typing import Callable
 
 from app.config import config
-from app.utils import current_timezone
+from app.timezone_util import current_timezone
 
 ACCESS_LOGGER_NAME = "access"
 UVICORN_LOGGER_NAME = "uvicorn.access"

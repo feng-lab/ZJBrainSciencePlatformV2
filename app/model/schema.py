@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from pydantic import BaseModel, Field
 
 
@@ -36,10 +34,3 @@ class SearchFile(BaseModel):
 
 class SearchResult(BaseModel):
     pass
-
-
-class AccessTokenData(BaseModel):
-    # 用户ID，按照JWT标准存储为string
-    sub: str
-    # 过期时间，UTC
-    exp: datetime

@@ -23,6 +23,10 @@ class UpdatePasswordRequest(BaseModel):
     new_password: str = Field(max_length=50)
 
 
+class DeleteUserRequest(BaseModel):
+    id: int = Field(ge=0)
+
+
 class LoginRequest(BaseModel):
     account: str = Field(title="用户名")
     password: str = Field(title="用户密码")

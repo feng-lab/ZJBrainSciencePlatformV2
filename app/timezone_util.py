@@ -2,11 +2,11 @@
 # request -> (none->current) -> backend -> (current->UTC) -> db
 from datetime import datetime, timezone, tzinfo, timedelta
 
+from dateutil import tz
 from dateutil.tz import gettz
 
-from app.utils import modify_model_field_by_type
 from app.config import config
-from app.utils import Model
+from app.utils import modify_model_field_by_type, Model
 
 CURRENT_TIMEZONE: tzinfo = gettz(config.TIMEZONE)
 
@@ -30,3 +30,10 @@ def convert_timezone_after_get_db(model: Model):
 
 def convert_timezone_before_handle_request(model: Model):
     return modify_model_field_by_type(model, datetime, lambda dt: dt.replace(tzinfo=CURRENT_TIMEZONE))
+
+
+current_timezone = tz.gettz(config.TIMEZONE)
+
+
+def utc_now() -> datetime:
+    return datetime.now(tz=tz.UTC)

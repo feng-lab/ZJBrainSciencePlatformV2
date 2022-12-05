@@ -11,8 +11,8 @@ from ormar import QuerySet
 
 from app.config import config
 from app.model.db_model import User, Notification
-from app.timezone_util import convert_timezone_after_get_db, convert_timezone_before_save
-from app.utils import utc_now, get_module_defined_members
+from app.timezone_util import convert_timezone_after_get_db, convert_timezone_before_save, utc_now
+from app.utils import get_module_defined_members
 
 logger = logging.getLogger(__name__)
 
