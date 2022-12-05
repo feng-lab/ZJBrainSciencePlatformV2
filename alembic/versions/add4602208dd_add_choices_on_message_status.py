@@ -5,8 +5,9 @@ Revises: 2481c8a86f7e
 Create Date: 2022-11-22 15:01:08.100532
 
 """
-from alembic import op
 from sqlalchemy.dialects import mysql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "add4602208dd"

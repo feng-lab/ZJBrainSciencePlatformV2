@@ -5,14 +5,14 @@ from typing import NoReturn
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import jwt, ExpiredSignatureError, JWTError
+from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 from starlette.status import HTTP_401_UNAUTHORIZED
 
 from app.config import config
 from app.db import crud
 from app.model.db_model import User
-from app.model.response import LoginResponse, NoneResponse, wrap_api_response, AccessTokenData
+from app.model.response import AccessTokenData, LoginResponse, NoneResponse, wrap_api_response
 from app.timezone_util import utc_now
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         return user
     except ExpiredSignatureError as e:
         # token过期
-        token_payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_signature": False})
+        token_payload = jwt.decode(
+            token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_signature": False}
+        )
         logger.info(f"token expired, {token_payload=}")
         raise e
     except JWTError:
@@ -94,7 +96,9 @@ def hash_password(password: str) -> str:
 def raise_unauthorized_exception(**data) -> NoReturn:
     logger.error(f"unauthorized user, {data=}")
     raise HTTPException(
-        status_code=HTTP_401_UNAUTHORIZED, detail="wrong username or password", headers={"WWW-Authenticate": "Bearer"}
+        status_code=HTTP_401_UNAUTHORIZED,
+        detail="wrong username or password",
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
 

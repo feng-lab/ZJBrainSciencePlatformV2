@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "ZJBrainSciencePlatform"
+version = "0.1.0"
+description = "之江实验室 Brain Science 平台"
+authors = ["蔡涛 <caitao@zhejianglab.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.88.0"
+sqlalchemy = "^1.4.41"
+ormar = { extras = ["mysql"], version = "^0.12.0" }
+passlib = { extras = ["bcrypt"], version = "^1.7.4" }
+pydantic = "^1.10.2"
+python-jose = "^3.3.0"
+python-multipart = "^0.0.5"
+starlette = "^0.22.0"
+uvicorn = "^0.20.0"
+python-dateutil = "^2.8.2"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.10.0"
+isort = "^5.10.1"
+
+
+[tool.poetry.group.alembic.dependencies]
+alembic = "^1.8.1"
+mysqlclient = "^2.1.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+skip-magic-trailing-comma = true
+
+[tool.isort]
+profile = "black"
+line_length = 100
+src_paths = ["app", "alembic"]

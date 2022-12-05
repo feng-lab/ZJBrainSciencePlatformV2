@@ -3,11 +3,11 @@ from fastapi import APIRouter, Depends, Query
 from app.api.auth import get_current_user_as_human_subject
 from app.config import config
 from app.db import crud
-from app.model.db_model import User, Notification
-from app.model.request import SendNotificationRequest, MarkNotificationsAsReadRequest
-from app.model.response import Response, wrap_api_response, NotificationInfo
+from app.model.db_model import Notification, User
+from app.model.request import MarkNotificationsAsReadRequest, SendNotificationRequest
+from app.model.response import NotificationInfo, Response, wrap_api_response
 from app.timezone_util import convert_timezone_before_handle_request
-from app.utils import convert_models
+from app.util import convert_models
 
 router = APIRouter()
 
@@ -24,7 +24,9 @@ async def send_notification(
 
 
 @router.get(
-    "/api/getRecentUnreadNotifications", description="获取最近未读通知", response_model=Response[list[NotificationInfo]]
+    "/api/getRecentUnreadNotifications",
+    description="获取最近未读通知",
+    response_model=Response[list[NotificationInfo]],
 )
 @wrap_api_response
 async def get_recent_unread_notifications(
@@ -36,7 +38,11 @@ async def get_recent_unread_notifications(
     return convert_models(recent_notifications, NotificationInfo)
 
 
-@router.get("/api/getNotificationsByPage", description="分页获取未读通知", response_model=Response[list[NotificationInfo]])
+@router.get(
+    "/api/getNotificationsByPage",
+    description="分页获取未读通知",
+    response_model=Response[list[NotificationInfo]],
+)
 @wrap_api_response
 async def get_notifications_by_page(
     user: User = Depends(get_current_user_as_human_subject()),
@@ -48,10 +54,13 @@ async def get_notifications_by_page(
     return convert_models(recent_notifications, NotificationInfo)
 
 
-@router.post("/api/markNotificationsAsRead", description="批量将通知标记为已读", response_model=Response[list[int]])
+@router.post(
+    "/api/markNotificationsAsRead", description="批量将通知标记为已读", response_model=Response[list[int]]
+)
 @wrap_api_response
 async def mark_notifications_as_read(
-    request: MarkNotificationsAsReadRequest, user: User = Depends(get_current_user_as_human_subject())
+    request: MarkNotificationsAsReadRequest,
+    user: User = Depends(get_current_user_as_human_subject()),
 ) -> list[int]:
     user_id = user.id
     notification_ids = set(request.notification_ids)

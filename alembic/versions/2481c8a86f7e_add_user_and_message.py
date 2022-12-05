@@ -5,9 +5,9 @@ Revises:
 Create Date: 2022-11-22 10:27:18.671527
 
 """
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "2481c8a86f7e"
@@ -21,8 +21,15 @@ def upgrade() -> None:
     op.create_table(
         "message",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("gmt_create", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
-        sa.Column("gmt_modified", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
+        sa.Column(
+            "gmt_create", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True
+        ),
+        sa.Column(
+            "gmt_modified",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
         sa.Column("is_deleted", sa.Boolean(), nullable=True),
         sa.Column("msg_type", sa.String(length=20), nullable=False),
         sa.Column("creator", sa.Integer(), nullable=False),
@@ -37,8 +44,15 @@ def upgrade() -> None:
     op.create_table(
         "user",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("gmt_create", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
-        sa.Column("gmt_modified", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
+        sa.Column(
+            "gmt_create", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True
+        ),
+        sa.Column(
+            "gmt_modified",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=True,
+        ),
         sa.Column("is_deleted", sa.Boolean(), nullable=True),
         sa.Column("username", sa.String(length=255), nullable=False),
         sa.Column("hashed_password", sa.String(length=255), nullable=False),

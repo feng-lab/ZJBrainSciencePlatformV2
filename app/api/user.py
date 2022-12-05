@@ -1,18 +1,23 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_401_UNAUTHORIZED
+from fastapi import APIRouter, Depends, HTTPException, Query
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 
 from app.api.auth import (
-    get_current_user,
-    hash_password,
-    get_current_user_as_administrator,
     AccessLevel,
+    get_current_user,
+    get_current_user_as_administrator,
+    hash_password,
     verify_password,
 )
 from app.db import crud
 from app.model.db_model import User
-from app.model.request import CreateUserRequest, UpdateUserAccessLevelRequest, UpdatePasswordRequest, DeleteUserRequest
-from app.model.response import Response, UserInfo, ListUserData, NoneResponse, wrap_api_response
-from app.utils import convert_models
+from app.model.request import (
+    CreateUserRequest,
+    DeleteUserRequest,
+    UpdatePasswordRequest,
+    UpdateUserAccessLevelRequest,
+)
+from app.model.response import ListUserData, NoneResponse, Response, UserInfo, wrap_api_response
+from app.util import convert_models
 
 router = APIRouter()
 
@@ -22,7 +27,9 @@ ROOT_PASSWORD = "?L09G$7g5*j@.q*4go4d"
 
 @router.post("/api/createUser", description="创建用户", response_model=Response[int])
 @wrap_api_response
-async def create_user(request: CreateUserRequest, _user: User = Depends(get_current_user_as_administrator())) -> int:
+async def create_user(
+    request: CreateUserRequest, _user: User = Depends(get_current_user_as_administrator())
+) -> int:
     # 用户名唯一，幂等处理
     user = await crud.get_user_by_username(request.username)
     if user is None:
@@ -76,14 +83,17 @@ async def get_users_by_page(
     limit: int = Query(description="列表大小", default=10),
     include_deleted: bool = Query(description="是否包括已删除项", default=False),
 ) -> ListUserData:
-    total_count, users = await crud.search_users(username, staff_id, access_level, offset, limit, include_deleted)
+    total_count, users = await crud.search_users(
+        username, staff_id, access_level, offset, limit, include_deleted
+    )
     return ListUserData(total=total_count, items=convert_models(users, UserInfo))
 
 
 @router.post("/api/updateUserAccessLevel", description="修改用户权限", response_model=NoneResponse)
 @wrap_api_response
 async def update_user_access_level(
-    request: UpdateUserAccessLevelRequest, _user: User = Depends(get_current_user_as_administrator())
+    request: UpdateUserAccessLevelRequest,
+    _user: User = Depends(get_current_user_as_administrator()),
 ) -> None:
     update_user = await crud.get_model_by_id(User, request.id)
     if update_user is None:
@@ -93,7 +103,9 @@ async def update_user_access_level(
 
 @router.post("/api/updatePassword", description="用户修改密码", response_model=NoneResponse)
 @wrap_api_response
-async def update_password(request: UpdatePasswordRequest, user: User = Depends(get_current_user)) -> None:
+async def update_password(
+    request: UpdatePasswordRequest, user: User = Depends(get_current_user)
+) -> None:
     db_user = await verify_password(user.username, request.old_password)
     if db_user is None or db_user.id != user.id or db_user.username != user.username:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="原密码错误")
@@ -103,6 +115,8 @@ async def update_password(request: UpdatePasswordRequest, user: User = Depends(g
 
 @router.delete("/api/deleteUser", description="删除用户", response_model=NoneResponse)
 @wrap_api_response
-async def delete_user(request: DeleteUserRequest, _user: User = Depends(get_current_user_as_administrator())) -> None:
+async def delete_user(
+    request: DeleteUserRequest, _user: User = Depends(get_current_user_as_administrator())
+) -> None:
     user = await crud.get_model_by_id(User, request.id)
     await crud.update_model(user, is_deleted=True)

@@ -4,15 +4,15 @@ import inspect
 import itertools
 import logging
 import sys
-from typing import TypeVar, Callable, Awaitable
+from typing import Awaitable, Callable, TypeVar
 
 import ormar
 from ormar import QuerySet
 
 from app.config import config
-from app.model.db_model import User, Notification
+from app.model.db_model import Notification, User
 from app.timezone_util import convert_timezone_after_get_db, convert_timezone_before_save, utc_now
-from app.utils import get_module_defined_members
+from app.util import get_module_defined_members
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,12 @@ async def get_user_by_username(username: str) -> User | None:
 
 
 async def search_users(
-    username: str | None, staff_id: str | None, access_level: int | None, offset: int, limit: int, include_deleted: bool
+    username: str | None,
+    staff_id: str | None,
+    access_level: int | None,
+    offset: int,
+    limit: int,
+    include_deleted: bool,
 ) -> (int, list[User]):
     query: QuerySet = User.objects
     if username is not None:
@@ -61,7 +66,9 @@ async def search_users(
     if not include_deleted:
         query = query.filter(is_deleted=False)
 
-    total_count, users = await asyncio.gather(query.count(), query.offset(offset).limit(limit).order_by("id").all())
+    total_count, users = await asyncio.gather(
+        query.count(), query.offset(offset).limit(limit).order_by("id").all()
+    )
     return total_count, users
 
 
@@ -76,8 +83,12 @@ async def list_notifications(user_id: int, offset: int, limit: int) -> list[Noti
     return msgs
 
 
-async def list_unread_notifications(user_id: int, is_all: bool, msg_ids: list[int]) -> list[Notification]:
-    query = Notification.objects.filter(receiver=user_id, is_deleted=False, status=Notification.Status.UNREAD.value)
+async def list_unread_notifications(
+    user_id: int, is_all: bool, msg_ids: list[int]
+) -> list[Notification]:
+    query = Notification.objects.filter(
+        receiver=user_id, is_deleted=False, status=Notification.Status.UNREAD.value
+    )
     if not is_all:
         query = query.filter(id__in=msg_ids)
     msgs = await query.all()
@@ -94,7 +105,9 @@ async def update_notifications_as_read(msgs: list[Notification]) -> None:
 
 def add_common_stuff() -> None:
     current_module = sys.modules[__name__]
-    async_funcs = get_module_defined_members(current_module, lambda _name, item: inspect.iscoroutinefunction(item))
+    async_funcs = get_module_defined_members(
+        current_module, lambda _name, item: inspect.iscoroutinefunction(item)
+    )
     for name, func in async_funcs:
         new_func = convert_db_model_timezone(func)
         if config.DEBUG_MODE:
@@ -112,7 +125,8 @@ def convert_db_model_timezone(func: Callable[..., Awaitable[DBModel | list[DBMod
             return convert_timezone_after_get_db(result)
         if isinstance(result, list):
             return [
-                convert_timezone_after_get_db(model) if isinstance(model, ormar.Model) else model for model in result
+                convert_timezone_after_get_db(model) if isinstance(model, ormar.Model) else model
+                for model in result
             ]
         return result
 
@@ -125,7 +139,9 @@ def log_db_operation(name: str, func: Callable[..., Awaitable[...]]):
         func_sig = inspect.signature(func)
         real_args = ",".join(
             f"{param_name}={repr(param_value)}"
-            for param_name, param_value in zip(func_sig.parameters.keys(), itertools.chain(args, kwargs))
+            for param_name, param_value in zip(
+                func_sig.parameters.keys(), itertools.chain(args, kwargs)
+            )
         )
         result = await func(*args, **kwargs)
         logger.info(f"{name}({real_args})->{repr(result)}")

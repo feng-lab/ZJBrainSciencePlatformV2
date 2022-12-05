@@ -1,7 +1,7 @@
 import importlib
 import inspect
 from types import ModuleType
-from typing import TypeVar, Callable, Any, Type
+from typing import Any, Callable, Type, TypeVar
 
 from pydantic import BaseModel
 
@@ -29,7 +29,8 @@ def get_module_defined_members(
     return [
         member
         for member in inspect.getmembers(module)
-        if inspect.getmodule(member[1]) == module and (filter_func is None or filter_func(member[0], member[1]))
+        if inspect.getmodule(member[1]) == module
+        and (filter_func is None or filter_func(member[0], member[1]))
     ]
 
 

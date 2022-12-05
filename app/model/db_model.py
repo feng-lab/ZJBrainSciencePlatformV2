@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from ormar import Model, String, DateTime, Boolean, Integer, Text
+from ormar import Boolean, DateTime, Integer, Model, String, Text
 from pydantic import BaseModel
 
 from app.db.database import BaseMeta

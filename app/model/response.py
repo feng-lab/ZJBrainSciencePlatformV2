@@ -2,14 +2,14 @@ import functools
 import json
 from datetime import datetime
 from json import JSONEncoder
-from typing import TypeVar, Generic, Any, Callable, Awaitable
+from typing import Any, Awaitable, Callable, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 from starlette.responses import JSONResponse
 
-from app.model.db_model import User, Experiment, Notification
-from app.model.schema import Paradigm, Human, Device, EEGData, File, Task, SearchFile, SearchResult
+from app.model.db_model import Experiment, Notification, User
+from app.model.schema import Device, EEGData, File, Human, Paradigm, SearchFile, SearchResult, Task
 
 CODE_SUCCESS: int = 0
 """请求成功的code"""
@@ -45,7 +45,12 @@ class JsonEncoder(JSONEncoder):
 class JsonResponse(JSONResponse):
     def render(self, content: Any) -> bytes:
         return json.dumps(
-            content, ensure_ascii=False, allow_nan=False, indent=None, separators=(",", ":"), cls=JsonEncoder
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=None,
+            separators=(",", ":"),
+            cls=JsonEncoder,
         ).encode("UTF-8")
 
 
