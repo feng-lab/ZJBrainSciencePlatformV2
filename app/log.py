@@ -25,10 +25,7 @@ logging.Formatter.converter = current_time_tuple
 
 
 def init_handler(
-    path: Path,
-    log_filter: Callable[[LogRecord], bool],
-    level: int | None = None,
-    log_format: str = DEFAULT_LOG_FORMAT,
+    path: Path, log_filter: Callable[[LogRecord], bool], level: int | None = None, log_format: str = DEFAULT_LOG_FORMAT
 ) -> Handler:
     log_handler = TimedRotatingFileHandler(
         filename=path, when="D", backupCount=config.LOG_ROTATING_DAYS, encoding="UTF-8"
@@ -53,33 +50,20 @@ def name_logger_filter(name: str) -> Callable[[LogRecord], bool]:
 
 
 root_handler = init_handler(config.LOG_ROOT / "app.log", root_logger_filter)
-error_handler = init_handler(
-    config.LOG_ROOT / "error.log", root_logger_filter, level=ERROR
-)
+error_handler = init_handler(config.LOG_ROOT / "error.log", root_logger_filter, level=ERROR)
 access_handler = init_handler(
-    config.LOG_ROOT / "access.log",
-    name_logger_filter(ACCESS_LOGGER_NAME),
-    log_format=ACCESS_LOG_FORMAT,
+    config.LOG_ROOT / "access.log", name_logger_filter(ACCESS_LOGGER_NAME), log_format=ACCESS_LOG_FORMAT
 )
-uvicorn_handler = init_handler(
-    config.LOG_ROOT / "uvicorn.log", name_logger_filter(UVICORN_LOGGER_NAME)
-)
+uvicorn_handler = init_handler(config.LOG_ROOT / "uvicorn.log", name_logger_filter(UVICORN_LOGGER_NAME))
 
 log_queue = Queue()
 log_queue_handler = QueueHandler(log_queue)
 log_queue_listener = QueueListener(
-    log_queue,
-    root_handler,
-    access_handler,
-    error_handler,
-    uvicorn_handler,
-    respect_handler_level=True,
+    log_queue, root_handler, access_handler, error_handler, uvicorn_handler, respect_handler_level=True
 )
 
 
-def init_logger(
-    name: str | None, level: int = INFO, log_handler: Handler | None = None
-) -> Logger:
+def init_logger(name: str | None, level: int = INFO, log_handler: Handler | None = None) -> Logger:
     logger = getLogger(name)
     logger.setLevel(level)
     if log_handler is None:

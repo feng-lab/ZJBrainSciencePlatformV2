@@ -3,16 +3,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.model.db_model import User, Notification, Experiment
-from app.model.schema import (
-    Paradigm,
-    Human,
-    Device,
-    EEGData,
-    File,
-    Task,
-    SearchFile,
-    SearchResult,
-)
+from app.model.schema import Paradigm, Human, Device, EEGData, File, Task, SearchFile, SearchResult
 
 CODE_SUCCESS: int = 0
 """请求成功的code"""
@@ -112,9 +103,7 @@ class GetStatisticWithServerResponse(Response):
 
 
 class GetStatisticWithDataResponse(Response):
-    data: list[list[float]] = Field(
-        title="每天数据", description="每天数据的格式：[UTC毫秒时间戳，数值(GB)]"
-    )
+    data: list[list[float]] = Field(title="每天数据", description="每天数据的格式：[UTC毫秒时间戳，数值(GB)]")
 
 
 class GetStatisticWithSickResponse(Response):

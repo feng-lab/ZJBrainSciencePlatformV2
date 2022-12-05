@@ -39,9 +39,7 @@ def get_current_user_with_level(api_access_level: int):
     async def wrapper(user: User = Depends(get_current_user)) -> User:
         if user.access_level < api_access_level:
             logger.error(f"unauthorized api invocation, {user.id=}")
-            raise HTTPException(
-                status_code=HTTP_401_UNAUTHORIZED, detail="用户没有调用本API的权限"
-            )
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="用户没有调用本API的权限")
         return user
 
     return wrapper
@@ -74,12 +72,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         return user
     except ExpiredSignatureError as e:
         # token过期
-        token_payload = jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM],
-            options={"verify_signature": False},
-        )
+        token_payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_signature": False})
         logger.info(f"token expired, {token_payload=}")
         raise e
     except JWTError:
@@ -102,9 +95,7 @@ def hash_password(password: str) -> str:
 def raise_unauthorized_exception(**data) -> NoReturn:
     logger.error(f"unauthorized user, {data=}")
     raise HTTPException(
-        status_code=HTTP_401_UNAUTHORIZED,
-        detail="wrong username or password",
-        headers={"WWW-Authenticate": "Bearer"},
+        status_code=HTTP_401_UNAUTHORIZED, detail="wrong username or password", headers={"WWW-Authenticate": "Bearer"}
     )
 
 
@@ -115,9 +106,7 @@ async def verify_password(username: str, password: str) -> User | None:
     return None
 
 
-@router.post(
-    "/api/login", description="用户登录，获取AccessToken", response_model=LoginResponse
-)
+@router.post("/api/login", description="用户登录，获取AccessToken", response_model=LoginResponse)
 async def login(form: OAuth2PasswordRequestForm = Depends()):
     # 验证用户名与密码是否匹配
     user = await verify_password(form.username, form.password)

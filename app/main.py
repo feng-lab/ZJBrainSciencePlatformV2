@@ -72,16 +72,7 @@ from app.model.response import (
     UploadSearchFileResponse,
     GoSearchResponse,
 )
-from app.model.schema import (
-    Paradigm,
-    Human,
-    Device,
-    EEGData,
-    File,
-    Task,
-    SearchFile,
-    SearchResult,
-)
+from app.model.schema import Paradigm, Human, Device, EEGData, File, Task, SearchFile, SearchResult
 
 app_logger = logging.getLogger(__name__)
 access_logger = logging.getLogger(ACCESS_LOGGER_NAME)
@@ -95,11 +86,7 @@ app.include_router(experiment_router)
 app.state.database = database
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
 
 
@@ -130,12 +117,8 @@ async def log_access_api(request: Request, call_next: Callable):
     response = await call_next(request)
 
     rt = datetime.now() - start_time
-    request.state.access_info.update(
-        code=response.status_code, rt=int(rt.total_seconds() * 1000)
-    )
-    log_message = ";".join(
-        f"{key}={value}" for key, value in request.state.access_info.items()
-    )
+    request.state.access_info.update(code=response.status_code, rt=int(rt.total_seconds() * 1000))
+    log_message = ";".join(f"{key}={value}" for key, value in request.state.access_info.items())
     access_logger.info(log_message)
 
     return response
@@ -147,36 +130,25 @@ async def filter_blank_query_params(request: Request, call_next: Callable):
     query_string_key = "query_string"
     latin_1_encoding = "latin-1"
     if (scope := request.scope) and scope.get(query_string_key):
-        filtered_query_params = parse_qsl(
-            qs=scope[query_string_key].decode(latin_1_encoding), keep_blank_values=False
-        )
-        scope[query_string_key] = urlencode(filtered_query_params).encode(
-            latin_1_encoding
-        )
+        filtered_query_params = parse_qsl(qs=scope[query_string_key].decode(latin_1_encoding), keep_blank_values=False)
+        scope[query_string_key] = urlencode(filtered_query_params).encode(latin_1_encoding)
     return await call_next(request)
 
 
 @app.exception_handler(HTTPException)
 async def handle_http_exception(_request: Request, e: HTTPException):
-    return JSONResponse(
-        status_code=e.status_code,
-        content=Response(code=CODE_FAIL, message=e.detail).dict(),
-    )
+    return JSONResponse(status_code=e.status_code, content=Response(code=CODE_FAIL, message=e.detail).dict())
 
 
 @app.exception_handler(RequestValidationError)
 async def handle_http_exception(_request: Request, e: RequestValidationError):
-    return JSONResponse(
-        status_code=HTTP_400_BAD_REQUEST,
-        content=Response(code=CODE_FAIL, message=repr(e)).dict(),
-    )
+    return JSONResponse(status_code=HTTP_400_BAD_REQUEST, content=Response(code=CODE_FAIL, message=repr(e)).dict())
 
 
 @app.exception_handler(ExpiredSignatureError)
 async def handle_expired_token_exception(_request: Request, _e: ExpiredSignatureError):
     return JSONResponse(
-        status_code=HTTP_401_UNAUTHORIZED,
-        content=Response(code=CODE_SESSION_TIMEOUT, message="session timeout").dict(),
+        status_code=HTTP_401_UNAUTHORIZED, content=Response(code=CODE_SESSION_TIMEOUT, message="session timeout").dict()
     )
 
 
@@ -189,15 +161,11 @@ async def index():
 
 
 @app.get(
-    "/api/getStatistic",
-    response_model=GetStatisticResponse,
-    name="获取统计信息",
-    description="获取首页实验、文件、被试、任务四个卡片的统计数据",
+    "/api/getStatistic", response_model=GetStatisticResponse, name="获取统计信息", description="获取首页实验、文件、被试、任务四个卡片的统计数据"
 )
 def get_statistic():
     return GetStatisticResponse(
-        code=CODE_SUCCESS,
-        data=GetStatisticResponse.Data(experiments=7, files=8, human=7, taskmaster=8),
+        code=CODE_SUCCESS, data=GetStatisticResponse.Data(experiments=7, files=8, human=7, taskmaster=8)
     )
 
 
@@ -230,12 +198,8 @@ def get_statistic_with_subject():
     return GetStatisticWithSubjectResponse(
         code=CODE_SUCCESS,
         data=[
-            GetStatisticWithSubjectResponse.Data(
-                type="男性", below_30=5, between_30_and_60=5, over_60=3
-            ),
-            GetStatisticWithSubjectResponse.Data(
-                type="女性", below_30=9, between_30_and_60=5, over_60=7
-            ),
+            GetStatisticWithSubjectResponse.Data(type="男性", below_30=5, between_30_and_60=5, over_60=3),
+            GetStatisticWithSubjectResponse.Data(type="女性", below_30=9, between_30_and_60=5, over_60=7),
         ],
     )
 
@@ -257,8 +221,7 @@ def get_statistic_with_server():
     description="获取一定周期内平台上传数据量的按天统计结果，默认周期为一周",
 )
 def get_statistic_with_data(
-    start: date = Query(title="周期起始日期，YYYY-MM-DD"),
-    end: date = Query(title="周期截止日期，YYYY-MM-DD"),
+    start: date = Query(title="周期起始日期，YYYY-MM-DD"), end: date = Query(title="周期截止日期，YYYY-MM-DD")
 ):
     return GetStatisticWithDataResponse(
         code=CODE_SUCCESS,
@@ -282,12 +245,8 @@ def get_statistic_with_sick():
     return GetStatisticWithSickResponse(
         code=CODE_SUCCESS,
         data=[
-            GetStatisticWithSickResponse.Data(
-                sick="癫痫", part1=107, part2=133, part3=93
-            ),
-            GetStatisticWithSickResponse.Data(
-                sick="睡眠障碍", part1=31, part2=156, part3=14
-            ),
+            GetStatisticWithSickResponse.Data(sick="癫痫", part1=107, part2=133, part3=93),
+            GetStatisticWithSickResponse.Data(sick="睡眠障碍", part1=31, part2=156, part3=14),
             GetStatisticWithSickResponse.Data(sick="老年痴呆", part1=5, part2=92, part3=14),
             GetStatisticWithSickResponse.Data(sick="中风", part1=23, part2=48, part3=32),
             GetStatisticWithSickResponse.Data(sick="其他", part1=2, part2=6, part3=34),
@@ -295,64 +254,35 @@ def get_statistic_with_sick():
     )
 
 
-@app.post(
-    "/api/addParadigms",
-    response_model=AddParadigmResponse,
-    name="新增实验范式",
-    description="新增实验相关的范式描述",
-)
+@app.post("/api/addParadigms", response_model=AddParadigmResponse, name="新增实验范式", description="新增实验相关的范式描述")
 def add_paradigm(request: AddParadigmRequest):
     return AddParadigmResponse(code=CODE_SUCCESS)
 
 
-@app.get(
-    "/api/getParadigms",
-    response_model=GetParadigmsResponse,
-    name="获取实验范式",
-    description="根据实验编号获取实验相关的所有范式描述",
-)
+@app.get("/api/getParadigms", response_model=GetParadigmsResponse, name="获取实验范式", description="根据实验编号获取实验相关的所有范式描述")
 def get_paradigms(experiment_id: str = Query(title="实验编号")):
     return GetParadigmsResponse(code=CODE_SUCCESS, data=[Paradigm()])
 
 
 @app.get(
-    "/api/getParadigmById",
-    response_model=GetParadigmByIdResponse,
-    name="获取具体实验范式详情",
-    description="根据实验范式ID获取单条实验范式的详情",
+    "/api/getParadigmById", response_model=GetParadigmByIdResponse, name="获取具体实验范式详情", description="根据实验范式ID获取单条实验范式的详情"
 )
-def get_paradigm_by_id(
-    experiment_id: str = Query(title="实验编号"),
-    paradigm_id: str = Query(alias="id", title="实验范式id"),
-):
+def get_paradigm_by_id(experiment_id: str = Query(title="实验编号"), paradigm_id: str = Query(alias="id", title="实验范式id")):
     return GetParadigmByIdResponse(code=CODE_SUCCESS, data=Paradigm())
 
 
-@app.delete(
-    "/api/deleteParadigms",
-    response_model=DeleteParadigmsResponse,
-    name="删除实验范式",
-    description="删除指定的实验范式",
-)
+@app.delete("/api/deleteParadigms", response_model=DeleteParadigmsResponse, name="删除实验范式", description="删除指定的实验范式")
 def delete_paradigms(request: DeleteParadigmsRequest):
     return DeleteParadigmsResponse(code=CODE_SUCCESS)
 
 
-@app.get(
-    "/api/getDocType",
-    response_model=GetDocTypeResponse,
-    name="获取平台可筛选的文件格式",
-    description="获取平台支持的或者已上传的文件格式后缀列表",
-)
+@app.get("/api/getDocType", response_model=GetDocTypeResponse, name="获取平台可筛选的文件格式", description="获取平台支持的或者已上传的文件格式后缀列表")
 def get_doc_type():
     return GetDocTypeResponse(code=CODE_SUCCESS, data=["MP4", "BDF", "EEG"])
 
 
 @app.get(
-    "/api/getDocByPage",
-    response_model=GetDocByPageResponse,
-    name="获取文件列表",
-    description="根据文件格式，分页获取文件列表，默认获取所有文件的前30个",
+    "/api/getDocByPage", response_model=GetDocByPageResponse, name="获取文件列表", description="根据文件格式，分页获取文件列表，默认获取所有文件的前30个"
 )
 def get_doc_by_page(
     experiment_id: str = Query(title="实验编号"),
@@ -361,36 +291,18 @@ def get_doc_by_page(
     limit: int = Query(title="分页大小", default=30),
 ):
     return GetDocByPageResponse(
-        code=CODE_SUCCESS,
-        data=[
-            GetDocByPageResponse.Data(file_id=1, name="file1", url="http://example.com")
-        ],
+        code=CODE_SUCCESS, data=[GetDocByPageResponse.Data(file_id=1, name="file1", url="http://example.com")]
     )
 
 
-@app.delete(
-    "/api/deleteDoc",
-    response_model=DeleteDocResponse,
-    name="删除文件",
-    description="删除上传的数据文件",
-)
-def delete_doc(
-    experiment_id: str = Query(title="实验编号"), file_id: int = Query(title="文件ID")
-):
+@app.delete("/api/deleteDoc", response_model=DeleteDocResponse, name="删除文件", description="删除上传的数据文件")
+def delete_doc(experiment_id: str = Query(title="实验编号"), file_id: int = Query(title="文件ID")):
     return DeleteDocResponse(code=CODE_SUCCESS)
 
 
-@app.post(
-    "/api/addFile",
-    response_model=AddFileResponse,
-    name="批量上传文件",
-    description="从用户本地上传文件到服务端",
-)
+@app.post("/api/addFile", response_model=AddFileResponse, name="批量上传文件", description="从用户本地上传文件到服务端")
 def delete_doc(files: list[UploadFile]):
-    return AddFileResponse(
-        code=CODE_SUCCESS,
-        data=[AddFileResponse.Data(name="file1", url="http://example.com")],
-    )
+    return AddFileResponse(code=CODE_SUCCESS, data=[AddFileResponse.Data(name="file1", url="http://example.com")])
 
 
 @app.get(
@@ -407,41 +319,27 @@ def get_human_subject_by_page(
     return GetHumanSubjectByPageResponse(code=CODE_SUCCESS, data=[Human()])
 
 
-@app.post(
-    "/api/addHumanSubject",
-    response_model=AddHumanSubjectResponse,
-    name="新增人类被试",
-    description="新增一条人类被试记录",
-)
+@app.post("/api/addHumanSubject", response_model=AddHumanSubjectResponse, name="新增人类被试", description="新增一条人类被试记录")
 def add_human_subject(request: AddHumanSubjectRequest):
     return AddHumanSubjectResponse(code=CODE_SUCCESS)
 
 
 @app.post(
-    "/api/updateHumanSubject",
-    response_model=UpdateHumanSubjectResponse,
-    name="编辑人类被试",
-    description="更新某一个人类被试的信息",
+    "/api/updateHumanSubject", response_model=UpdateHumanSubjectResponse, name="编辑人类被试", description="更新某一个人类被试的信息"
 )
 def update_human_subject(request: UpdateHumanSubjectRequest):
     return UpdateHumanSubjectResponse(code=CODE_SUCCESS)
 
 
 @app.delete(
-    "/api/deleteHumanSubject",
-    response_model=DeleteHumanSubjectResponse,
-    name="删除人类被试",
-    description="删除某个实验下的某个人类被试",
+    "/api/deleteHumanSubject", response_model=DeleteHumanSubjectResponse, name="删除人类被试", description="删除某个实验下的某个人类被试"
 )
 def delete_human_subject(request: DeleteHumanSubjectRequest):
     return DeleteHumanSubjectResponse(code=CODE_SUCCESS)
 
 
 @app.get(
-    "/api/getDeviceByPage",
-    response_model=GetDeviceByPageResponse,
-    name="获取设备列表",
-    description="分页获取设备列表，默认每页返回10个元素",
+    "/api/getDeviceByPage", response_model=GetDeviceByPageResponse, name="获取设备列表", description="分页获取设备列表，默认每页返回10个元素"
 )
 def get_device_by_page(
     experiment_id: str = Query(title="实验编号"),
@@ -451,64 +349,32 @@ def get_device_by_page(
     return GetDeviceByPageResponse(code=CODE_SUCCESS, data=[Device()])
 
 
-@app.post(
-    "/api/addDevice",
-    response_model=AddDeviceResponse,
-    name="新增设备",
-    description="新增实验设备",
-)
+@app.post("/api/addDevice", response_model=AddDeviceResponse, name="新增设备", description="新增实验设备")
 def add_device(request: AddDeviceRequest):
     return AddDeviceResponse(code=CODE_SUCCESS)
 
 
-@app.get(
-    "/api/getDeviceById",
-    response_model=GetDeviceByIdResponse,
-    name="获取设备详情",
-    description="根据设备ID获取设备详情",
-)
-def get_device_by_id(
-    experiment_id: str = Query(title="实验编号"), equipment_id: str = Query(title="设备编号")
-):
+@app.get("/api/getDeviceById", response_model=GetDeviceByIdResponse, name="获取设备详情", description="根据设备ID获取设备详情")
+def get_device_by_id(experiment_id: str = Query(title="实验编号"), equipment_id: str = Query(title="设备编号")):
     return GetDeviceByIdResponse(code=CODE_SUCCESS, data=Device())
 
 
-@app.post(
-    "/api/updateDevice",
-    response_model=UpdateDeviceResponse,
-    name="编辑设备",
-    description="更新设备信息",
-)
+@app.post("/api/updateDevice", response_model=UpdateDeviceResponse, name="编辑设备", description="更新设备信息")
 def update_device(request: UpdateDeviceRequest):
     return UpdateDeviceResponse(code=CODE_SUCCESS)
 
 
-@app.delete(
-    "/api/deleteDevice",
-    response_model=DeleteDeviceResponse,
-    name="删除设备",
-    description="删除某个实验下的某个设备",
-)
+@app.delete("/api/deleteDevice", response_model=DeleteDeviceResponse, name="删除设备", description="删除某个实验下的某个设备")
 def delete_device(request: DeleteDeviceRequest):
     return DeleteDeviceResponse(code=CODE_SUCCESS)
 
 
-@app.post(
-    "/api/data/displayEEG",
-    response_model=DisplayEEGResponse,
-    name="查看EEG数据",
-    description="查看EEG数据文件指定段",
-)
+@app.post("/api/data/displayEEG", response_model=DisplayEEGResponse, name="查看EEG数据", description="查看EEG数据文件指定段")
 def display_eeg(request: DisplayEEGRequest):
     return DisplayEEGResponse(code=CODE_SUCCESS, data=EEGData())
 
 
-@app.get(
-    "/api/getFiles",
-    response_model=GetFilesResponse,
-    name="获取任务可用目标文件列表",
-    description="新建任务时获取任务可用的目标数据文件列表",
-)
+@app.get("/api/getFiles", response_model=GetFilesResponse, name="获取任务可用目标文件列表", description="新建任务时获取任务可用的目标数据文件列表")
 def get_files():
     return GetFilesResponse(code=CODE_SUCCESS, data=[File()])
 
@@ -530,18 +396,13 @@ def get_task_by_page(
     return GetTaskByPageResponse(code=CODE_SUCCESS, data=[Task()])
 
 
-@app.post(
-    "/api/addTask", response_model=AddTaskResponse, name="新增任务", description="新增任务"
-)
+@app.post("/api/addTask", response_model=AddTaskResponse, name="新增任务", description="新增任务")
 def add_task(request: AddTaskRequest):
     return AddTaskResponse(code=CODE_SUCCESS, data=[Task()])
 
 
 @app.get(
-    "/api/getTaskByID",
-    response_model=GetTaskByIDResponse,
-    name="获取任务详细信息",
-    description="获取指定任务的相关信息，包括基础信息和步骤执行信息",
+    "/api/getTaskByID", response_model=GetTaskByIDResponse, name="获取任务详细信息", description="获取指定任务的相关信息，包括基础信息和步骤执行信息"
 )
 def get_task_by_id(task_id: str = Query(title="任务ID")):
     return GetTaskByIDResponse(code=CODE_SUCCESS, data=Task())
@@ -563,16 +424,9 @@ def get_task_steps_by_id(task_id: str = Query(title="任务ID")):
     name="获取滤波类型步骤的执行结果",
     description="页面点击滤波类型步骤后，获取对应步骤的执行结果，即波形图数据",
 )
-def get_filter_step_result_by_id(
-    task_id: str = Query(title="任务ID"), operation_id: str = Query(title="操作步骤ID")
-):
+def get_filter_step_result_by_id(task_id: str = Query(title="任务ID"), operation_id: str = Query(title="操作步骤ID")):
     return GetFilterStepResultByIDResponse(
-        code=CODE_SUCCESS,
-        data=[
-            [1370131200000, 0.7695],
-            [1370217600000, 0.7648],
-            [1370304000000, 0.7645],
-        ],
+        code=CODE_SUCCESS, data=[[1370131200000, 0.7695], [1370217600000, 0.7648], [1370304000000, 0.7645]]
     )
 
 
@@ -582,12 +436,8 @@ def get_filter_step_result_by_id(
     name="获取分析类型步骤的执行结果",
     description="页面点击分析步骤后，获取分析步骤的执行结果，即生成的png图片路径",
 )
-def get_analysis_step_result_by_id(
-    task_id: str = Query(title="任务ID"), operation_id: str = Query(title="操作步骤ID")
-):
-    return GetAnalysisStepResultByIDResponse(
-        code=CODE_SUCCESS, data="http://xxx.xxx/result_img.png"
-    )
+def get_analysis_step_result_by_id(task_id: str = Query(title="任务ID"), operation_id: str = Query(title="操作步骤ID")):
+    return GetAnalysisStepResultByIDResponse(code=CODE_SUCCESS, data="http://xxx.xxx/result_img.png")
 
 
 @app.post(
@@ -601,10 +451,7 @@ def upload_search_file(file: UploadFile):
 
 
 @app.post(
-    "/api/search/goSearch",
-    response_model=GoSearchResponse,
-    name="搜索信号",
-    description="根据选择的待检索信号，由服务端检索并返回相似的信号数组",
+    "/api/search/goSearch", response_model=GoSearchResponse, name="搜索信号", description="根据选择的待检索信号，由服务端检索并返回相似的信号数组"
 )
 def go_search(request: GoSearchRequest):
     return GoSearchResponse(code=CODE_SUCCESS, data=[SearchResult()])

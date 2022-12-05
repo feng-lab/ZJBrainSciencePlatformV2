@@ -21,18 +21,8 @@ def upgrade() -> None:
     op.create_table(
         "message",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column(
-            "gmt_create",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=True,
-        ),
-        sa.Column(
-            "gmt_modified",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=True,
-        ),
+        sa.Column("gmt_create", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
+        sa.Column("gmt_modified", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
         sa.Column("is_deleted", sa.Boolean(), nullable=True),
         sa.Column("msg_type", sa.String(length=20), nullable=False),
         sa.Column("creator", sa.Integer(), nullable=False),
@@ -42,25 +32,13 @@ def upgrade() -> None:
         sa.Column("content", sa.Text(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_message_create_at"), "message", ["create_at"], unique=False
-    )
+    op.create_index(op.f("ix_message_create_at"), "message", ["create_at"], unique=False)
     op.create_index(op.f("ix_message_receiver"), "message", ["receiver"], unique=False)
     op.create_table(
         "user",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column(
-            "gmt_create",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=True,
-        ),
-        sa.Column(
-            "gmt_modified",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=True,
-        ),
+        sa.Column("gmt_create", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
+        sa.Column("gmt_modified", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=True),
         sa.Column("is_deleted", sa.Boolean(), nullable=True),
         sa.Column("username", sa.String(length=255), nullable=False),
         sa.Column("hashed_password", sa.String(length=255), nullable=False),

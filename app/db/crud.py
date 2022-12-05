@@ -3,16 +3,13 @@ import functools
 import inspect
 import logging
 import sys
-from typing import TypeVar, Callable
+from typing import TypeVar, Callable, Awaitable
 
 import ormar
 from ormar import QuerySet
 
 from app.model.db_model import User, Notification
-from app.timezone_util import (
-    convert_timezone_after_get_db,
-    convert_timezone_before_save,
-)
+from app.timezone_util import convert_timezone_after_get_db, convert_timezone_before_save
 from app.utils import utc_now
 
 logger = logging.getLogger(__name__)
@@ -50,12 +47,7 @@ async def get_user_by_username(username: str) -> User | None:
 
 
 async def search_users(
-    username: str | None,
-    staff_id: str | None,
-    access_level: int | None,
-    offset: int,
-    limit: int,
-    include_deleted: bool,
+    username: str | None, staff_id: str | None, access_level: int | None, offset: int, limit: int, include_deleted: bool
 ) -> (int, list[User]):
     query: QuerySet = User.objects
     if username is not None:
@@ -67,15 +59,11 @@ async def search_users(
     if not include_deleted:
         query = query.filter(is_deleted=False)
 
-    total_count, users = await asyncio.gather(
-        query.count(), query.offset(offset).limit(limit).order_by("id").all()
-    )
+    total_count, users = await asyncio.gather(query.count(), query.offset(offset).limit(limit).order_by("id").all())
     return total_count, users
 
 
-async def list_notifications(
-    user_id: int, offset: int, limit: int
-) -> list[Notification]:
+async def list_notifications(user_id: int, offset: int, limit: int) -> list[Notification]:
     msgs = (
         await Notification.objects.filter(receiver=user_id, is_deleted=False)
         .order_by("-create_at")
@@ -86,12 +74,8 @@ async def list_notifications(
     return msgs
 
 
-async def list_unread_notifications(
-    user_id: int, is_all: bool, msg_ids: list[int]
-) -> list[Notification]:
-    query = Notification.objects.filter(
-        receiver=user_id, is_deleted=False, status=Notification.Status.UNREAD.value
-    )
+async def list_unread_notifications(user_id: int, is_all: bool, msg_ids: list[int]) -> list[Notification]:
+    query = Notification.objects.filter(receiver=user_id, is_deleted=False, status=Notification.Status.UNREAD.value)
     if not is_all:
         query = query.filter(id__in=msg_ids)
     msgs = await query.all()
@@ -106,17 +90,15 @@ async def update_notifications_as_read(msgs: list[Notification]) -> None:
     await Notification.objects.bulk_update(msgs, columns=["status", "gmt_modified"])
 
 
-def set_convert_db_model_timezone():
+def set_convert_db_model_timezone() -> None:
     current_module = sys.modules[__name__]
     for name, member in inspect.getmembers(current_module):
-        if inspect.getmodule(member) == current_module and inspect.iscoroutinefunction(
-            member
-        ):
+        if inspect.getmodule(member) == current_module and inspect.iscoroutinefunction(member):
             new_func = convert_db_model_timezone(member)
             setattr(current_module, name, new_func)
 
 
-def convert_db_model_timezone(func: Callable[..., DBModel | list[DBModel]]):
+def convert_db_model_timezone(func: Callable[..., Awaitable[DBModel | list[DBModel] | None]]):
     @functools.wraps(func)
     async def wrapper(*args, **kwargs) -> DBModel | list[DBModel] | None:
         result = await func(*args, **kwargs)
@@ -126,10 +108,7 @@ def convert_db_model_timezone(func: Callable[..., DBModel | list[DBModel]]):
             return convert_timezone_after_get_db(result)
         if isinstance(result, list):
             return [
-                convert_timezone_after_get_db(model)
-                if isinstance(model, ormar.Model)
-                else model
-                for model in result
+                convert_timezone_after_get_db(model) if isinstance(model, ormar.Model) else model for model in result
             ]
         return result
 

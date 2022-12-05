@@ -30,12 +30,7 @@ class JsonEncoder(JSONEncoder):
 class JsonResponse(JSONResponse):
     def render(self, content: Any) -> bytes:
         return json.dumps(
-            content,
-            ensure_ascii=False,
-            allow_nan=False,
-            indent=None,
-            separators=(",", ":"),
-            cls=JsonEncoder,
+            content, ensure_ascii=False, allow_nan=False, indent=None, separators=(",", ":"), cls=JsonEncoder
         ).encode("UTF-8")
 
 
@@ -52,17 +47,13 @@ def custom_json_response(func: Callable[..., Model]):
 T = TypeVar("T")
 
 
-def modify_model_field_by_type(
-    model: Model, field_type: Type[T], map_func: Callable[[T], T]
-):
+def modify_model_field_by_type(model: Model, field_type: Type[T], map_func: Callable[[T], T]):
     if model is None:
         return None
 
     old_dict = model.dict()
     new_dict = {
-        field_name: map_func(field_value)
-        if isinstance(field_value, field_type)
-        else field_value
+        field_name: map_func(field_value) if isinstance(field_value, field_type) else field_value
         for field_name, field_value in old_dict.items()
     }
     return model.construct(**new_dict)
