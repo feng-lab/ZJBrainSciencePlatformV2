@@ -1,7 +1,10 @@
 import functools
+import importlib
+import inspect
 import json
 from datetime import datetime
 from json import JSONEncoder
+from types import ModuleType
 from typing import TypeVar, Callable, Any, Type
 
 from dateutil import tz
@@ -57,3 +60,15 @@ def modify_model_field_by_type(model: Model, field_type: Type[T], map_func: Call
         for field_name, field_value in old_dict.items()
     }
     return model.construct(**new_dict)
+
+
+def get_module_defined_members(
+    module: str | ModuleType, filter_func: Callable[[str, Any], bool] | None = None
+) -> list[(str, Any)]:
+    if isinstance(module, str):
+        module = importlib.import_module(module)
+    return [
+        member
+        for member in inspect.getmembers(module)
+        if inspect.getmodule(member[1]) == module and (filter_func is None or filter_func(member[0], member[1]))
+    ]

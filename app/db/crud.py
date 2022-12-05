@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import inspect
+import itertools
 import logging
 import sys
 from typing import TypeVar, Callable, Awaitable
@@ -8,9 +9,10 @@ from typing import TypeVar, Callable, Awaitable
 import ormar
 from ormar import QuerySet
 
+from app.config import config
 from app.model.db_model import User, Notification
 from app.timezone_util import convert_timezone_after_get_db, convert_timezone_before_save
-from app.utils import utc_now
+from app.utils import utc_now, get_module_defined_members
 
 logger = logging.getLogger(__name__)
 
@@ -90,12 +92,14 @@ async def update_notifications_as_read(msgs: list[Notification]) -> None:
     await Notification.objects.bulk_update(msgs, columns=["status", "gmt_modified"])
 
 
-def set_convert_db_model_timezone() -> None:
+def add_common_stuff() -> None:
     current_module = sys.modules[__name__]
-    for name, member in inspect.getmembers(current_module):
-        if inspect.getmodule(member) == current_module and inspect.iscoroutinefunction(member):
-            new_func = convert_db_model_timezone(member)
-            setattr(current_module, name, new_func)
+    async_funcs = get_module_defined_members(current_module, lambda _name, item: inspect.iscoroutinefunction(item))
+    for name, func in async_funcs:
+        new_func = convert_db_model_timezone(func)
+        if config.DEBUG_MODE:
+            new_func = log_db_operation(name, new_func)
+        setattr(current_module, name, new_func)
 
 
 def convert_db_model_timezone(func: Callable[..., Awaitable[DBModel | list[DBModel] | None]]):
@@ -115,4 +119,19 @@ def convert_db_model_timezone(func: Callable[..., Awaitable[DBModel | list[DBMod
     return wrapper
 
 
-set_convert_db_model_timezone()
+def log_db_operation(name: str, func: Callable[..., Awaitable[...]]):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        func_sig = inspect.signature(func)
+        real_args = ",".join(
+            f"{param_name}={repr(param_value)}"
+            for param_name, param_value in zip(func_sig.parameters.keys(), itertools.chain(args, kwargs))
+        )
+        result = await func(*args, **kwargs)
+        logger.info(f"{name}({real_args})->{repr(result)}")
+        return result
+
+    return wrapper
+
+
+add_common_stuff()
