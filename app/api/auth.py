@@ -12,8 +12,7 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 from app.config import config
 from app.db import crud
 from app.model.db_model import User
-from app.model.response import LoginResponse, NoneResponse, wrap_api_response
-from model.response import AccessTokenData
+from app.model.response import LoginResponse, NoneResponse, wrap_api_response, AccessTokenData
 from app.timezone_util import utc_now
 
 logger = logging.getLogger(__name__)
