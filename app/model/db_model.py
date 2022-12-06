@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from ormar import Boolean, DateTime, Integer, Model, String, Text
+from ormar import Boolean, DateTime, Float, Integer, Model, String, Text
 from pydantic import BaseModel
 
 from app.db.database import BaseMeta
@@ -132,8 +132,14 @@ class File(Model, ModelMixin):
     experiment_id: int = Integer(ge=0, index=True)
     # 逻辑路径
     path: str = String(max_length=255, index=True)
-    # 实际存储在服务器文件系统中的路径
-    store_path: str = String(max_length=511)
+    # 文件扩展名（类型）
+    extension: str = String(max_length=50)
+    # 同一实验下的文件序号
+    index: int = Integer(ge=0, index=True)
+    # 文件大小（MB）
+    size: float = Float(ge=0.0)
+    # 是否是设备产生的原始文件
+    is_original: bool = Boolean()
 
 
 # 实验范式

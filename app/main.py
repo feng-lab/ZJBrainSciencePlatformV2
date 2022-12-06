@@ -15,6 +15,7 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 from app.api import user
 from app.api.auth import router as auth_router
 from app.api.experiment import router as experiment_router
+from app.api.file import router as file_router
 from app.api.notification import router as notification_router
 from app.api.user import router as user_router
 from app.config import config
@@ -82,6 +83,7 @@ app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(notification_router)
 app.include_router(experiment_router)
+app.include_router(file_router)
 
 app.state.database = database
 

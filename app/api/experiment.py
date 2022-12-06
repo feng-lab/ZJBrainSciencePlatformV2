@@ -51,7 +51,7 @@ async def get_experiment_info(
 @wrap_api_response
 async def get_experiments_by_page(
     _user: User = Depends(get_current_user_as_human_subject()),
-    search: str | None = Query(description="搜索任务名", default=None),
+    search: str = Query(description="搜索任务名", default=""),
     sort_by: GetExperimentsByPageSortBy = Query(
         description="排序依据", default=GetExperimentsByPageSortBy.START_TIME
     ),

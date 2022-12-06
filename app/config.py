@@ -20,6 +20,12 @@ class Config(BaseSettings):
     # 日志路径
     LOG_ROOT: Path = Path.home() / "log" / "ZJBrainSciencePlatform" / "app"
 
+    # 文件存储路径
+    FILE_ROOT: Path = Path.home() / "data" / "ZJBrainSciencePlatform" / "file"
+
+    # 读取文件的块大小
+    FILE_CHUNK_SIZE: int = 64 * 1024
+
     # 日志轮换天数
     LOG_ROTATING_DAYS: int = 7
 

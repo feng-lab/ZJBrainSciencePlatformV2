@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 from starlette.responses import JSONResponse
 
+from app.model import db_model
 from app.model.db_model import Experiment, Notification, User
 from app.model.schema import Device, EEGData, File, Human, Paradigm, SearchFile, SearchResult, Task
 
@@ -81,11 +82,16 @@ class ListUserData(BaseModel):
 
 NotificationInfo = Notification.get_pydantic()
 
-ExperimentInfo = pydantic.create_model("ExperimentInfo", __base__=Experiment, assistants=(list[int] | None, None))
+ExperimentInfo = pydantic.create_model(
+    "ExperimentInfo", __base__=Experiment, assistants=(list[int] | None, None)
+)
 
 
 class GetExperimentInfoResponse(Response):
     data: ExperimentInfo
+
+
+UploadFileData = db_model.File.get_pydantic(include={"id", "index", "path"})
 
 
 class GetStatisticResponse(Response):

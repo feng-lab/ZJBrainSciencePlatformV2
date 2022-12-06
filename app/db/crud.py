@@ -10,7 +10,7 @@ import ormar
 from ormar import QuerySet
 
 from app.config import config
-from app.model.db_model import Experiment, Notification, User
+from app.model.db_model import Experiment, File, Notification, User
 from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 from app.timezone_util import convert_timezone_after_get_db, convert_timezone_before_save, utc_now
 from app.util import get_module_defined_members
@@ -153,6 +153,16 @@ async def search_experiments(
         query = query.filter(is_deleted=False)
 
     return await query.all()
+
+
+async def get_last_index_file(experiment_id: int) -> File | None:
+    last_index_file = (
+        await File.objects.filter(experiment_id=experiment_id, is_deleted=False)
+        .order_by("-index")
+        .limit(1)
+        .get_or_none()
+    )
+    return last_index_file
 
 
 def add_common_stuff() -> None:
