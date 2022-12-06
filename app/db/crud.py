@@ -11,7 +11,11 @@ from ormar import QuerySet
 
 from app.config import config
 from app.model.db_model import Experiment, File, Notification, User
-from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
+from app.model.request import (
+    GetExperimentsByPageSortBy,
+    GetExperimentsByPageSortOrder,
+    GetModelsByPageParam,
+)
 from app.timezone_util import convert_timezone_after_get_db, convert_timezone_before_save, utc_now
 from app.util import get_module_defined_members
 
@@ -55,6 +59,7 @@ async def search_models(model_type: type[DBModel], **queries) -> list[DBModel]:
     return models
 
 
+# noinspection PyTypeChecker
 async def bulk_search_models_by_key(
     model_type: type[DBModel], keys: list[Any], key_name: str
 ) -> list[list[DBModel]]:
@@ -163,6 +168,20 @@ async def get_last_index_file(experiment_id: int) -> File | None:
         .get_or_none()
     )
     return last_index_file
+
+
+async def search_files(
+    experiment_id: int, path: str, extension: str, paging_param: GetModelsByPageParam
+) -> list[File]:
+    query: QuerySet = File.objects.filter(experiment_id=experiment_id)
+    if path:
+        query = query.filter(path__icontains=path)
+    if extension:
+        query = query.filter(extension__icontains=extension)
+    if not paging_param.include_deleted:
+        query = query.filter(is_deleted=False)
+    files = await query.offset(paging_param.offset).limit(paging_param.limit).all()
+    return files
 
 
 def add_common_stuff() -> None:

@@ -93,6 +93,8 @@ class GetExperimentInfoResponse(Response):
 
 UploadFileData = db_model.File.get_pydantic(include={"id", "index", "path"})
 
+FileInfo = db_model.File.get_pydantic()
+
 
 class GetStatisticResponse(Response):
     class Data(BaseModel):

@@ -4,13 +4,15 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends
 from fastapi import File as FastApiFile
-from fastapi import Form, UploadFile
+from fastapi import Form, Query, UploadFile
 
-from app.api.auth import get_current_user_as_researcher
+from app.api.auth import get_current_user_as_human_subject, get_current_user_as_researcher
 from app.config import config
 from app.db import crud
 from app.model.db_model import File, User
-from app.model.response import Response, UploadFileData, wrap_api_response
+from app.model.request import GetModelsByPageParam, get_models_by_page
+from app.model.response import FileInfo, Response, UploadFileData, wrap_api_response
+from app.util import convert_models
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +43,19 @@ async def upload_file(
     )
     db_file = await crud.create_model(db_file)
     return UploadFileData(id=db_file.id, index=file_index, path=path)
+
+
+@router.get("/api/getFilesByPage", description="分页获取文件列表", response_model=Response[list[FileInfo]])
+@wrap_api_response
+async def get_files_by_page(
+    experiment_id: int = Query(description="实验ID"),
+    path: str = Query(description="文件名，模糊查找", default=""),
+    file_type: str = Query(description="文件类型，模糊查找", default=""),
+    paging_param: GetModelsByPageParam = Depends(get_models_by_page),
+    _user: User = Depends(get_current_user_as_human_subject()),
+) -> list[FileInfo]:
+    files = await crud.search_files(experiment_id, path, file_type, paging_param)
+    return convert_models(files, FileInfo)
 
 
 async def get_next_index(experiment_id: int) -> int:
