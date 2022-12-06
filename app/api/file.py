@@ -45,6 +45,16 @@ async def upload_file(
     return UploadFileData(id=db_file.id, index=file_index, path=path)
 
 
+@router.get("/api/getFileTypes", description="获取当前实验已有的文件类型", response_model=Response[list[str]])
+@wrap_api_response
+async def get_file_types(
+    experiment_id: int = Query(description="实验ID"),
+    _user: User = Depends(get_current_user_as_human_subject()),
+) -> list[str]:
+    extensions = await crud.get_file_extensions(experiment_id)
+    return extensions
+
+
 @router.get("/api/getFilesByPage", description="分页获取文件列表", response_model=Response[list[FileInfo]])
 @wrap_api_response
 async def get_files_by_page(

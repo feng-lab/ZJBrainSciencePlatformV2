@@ -170,6 +170,14 @@ async def get_last_index_file(experiment_id: int) -> File | None:
     return last_index_file
 
 
+async def get_file_extensions(experiment_id: int) -> list[str]:
+    extensions = await File.objects.filter(
+        experiment_id=experiment_id, is_deleted=False
+    ).values_list(fields={"extension"}, flatten=True)
+
+    return list(set(extensions))
+
+
 async def search_files(
     experiment_id: int, path: str, extension: str, paging_param: GetModelsByPageParam
 ) -> list[File]:
