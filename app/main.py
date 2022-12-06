@@ -39,20 +39,16 @@ from app.model.response import (
     CODE_SESSION_TIMEOUT,
     CODE_SUCCESS,
     AddDeviceResponse,
-    AddFileResponse,
     AddHumanSubjectResponse,
     AddParadigmResponse,
     AddTaskResponse,
     DeleteDeviceResponse,
-    DeleteDocResponse,
     DeleteHumanSubjectResponse,
     DeleteParadigmsResponse,
     DisplayEEGResponse,
     GetAnalysisStepResultByIDResponse,
     GetDeviceByIdResponse,
     GetDeviceByPageResponse,
-    GetDocByPageResponse,
-    GetDocTypeResponse,
     GetFilesResponse,
     GetFilterStepResultByIDResponse,
     GetHumanSubjectByPageResponse,
@@ -315,50 +311,6 @@ def get_paradigm_by_id(
 )
 def delete_paradigms(request: DeleteParadigmsRequest):
     return DeleteParadigmsResponse(code=CODE_SUCCESS)
-
-
-@app.get(
-    "/api/getDocType",
-    response_model=GetDocTypeResponse,
-    name="获取平台可筛选的文件格式",
-    description="获取平台支持的或者已上传的文件格式后缀列表",
-)
-def get_doc_type():
-    return GetDocTypeResponse(code=CODE_SUCCESS, data=["MP4", "BDF", "EEG"])
-
-
-@app.get(
-    "/api/getDocByPage",
-    response_model=GetDocByPageResponse,
-    name="获取文件列表",
-    description="根据文件格式，分页获取文件列表，默认获取所有文件的前30个",
-)
-def get_doc_by_page(
-    experiment_id: str = Query(title="实验编号"),
-    doc_type: str = Query(title="文档格式"),
-    offset: int = Query(title="分页起始位置", default=0),
-    limit: int = Query(title="分页大小", default=30),
-):
-    return GetDocByPageResponse(
-        code=CODE_SUCCESS,
-        data=[GetDocByPageResponse.Data(file_id=1, name="file1", url="http://example.com")],
-    )
-
-
-@app.delete(
-    "/api/deleteDoc", response_model=DeleteDocResponse, name="删除文件", description="删除上传的数据文件"
-)
-def delete_doc(experiment_id: str = Query(title="实验编号"), file_id: int = Query(title="文件ID")):
-    return DeleteDocResponse(code=CODE_SUCCESS)
-
-
-@app.post(
-    "/api/addFile", response_model=AddFileResponse, name="批量上传文件", description="从用户本地上传文件到服务端"
-)
-def delete_doc(files: list[UploadFile]):
-    return AddFileResponse(
-        code=CODE_SUCCESS, data=[AddFileResponse.Data(name="file1", url="http://example.com")]
-    )
 
 
 @app.get(

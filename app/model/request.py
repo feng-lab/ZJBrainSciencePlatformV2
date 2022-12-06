@@ -28,11 +28,6 @@ class UpdatePasswordRequest(BaseModel):
     new_password: str = Field(max_length=50)
 
 
-class LoginRequest(BaseModel):
-    account: str = Field(title="用户名")
-    password: str = Field(title="用户密码")
-
-
 class SendNotificationRequest(BaseModel):
     type: str = Field(title="通知类型", max_length=20)
     receiver: int = Field(title="通知接收者ID")
@@ -198,11 +193,6 @@ class GoSearchRequest(BaseModel):
     channel: str = Field(title="通道")
     start: int = Field(title="信号起始点")
     end: int = Field(title="信号截止点")
-
-
-class MarkMsgRequest(BaseModel):
-    account: str = Field(title="登录用户账号名")
-    ids: str = Field(title="消息id,多个id则逗号分隔")
 
 
 class GetModelsByPageParam(BaseModel):

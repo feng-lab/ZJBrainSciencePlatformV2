@@ -87,10 +87,6 @@ ExperimentInfo = pydantic.create_model(
 )
 
 
-class GetExperimentInfoResponse(Response):
-    data: ExperimentInfo
-
-
 UploadFileData = db_model.File.get_pydantic(include={"id", "index", "path"})
 
 FileInfo = db_model.File.get_pydantic()
@@ -156,31 +152,6 @@ class GetParadigmByIdResponse(Response):
 
 class DeleteParadigmsResponse(Response):
     pass
-
-
-class GetDocTypeResponse(Response):
-    data: list[str]
-
-
-class GetDocByPageResponse(Response):
-    class Data(BaseModel):
-        file_id: int = Field(title="文件ID")
-        name: str = Field(title="文件名称")
-        url: str = Field(title="文件访问地址")
-
-    data: list[Data]
-
-
-class DeleteDocResponse(Response):
-    pass
-
-
-class AddFileResponse(Response):
-    class Data(BaseModel):
-        name: str = Field(title="文件名称")
-        url: str = Field(title="文件访问地址")
-
-    data: list[Data]
 
 
 class GetHumanSubjectByPageResponse(Response):
