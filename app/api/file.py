@@ -11,7 +11,7 @@ from app.config import config
 from app.db import crud
 from app.model.db_model import File, User
 from app.model.request import DeleteModelRequest, GetModelsByPageParam, get_models_by_page
-from app.model.response import FileInfo, NoneResponse, Response, UploadFileData, wrap_api_response
+from app.model.response import FileInfo, NoneResponse, Response, wrap_api_response
 from app.util import convert_models
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/api/uploadFile", description="上传文件", response_model=Response[UploadFileData])
+@router.post("/api/uploadFile", description="上传文件", response_model=Response[int])
 @wrap_api_response
 async def upload_file(
     experiment_id: int = Form(description="实验ID"),
@@ -27,7 +27,7 @@ async def upload_file(
     is_original: bool = Form(description="是否是设备产生的原始文件"),
     file: UploadFile = FastApiFile(),
     _user: User = Depends(get_current_user_as_researcher()),
-) -> UploadFileData:
+) -> int:
     file_index = await get_next_index(experiment_id)
     extension = path.rsplit(".", 1)[-1]
     store_path = get_real_store_path(experiment_id, file_index, extension)
@@ -42,7 +42,7 @@ async def upload_file(
         is_original=is_original,
     )
     db_file = await crud.create_model(db_file)
-    return UploadFileData(id=db_file.id, index=file_index, path=path)
+    return db_file.id
 
 
 @router.get("/api/getFileTypes", description="获取当前实验已有的文件类型", response_model=Response[list[str]])

@@ -86,9 +86,6 @@ ExperimentInfo = pydantic.create_model(
     "ExperimentInfo", __base__=Experiment, assistants=(list[int] | None, None)
 )
 
-
-UploadFileData = db_model.File.get_pydantic(include={"id", "index", "path"})
-
 FileInfo = db_model.File.get_pydantic()
 
 
