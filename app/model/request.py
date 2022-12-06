@@ -7,6 +7,10 @@ from pydantic import BaseModel, Field
 from app.model.schema import File
 
 
+class DeleteModelRequest(BaseModel):
+    id: int
+
+
 class CreateUserRequest(BaseModel):
     username: str = Field(max_length=255)
     password: str = Field(max_length=50)
@@ -22,10 +26,6 @@ class UpdateUserAccessLevelRequest(BaseModel):
 class UpdatePasswordRequest(BaseModel):
     old_password: str = Field(max_length=50)
     new_password: str = Field(max_length=50)
-
-
-class DeleteUserRequest(BaseModel):
-    id: int = Field(ge=0)
 
 
 class LoginRequest(BaseModel):

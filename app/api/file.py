@@ -10,8 +10,8 @@ from app.api.auth import get_current_user_as_human_subject, get_current_user_as_
 from app.config import config
 from app.db import crud
 from app.model.db_model import File, User
-from app.model.request import GetModelsByPageParam, get_models_by_page
-from app.model.response import FileInfo, Response, UploadFileData, wrap_api_response
+from app.model.request import DeleteModelRequest, GetModelsByPageParam, get_models_by_page
+from app.model.response import FileInfo, NoneResponse, Response, UploadFileData, wrap_api_response
 from app.util import convert_models
 
 logger = logging.getLogger(__name__)
@@ -56,6 +56,15 @@ async def get_files_by_page(
 ) -> list[FileInfo]:
     files = await crud.search_files(experiment_id, path, file_type, paging_param)
     return convert_models(files, FileInfo)
+
+
+@router.delete("/api/deleteFile", description="删除文件", response_model=NoneResponse)
+@wrap_api_response
+async def delete_file(
+    request: DeleteModelRequest, _user: User = Depends(get_current_user_as_researcher())
+):
+    file = await crud.get_model_by_id(File, request.id)
+    await crud.update_model(file, is_deleted=True)
 
 
 async def get_next_index(experiment_id: int) -> int:

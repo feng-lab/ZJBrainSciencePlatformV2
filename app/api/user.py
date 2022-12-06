@@ -12,7 +12,7 @@ from app.db import crud
 from app.model.db_model import User
 from app.model.request import (
     CreateUserRequest,
-    DeleteUserRequest,
+    DeleteModelRequest,
     GetModelsByPageParam,
     UpdatePasswordRequest,
     UpdateUserAccessLevelRequest,
@@ -121,7 +121,7 @@ async def update_password(
 @router.delete("/api/deleteUser", description="删除用户", response_model=NoneResponse)
 @wrap_api_response
 async def delete_user(
-    request: DeleteUserRequest, _user: User = Depends(get_current_user_as_administrator())
+    request: DeleteModelRequest, _user: User = Depends(get_current_user_as_administrator())
 ) -> None:
     user = await crud.get_model_by_id(User, request.id)
     await crud.update_model(user, is_deleted=True)
