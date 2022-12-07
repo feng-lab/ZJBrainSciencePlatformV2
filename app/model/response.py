@@ -89,6 +89,13 @@ ExperimentInfo = pydantic.create_model(
 FileInfo = db_model.File.get_pydantic()
 
 
+class ParadigmInfo(BaseModel):
+    experiment_id: int
+    creator: int
+    description: str
+    images: list[int]
+
+
 class GetStatisticResponse(Response):
     class Data(BaseModel):
         experiments: int = Field(title="实验数量", ge=0)
