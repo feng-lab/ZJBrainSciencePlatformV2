@@ -1,10 +1,6 @@
 from pydantic import BaseModel, Field
 
 
-class Paradigm(BaseModel):
-    pass
-
-
 class Human(BaseModel):
     pass
 

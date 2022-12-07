@@ -25,11 +25,9 @@ from app.log import ACCESS_LOGGER_NAME, log_queue_listener
 from app.model.request import (
     AddDeviceRequest,
     AddHumanSubjectRequest,
-    AddParadigmRequest,
     AddTaskRequest,
     DeleteDeviceRequest,
     DeleteHumanSubjectRequest,
-    DeleteParadigmsRequest,
     DisplayEEGRequest,
     GoSearchRequest,
     UpdateDeviceRequest,
@@ -41,11 +39,9 @@ from app.model.response import (
     CODE_SUCCESS,
     AddDeviceResponse,
     AddHumanSubjectResponse,
-    AddParadigmResponse,
     AddTaskResponse,
     DeleteDeviceResponse,
     DeleteHumanSubjectResponse,
-    DeleteParadigmsResponse,
     DisplayEEGResponse,
     GetAnalysisStepResultByIDResponse,
     GetDeviceByIdResponse,
@@ -53,8 +49,6 @@ from app.model.response import (
     GetFilesResponse,
     GetFilterStepResultByIDResponse,
     GetHumanSubjectByPageResponse,
-    GetParadigmByIdResponse,
-    GetParadigmsResponse,
     GetStatisticResponse,
     GetStatisticWithDataResponse,
     GetStatisticWithDataTypeResponse,
@@ -70,7 +64,7 @@ from app.model.response import (
     UpdateHumanSubjectResponse,
     UploadSearchFileResponse,
 )
-from app.model.schema import Device, EEGData, File, Human, Paradigm, SearchFile, SearchResult, Task
+from app.model.schema import Device, EEGData, File, Human, SearchFile, SearchResult, Task
 
 app_logger = logging.getLogger(__name__)
 access_logger = logging.getLogger(ACCESS_LOGGER_NAME)
@@ -284,48 +278,6 @@ def get_statistic_with_sick():
             GetStatisticWithSickResponse.Data(sick="其他", part1=2, part2=6, part3=34),
         ],
     )
-
-
-@app.post(
-    "/api/addParadigms",
-    response_model=AddParadigmResponse,
-    name="新增实验范式",
-    description="新增实验相关的范式描述",
-)
-def add_paradigm(request: AddParadigmRequest):
-    return AddParadigmResponse(code=CODE_SUCCESS)
-
-
-@app.get(
-    "/api/getParadigms",
-    response_model=GetParadigmsResponse,
-    name="获取实验范式",
-    description="根据实验编号获取实验相关的所有范式描述",
-)
-def get_paradigms(experiment_id: str = Query(title="实验编号")):
-    return GetParadigmsResponse(code=CODE_SUCCESS, data=[Paradigm()])
-
-
-@app.get(
-    "/api/getParadigmById",
-    response_model=GetParadigmByIdResponse,
-    name="获取具体实验范式详情",
-    description="根据实验范式ID获取单条实验范式的详情",
-)
-def get_paradigm_by_id(
-    experiment_id: str = Query(title="实验编号"), paradigm_id: str = Query(alias="id", title="实验范式id")
-):
-    return GetParadigmByIdResponse(code=CODE_SUCCESS, data=Paradigm())
-
-
-@app.delete(
-    "/api/deleteParadigms",
-    response_model=DeleteParadigmsResponse,
-    name="删除实验范式",
-    description="删除指定的实验范式",
-)
-def delete_paradigms(request: DeleteParadigmsRequest):
-    return DeleteParadigmsResponse(code=CODE_SUCCESS)
 
 
 @app.get(

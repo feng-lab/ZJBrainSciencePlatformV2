@@ -74,19 +74,6 @@ class CreateParadigmRequest(BaseModel):
     images: list[int] = Field(description="图片ID列表", default_factory=list)
 
 
-class AddParadigmRequest(BaseModel):
-    img_url: list[str] = Field(title="图片地址", default_factory=list)
-    desc: str = Field(title="文字描述")
-    experiment_id: str = Field(title="实验编号")
-    creator: str = Field(title="创建者用户名")
-    create_time: datetime = Field(title="创建时间")
-
-
-class DeleteParadigmsRequest(BaseModel):
-    experiment_id: str = Field(title="实验编号")
-    paradigm_id: str = Field(alias="id", title="实验范式id")
-
-
 class AddHumanSubjectRequest(BaseModel):
     class Gender(str, Enum):
         MALE = "男"

@@ -11,7 +11,7 @@ from starlette.responses import JSONResponse
 
 from app.model import db_model
 from app.model.db_model import Experiment, Notification, User
-from app.model.schema import Device, EEGData, File, Human, Paradigm, SearchFile, SearchResult, Task
+from app.model.schema import Device, EEGData, File, Human, SearchFile, SearchResult, Task
 
 CODE_SUCCESS: int = 0
 """请求成功的code"""
@@ -147,22 +147,6 @@ class GetStatisticWithSickResponse(Response):
         part3: int = Field(title="单位3")
 
     data: list[Data]
-
-
-class AddParadigmResponse(Response):
-    pass
-
-
-class GetParadigmsResponse(Response):
-    data: list[Paradigm]
-
-
-class GetParadigmByIdResponse(Response):
-    data: Paradigm
-
-
-class DeleteParadigmsResponse(Response):
-    pass
 
 
 class GetHumanSubjectByPageResponse(Response):
