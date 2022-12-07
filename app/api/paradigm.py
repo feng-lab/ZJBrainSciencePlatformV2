@@ -4,8 +4,13 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from app.api.auth import get_current_user_as_human_subject, get_current_user_as_researcher
 from app.db import crud
 from app.model.db_model import Experiment, Paradigm, ParadigmFile, User
-from app.model.request import CreateParadigmRequest, GetModelsByPageParam, get_models_by_page
-from app.model.response import ParadigmInfo, Response, wrap_api_response
+from app.model.request import (
+    CreateParadigmRequest,
+    DeleteModelRequest,
+    GetModelsByPageParam,
+    get_models_by_page,
+)
+from app.model.response import NoneResponse, ParadigmInfo, Response, wrap_api_response
 
 router = APIRouter()
 
@@ -67,3 +72,17 @@ async def get_paradigms_by_page(
         for paradigm, paradigm_files in zip(paradigms, paradigm_files_list)
     ]
     return paradigm_infos
+
+
+@router.delete("/api/deleteParadigm", description="删除范式", response_model=NoneResponse)
+@wrap_api_response
+async def delete_paradigm(
+    request: DeleteModelRequest, _user: User = Depends(get_current_user_as_researcher())
+) -> None:
+    paradigm = await crud.get_model_by_id(Paradigm, request.id)
+    if paradigm is None:
+        return
+    await crud.update_model(paradigm, is_deleted=True)
+
+    paradigm_files = await crud.search_models(ParadigmFile, paradigm_id=paradigm.id)
+    await crud.bulk_update_models(paradigm_files, is_deleted=False)

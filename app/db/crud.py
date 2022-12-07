@@ -32,6 +32,16 @@ async def update_model(model: DBModel, **updates) -> DBModel:
     return model
 
 
+async def bulk_update_models(models: list[DBModel], **updates) -> None:
+    now = utc_now()
+    for model in models:
+        updates["gmt_modified"] = now
+        model.update_from_dict(updates)
+    columns = list(updates.keys())
+    columns.append("gmt_modified")
+    await Notification.objects.bulk_update(models, columns=columns)
+
+
 async def create_model(model: DBModel) -> DBModel:
     model = convert_timezone_before_save(model)
     model = await model.save()
