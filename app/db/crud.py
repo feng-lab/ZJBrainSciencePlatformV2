@@ -54,6 +54,11 @@ async def get_model(model_type: type[DBModel], **queries) -> DBModel | None:
     return model
 
 
+async def model_exists(model_type: type[DBModel], model_id: int) -> bool:
+    exists = await model_type.objects.filter(id=model_id, is_deleted=False).exists()
+    return exists
+
+
 async def search_models(model_type: type[DBModel], **queries) -> list[DBModel]:
     models = await model_type.objects.filter(**queries, is_deleted=False).all()
     return models

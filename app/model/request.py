@@ -68,6 +68,12 @@ class GetExperimentsByPageSortOrder(Enum):
     DESC = "desc"
 
 
+class CreateParadigmRequest(BaseModel):
+    experiment_id: int = Field(description="实验ID", ge=0)
+    description: str = Field(description="范式描述")
+    images: list[int] = Field(description="图片ID列表", default_factory=list)
+
+
 class AddParadigmRequest(BaseModel):
     img_url: list[str] = Field(title="图片地址", default_factory=list)
     desc: str = Field(title="文字描述")

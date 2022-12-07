@@ -17,6 +17,7 @@ from app.api.auth import router as auth_router
 from app.api.experiment import router as experiment_router
 from app.api.file import router as file_router
 from app.api.notification import router as notification_router
+from app.api.paradigm import router as paradigm_router
 from app.api.user import router as user_router
 from app.config import config
 from app.db.database import database
@@ -64,7 +65,7 @@ from app.model.response import (
     GetTaskByPageResponse,
     GetTaskStepsByIDResponse,
     GoSearchResponse,
-    Response,
+    NoneResponse,
     UpdateDeviceResponse,
     UpdateHumanSubjectResponse,
     UploadSearchFileResponse,
@@ -80,6 +81,7 @@ app.include_router(user_router)
 app.include_router(notification_router)
 app.include_router(experiment_router)
 app.include_router(file_router)
+app.include_router(paradigm_router)
 
 app.state.database = database
 
@@ -142,14 +144,15 @@ async def filter_blank_query_params(request: Request, call_next: Callable):
 @app.exception_handler(HTTPException)
 async def handle_http_exception(_request: Request, e: HTTPException):
     return JSONResponse(
-        status_code=e.status_code, content=Response(code=CODE_FAIL, message=e.detail).dict()
+        status_code=e.status_code, content=NoneResponse(code=CODE_FAIL, message=e.detail).dict()
     )
 
 
 @app.exception_handler(RequestValidationError)
 async def handle_http_exception(_request: Request, e: RequestValidationError):
     return JSONResponse(
-        status_code=HTTP_400_BAD_REQUEST, content=Response(code=CODE_FAIL, message=repr(e)).dict()
+        status_code=HTTP_400_BAD_REQUEST,
+        content=NoneResponse(code=CODE_FAIL, message=repr(e)).dict(),
     )
 
 
@@ -157,7 +160,7 @@ async def handle_http_exception(_request: Request, e: RequestValidationError):
 async def handle_expired_token_exception(_request: Request, _e: ExpiredSignatureError):
     return JSONResponse(
         status_code=HTTP_401_UNAUTHORIZED,
-        content=Response(code=CODE_SESSION_TIMEOUT, message="session timeout").dict(),
+        content=NoneResponse(code=CODE_SESSION_TIMEOUT, message="session timeout").dict(),
     )
 
 

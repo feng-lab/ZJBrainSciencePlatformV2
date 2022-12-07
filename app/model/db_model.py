@@ -149,6 +149,8 @@ class Paradigm(Model, ModelMixin):
 
     # 实验ID
     experiment_id: int = Integer(ge=0, index=True)
+    # 创建者ID
+    creator: int = Integer(ge=0)
     # 描述文字
     description: str = Text()
 
