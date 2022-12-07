@@ -10,7 +10,7 @@ import ormar
 from ormar import QuerySet
 
 from app.config import config
-from app.model.db_model import Experiment, File, Notification, User
+from app.model.db_model import Experiment, File, Notification, Paradigm, User
 from app.model.request import (
     GetExperimentsByPageSortBy,
     GetExperimentsByPageSortOrder,
@@ -195,6 +195,16 @@ async def search_files(
         query = query.filter(is_deleted=False)
     files = await query.offset(paging_param.offset).limit(paging_param.limit).all()
     return files
+
+
+async def search_paradigms(
+    experiment_id: int, paging_param: GetModelsByPageParam
+) -> list[Paradigm]:
+    query: QuerySet = Paradigm.objects.filter(experiment_id=experiment_id)
+    if not paging_param.include_deleted:
+        query = query.filter(is_deleted=False)
+    paradigms = await query.offset(paging_param.offset).limit(paging_param.limit).all()
+    return paradigms
 
 
 def add_common_stuff() -> None:

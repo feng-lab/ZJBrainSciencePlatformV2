@@ -67,6 +67,13 @@ def wrap_api_response(func: Callable[..., Awaitable[Data]]):
     return wrapper
 
 
+class BaseDBModelInfo(BaseModel):
+    id: int
+    gmt_create: datetime
+    gmt_modified: datetime
+    is_deleted: bool
+
+
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str
@@ -89,7 +96,7 @@ ExperimentInfo = pydantic.create_model(
 FileInfo = db_model.File.get_pydantic()
 
 
-class ParadigmInfo(BaseModel):
+class ParadigmInfo(BaseDBModelInfo):
     experiment_id: int
     creator: int
     description: str
