@@ -14,7 +14,7 @@ from app.model.response import ExperimentInfo, Response, wrap_api_response
 from app.timezone_util import convert_timezone_before_handle_request
 from app.util import convert_models
 
-router = APIRouter()
+router = APIRouter(tags=["experiment"])
 
 
 @router.post("/api/createExperiment", description="创建实验", response_model=Response[int])

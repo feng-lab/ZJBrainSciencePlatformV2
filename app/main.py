@@ -75,7 +75,19 @@ from app.model.schema import Device, EEGData, File, Human, Paradigm, SearchFile,
 app_logger = logging.getLogger(__name__)
 access_logger = logging.getLogger(ACCESS_LOGGER_NAME)
 
-app = FastAPI()
+app = FastAPI(
+    title="ZJBrainSciencePlatform",
+    description="之江实验室 Brain Science 平台",
+    openapi_tags=[
+        {"name": "auth"},
+        {"name": "user"},
+        {"name": "notification"},
+        {"name": "experiment"},
+        {"name": "file"},
+        {"name": "paradigm"},
+    ],
+)
+
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(notification_router)

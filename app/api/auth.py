@@ -17,7 +17,7 @@ from app.timezone_util import utc_now
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(tags=["auth"])
 
 crypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 TOKEN_TYPE = "bearer"

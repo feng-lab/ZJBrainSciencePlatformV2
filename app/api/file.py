@@ -16,7 +16,7 @@ from app.util import convert_models
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(tags=["file"])
 
 
 @router.post("/api/uploadFile", description="上传文件", response_model=Response[int])

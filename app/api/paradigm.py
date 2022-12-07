@@ -12,7 +12,7 @@ from app.model.request import (
 )
 from app.model.response import NoneResponse, ParadigmInfo, Response, wrap_api_response
 
-router = APIRouter()
+router = APIRouter(tags=["paradigm"])
 
 
 @router.post("/api/createParadigm", description="创建实验范式", response_model=Response[int])

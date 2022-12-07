@@ -9,7 +9,7 @@ from app.model.response import NotificationInfo, Response, wrap_api_response
 from app.timezone_util import convert_timezone_before_handle_request
 from app.util import convert_models
 
-router = APIRouter()
+router = APIRouter(tags=["notification"])
 
 
 @router.post("/api/sendNotification", description="发送通知", response_model=Response[int])

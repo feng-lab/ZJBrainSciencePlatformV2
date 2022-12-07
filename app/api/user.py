@@ -21,7 +21,7 @@ from app.model.request import (
 from app.model.response import ListUserData, NoneResponse, Response, UserInfo, wrap_api_response
 from app.util import convert_models
 
-router = APIRouter()
+router = APIRouter(tags=["user"])
 
 ROOT_USERNAME = "root"
 ROOT_PASSWORD = "?L09G$7g5*j@.q*4go4d"
