@@ -61,7 +61,7 @@ def build_base_image():
 
 
 def docker_compose(*args: str) -> subprocess.CompletedProcess:
-    return run("docker-compose", "--file", str(docker_compose_file), *args)
+    return run("docker", "compose", "--file", str(docker_compose_file), *args)
 
 
 def run(*command: str) -> subprocess.CompletedProcess:
