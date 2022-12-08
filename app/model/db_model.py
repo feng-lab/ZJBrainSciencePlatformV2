@@ -61,9 +61,6 @@ class Notification(Model, ModelMixin):
     creator: int = Integer()
     # 消息接收者ID
     receiver: int = Integer(index=True)
-    # 消息发送时间
-    # 该字段指消息发送的时间，gmt_create指数据表记录创建时间
-    create_at: datetime = DateTime(timezone=True, index=True)
     # 消息状态
     status: str = String(max_length=20, choices=list(Status), default=Status.UNREAD.value)
     # 消息内容

@@ -10,7 +10,7 @@ from pydantic.generics import GenericModel
 from starlette.responses import JSONResponse
 
 from app.model import db_model
-from app.model.db_model import Experiment, Notification, User
+from app.model.db_model import Experiment, User
 from app.model.schema import Device, EEGData, File, Human, SearchFile, SearchResult, Task
 
 CODE_SUCCESS: int = 0
@@ -25,6 +25,7 @@ CODE_SESSION_TIMEOUT: int = 2
 MESSAGE_SUCCESS: str = "success"
 
 Data = TypeVar("Data")
+Model = TypeVar("Model", bound=BaseModel)
 
 
 class Response(GenericModel, Generic[Data]):
@@ -79,15 +80,22 @@ class LoginResponse(BaseModel):
     token_type: str
 
 
+class PagedData(GenericModel, Generic[Model]):
+    total: int
+    items: list[Model]
+
+
 UserInfo = User.get_pydantic(exclude={"hashed_password"})
 
 
-class ListUserData(BaseModel):
-    total: int = Field(title="总数", ge=0)
-    items: list[UserInfo] = Field(title="数据列表")
+class NotificationInfo(BaseDBModelInfo):
+    type: str
+    creator: int
+    creator_name: str
+    receiver: int
+    status: str
+    content: str
 
-
-NotificationInfo = Notification.get_pydantic()
 
 ExperimentInfo = pydantic.create_model(
     "ExperimentInfo", __base__=Experiment, assistants=(list[int] | None, None)

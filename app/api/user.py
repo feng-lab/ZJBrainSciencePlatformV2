@@ -18,7 +18,7 @@ from app.model.request import (
     UpdateUserAccessLevelRequest,
     get_models_by_page,
 )
-from app.model.response import ListUserData, NoneResponse, Response, UserInfo, wrap_api_response
+from app.model.response import NoneResponse, PagedData, Response, UserInfo, wrap_api_response
 from app.util import convert_models
 
 router = APIRouter(tags=["user"])
@@ -74,7 +74,9 @@ async def get_user_info(
     return UserInfo(**user.dict())
 
 
-@router.get("/api/getUsersByPage", description="获取用户列表", response_model=Response[ListUserData])
+@router.get(
+    "/api/getUsersByPage", description="获取用户列表", response_model=Response[PagedData[UserInfo]]
+)
 @wrap_api_response
 async def get_users_by_page(
     _user: User = Depends(get_current_user_as_administrator()),
@@ -82,7 +84,7 @@ async def get_users_by_page(
     staff_id: str | None = Query(description="员工号，模糊查询", max_length=255, default=None),
     access_level: int | None = Query(description="权限级别", ge=0, default=None),
     page_param: GetModelsByPageParam = Depends(get_models_by_page),
-) -> ListUserData:
+) -> PagedData[UserInfo]:
     total_count, users = await crud.search_users(
         username,
         staff_id,
@@ -91,7 +93,7 @@ async def get_users_by_page(
         page_param.limit,
         page_param.include_deleted,
     )
-    return ListUserData(total=total_count, items=convert_models(users, UserInfo))
+    return PagedData[UserInfo](total=total_count, items=convert_models(users, UserInfo))
 
 
 @router.post("/api/updateUserAccessLevel", description="修改用户权限", response_model=NoneResponse)

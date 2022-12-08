@@ -4,10 +4,14 @@ from app.api.auth import get_current_user_as_human_subject
 from app.config import config
 from app.db import crud
 from app.model.db_model import Notification, User
-from app.model.request import MarkNotificationsAsReadRequest, SendNotificationRequest
-from app.model.response import NotificationInfo, Response, wrap_api_response
+from app.model.request import (
+    GetModelsByPageParam,
+    MarkNotificationsAsReadRequest,
+    SendNotificationRequest,
+    get_models_by_page,
+)
+from app.model.response import NotificationInfo, PagedData, Response, wrap_api_response
 from app.timezone_util import convert_timezone_before_handle_request
-from app.util import convert_models
 
 router = APIRouter(tags=["notification"])
 
@@ -34,24 +38,41 @@ async def get_recent_unread_notifications(
     count: int = Query(description="数量", default=config.GET_RECENT_NOTIFICATIONS_COUNT, ge=0),
 ) -> list[NotificationInfo]:
     user_id = user.id
-    recent_notifications = await crud.list_notifications(user_id, offset=0, limit=count)
-    return convert_models(recent_notifications, NotificationInfo)
+    total_count, notifications = await crud.list_notifications(
+        user_id, offset=0, limit=count, include_deleted=False
+    )
+    creator_names = await crud.bulk_get_username_by_id(
+        [notification.creator for notification in notifications]
+    )
+    notification_infos = [
+        NotificationInfo(**notification.dict(), creator_name=creator_name)
+        for notification, creator_name in zip(notifications, creator_names)
+    ]
+    return notification_infos
 
 
 @router.get(
     "/api/getNotificationsByPage",
-    description="分页获取未读通知",
-    response_model=Response[list[NotificationInfo]],
+    description="分页获取所有通知",
+    response_model=Response[PagedData[NotificationInfo]],
 )
 @wrap_api_response
 async def get_notifications_by_page(
     user: User = Depends(get_current_user_as_human_subject()),
-    offset: int = Query(description="分页起始位置", default=0, ge=0),
-    limit: int = Query(description="分页大小", default=config.LIST_NOTIFICATIONS_LIMIT, ge=0),
-) -> list[NotificationInfo]:
+    paging_param: GetModelsByPageParam = Depends(get_models_by_page),
+) -> PagedData[NotificationInfo]:
     user_id = user.id
-    recent_notifications = await crud.list_notifications(user_id, offset, limit)
-    return convert_models(recent_notifications, NotificationInfo)
+    total_count, notifications = await crud.list_notifications(
+        user_id, paging_param.offset, paging_param.limit, paging_param.include_deleted
+    )
+    creator_names = await crud.bulk_get_username_by_id(
+        [notification.creator for notification in notifications]
+    )
+    notification_infos = [
+        NotificationInfo(**notification.dict(), creator_name=creator_name)
+        for notification, creator_name in zip(notifications, creator_names)
+    ]
+    return PagedData(total=total_count, items=notification_infos)
 
 
 @router.post(

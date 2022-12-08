@@ -113,15 +113,23 @@ async def search_users(
     return total_count, users
 
 
-async def list_notifications(user_id: int, offset: int, limit: int) -> list[Notification]:
-    msgs = (
-        await Notification.objects.filter(receiver=user_id, is_deleted=False)
-        .order_by("-create_at")
-        .offset(offset)
-        .limit(limit)
-        .all()
+# noinspection PyTypeChecker
+async def bulk_get_username_by_id(user_ids: list[int]) -> list[str]:
+    queries = [User.objects.get_or_none(id=user_id, is_deleted=False) for user_id in user_ids]
+    users: list[User] = await asyncio.gather(*queries)
+    return [user.username if user is not None else "" for user in users]
+
+
+async def list_notifications(
+    user_id: int, offset: int, limit: int, include_deleted: bool
+) -> (int, list[Notification]):
+    query = Notification.objects.filter(receiver=user_id)
+    if not include_deleted:
+        query = query.filter(is_deleted=False)
+    total_count, notifications = await asyncio.gather(
+        query.count(), query.order_by("-gmt_create").offset(offset).limit(limit).all()
     )
-    return msgs
+    return total_count, notifications
 
 
 async def list_unread_notifications(

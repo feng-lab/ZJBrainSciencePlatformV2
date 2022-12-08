@@ -32,7 +32,6 @@ class SendNotificationRequest(BaseModel):
     type: str = Field(title="通知类型", max_length=20)
     receiver: int = Field(title="通知接收者ID")
     content: str = Field(title="通知内容")
-    create_at: datetime = Field(title="通知发送时间")
 
 
 class MarkNotificationsAsReadRequest(BaseModel):
