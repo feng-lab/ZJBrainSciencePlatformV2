@@ -29,6 +29,10 @@ ipython = "^8.7.0"
 alembic = "^1.8.1"
 mysqlclient = "^2.1.1"
 
+
+[tool.poetry.group.build.dependencies]
+typer = { extras = ["all"], version = "^0.7.0" }
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
