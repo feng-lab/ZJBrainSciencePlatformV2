@@ -13,7 +13,7 @@ from app.config import config
 from app.db import crud
 from app.model.db_model import User
 from app.model.response import AccessTokenData, LoginResponse, NoneResponse, wrap_api_response
-from app.timezone_util import utc_now
+from app.time import utc_now
 
 logger = logging.getLogger(__name__)
 

@@ -16,7 +16,7 @@ from app.model.request import (
     GetExperimentsByPageSortOrder,
     GetModelsByPageParam,
 )
-from app.timezone_util import convert_timezone_after_get_db, convert_timezone_before_save, utc_now
+from app.time import convert_timezone_after_get_db, convert_timezone_before_save, utc_now
 from app.util import get_module_defined_members
 
 logger = logging.getLogger(__name__)

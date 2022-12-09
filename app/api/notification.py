@@ -11,7 +11,7 @@ from app.model.request import (
     get_models_by_page,
 )
 from app.model.response import NotificationInfo, PagedData, Response, wrap_api_response
-from app.timezone_util import convert_timezone_before_handle_request
+from app.time import convert_timezone_before_handle_request
 
 router = APIRouter(tags=["notification"])
 

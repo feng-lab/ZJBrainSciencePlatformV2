@@ -5,7 +5,7 @@ from ormar import Boolean, DateTime, Float, Integer, Model, String, Text
 from pydantic import BaseModel
 
 from app.db.database import BaseMeta
-from app.timezone_util import utc_now
+from app.time import utc_now
 
 
 class ModelMixin:

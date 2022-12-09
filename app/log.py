@@ -7,7 +7,7 @@ from queue import Queue
 from typing import Callable
 
 from app.config import config
-from app.timezone_util import current_timezone
+from app.time import CURRENT_TIMEZONE
 
 ACCESS_LOGGER_NAME = "access"
 UVICORN_LOGGER_NAME = "uvicorn.access"
@@ -18,7 +18,7 @@ ACCESS_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(message)s"
 
 
 def current_time_tuple(_second, _what):
-    return datetime.now(current_timezone).timetuple()
+    return datetime.now(CURRENT_TIMEZONE).timetuple()
 
 
 logging.Formatter.converter = current_time_tuple
