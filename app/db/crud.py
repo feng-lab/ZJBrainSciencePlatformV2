@@ -1,253 +1,64 @@
-import asyncio
 import functools
-import inspect
-import itertools
 import logging
-import sys
-from typing import Any, Awaitable, Callable, TypeVar
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, TypeVar
 
-import ormar
-from ormar import QuerySet
+from pydantic import BaseModel
+from sqlalchemy import func, insert, select, text, update
+from sqlalchemy.engine import CursorResult, Result
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import Executable
+from sqlalchemy.sql.roles import WhereHavingRole
 
-from app.config import config
-from app.model.db_model import Experiment, File, Notification, Paradigm, User
+from app.common.time import convert_timezone_after_get_db, convert_timezone_before_save, utc_now
+from app.common.util import Model
+from app.db.database import Base
+from app.db.orm import (
+    Experiment,
+    ExperimentAssistant,
+    File,
+    Notification,
+    Paradigm,
+    ParadigmFile,
+    User,
+)
 from app.model.request import (
     GetExperimentsByPageSortBy,
     GetExperimentsByPageSortOrder,
     GetModelsByPageParam,
 )
-from app.time import convert_timezone_after_get_db, convert_timezone_before_save, utc_now
-from app.util import get_module_defined_members
+from app.model.response import PagedData
+from app.model.schema import (
+    ExperimentInDB,
+    FileInDB,
+    FileResponse,
+    NotificationInDB,
+    NotificationResponse,
+    ParadigmInDB,
+    UserAuth,
+    UserCreate,
+    UserInDB,
+    UserResponse,
+)
 
 logger = logging.getLogger(__name__)
 
-DBModel = TypeVar("DBModel", bound=ormar.Model, contravariant=True)
+OrmModel = TypeVar("OrmModel", bound=Base)
+Exec = TypeVar("Exec", bound=Executable)
+Res = TypeVar("Res", bound=Result)
 
 
-async def update_model(model: DBModel, **updates) -> DBModel:
-    if model is not None:
-        updates["gmt_modified"] = utc_now()
-        columns = list(updates.keys())
-        model = await model.update(_columns=columns, **updates)
-    return model
-
-
-async def bulk_update_models(models: list[DBModel], **updates) -> None:
-    now = utc_now()
-    for model in models:
-        updates["gmt_modified"] = now
-        model.update_from_dict(updates)
-    columns = list(updates.keys())
-    columns.append("gmt_modified")
-    await Notification.objects.bulk_update(models, columns=columns)
-
-
-async def create_model(model: DBModel) -> DBModel:
-    model = convert_timezone_before_save(model)
-    model = await model.save()
-    logger.info(f"created model {type(model).__name__}: {repr(model)}")
-    return model
-
-
-async def bulk_create_models(models: list[DBModel]) -> None:
-    model_type = type(models[0])
-    await model_type.objects.bulk_create(models)
-
-
-async def get_model_by_id(model_type: type[DBModel], model_id: int) -> DBModel | None:
-    model = await model_type.objects.get_or_none(id=model_id, is_deleted=False)
-    return model
-
-
-async def get_model(model_type: type[DBModel], **queries) -> DBModel | None:
-    model = await model_type.objects.get_or_none(**queries, is_deleted=False)
-    return model
-
-
-async def model_exists(model_type: type[DBModel], model_id: int) -> bool:
-    exists = await model_type.objects.filter(id=model_id, is_deleted=False).exists()
-    return exists
-
-
-async def search_models(model_type: type[DBModel], **queries) -> list[DBModel]:
-    models = await model_type.objects.filter(**queries, is_deleted=False).all()
-    return models
-
-
-# noinspection PyTypeChecker
-async def bulk_search_models_by_key(
-    model_type: type[DBModel], keys: list[Any], key_name: str
-) -> list[list[DBModel]]:
-    tasks = [
-        model_type.objects.filter(**{key_name: key, "is_deleted": False}).all() for key in keys
-    ]
-    result = await asyncio.gather(*tasks)
-    return result
-
-
-async def get_user_by_username(username: str) -> User | None:
-    return await get_model(User, username=username)
-
-
-async def search_users(
-    username: str | None,
-    staff_id: str | None,
-    access_level: int | None,
-    offset: int,
-    limit: int,
-    include_deleted: bool,
-) -> (int, list[User]):
-    query: QuerySet = User.objects
-    if username is not None:
-        query = query.filter(username__icontains=username)
-    if staff_id is not None:
-        query = query.filter(staff_id__icontains=staff_id)
-    if access_level is not None:
-        query = query.filter(access_level=access_level)
-    if not include_deleted:
-        query = query.filter(is_deleted=False)
-
-    total_count, users = await asyncio.gather(
-        query.count(), query.offset(offset).limit(limit).order_by("id").all()
-    )
-    return total_count, users
-
-
-# noinspection PyTypeChecker
-async def bulk_get_username_by_id(user_ids: list[int]) -> list[str]:
-    queries = [User.objects.get_or_none(id=user_id, is_deleted=False) for user_id in user_ids]
-    users: list[User] = await asyncio.gather(*queries)
-    return [user.username if user is not None else "" for user in users]
-
-
-async def list_notifications(
-    user_id: int, offset: int, limit: int, include_deleted: bool
-) -> (int, list[Notification]):
-    query = Notification.objects.filter(receiver=user_id)
-    if not include_deleted:
-        query = query.filter(is_deleted=False)
-    total_count, notifications = await asyncio.gather(
-        query.count(), query.order_by("-gmt_create").offset(offset).limit(limit).all()
-    )
-    return total_count, notifications
-
-
-async def list_unread_notifications(
-    user_id: int, is_all: bool, msg_ids: list[int]
-) -> list[Notification]:
-    query = Notification.objects.filter(
-        receiver=user_id, is_deleted=False, status=Notification.Status.UNREAD.value
-    )
-    if not is_all:
-        query = query.filter(id__in=msg_ids)
-    msgs = await query.all()
-    return msgs
-
-
-async def update_notifications_as_read(msgs: list[Notification]) -> None:
-    now = utc_now()
-    for msg in msgs:
-        msg.status = Notification.Status.READ.value
-        msg.gmt_modified = now
-    await Notification.objects.bulk_update(msgs, columns=["status", "gmt_modified"])
-
-
-async def search_experiments(
-    search: str,
-    sort_by: GetExperimentsByPageSortBy,
-    sort_order: GetExperimentsByPageSortOrder,
-    offset: int,
-    limit: int,
-    include_deleted: bool,
-) -> list[Experiment]:
-    query: QuerySet = Experiment.objects.offset(offset).limit(limit)
-
-    if sort_by is GetExperimentsByPageSortBy.START_TIME:
-        order_key = "start_at"
-    elif sort_by is GetExperimentsByPageSortBy.TYPE:
-        order_key = "type"
-    else:
-        raise ValueError("invalid sort_by")
-    if sort_order is GetExperimentsByPageSortOrder.ASC:
-        pass
-    elif sort_order is GetExperimentsByPageSortOrder.DESC:
-        order_key = "-" + order_key
-    else:
-        raise ValueError("invalid sort_order")
-    query = query.order_by(order_key)
-    if search:
-        query = query.filter(name__icontains=search)
-    if not include_deleted:
-        query = query.filter(is_deleted=False)
-
-    return await query.all()
-
-
-async def get_last_index_file(experiment_id: int) -> File | None:
-    last_index_file = (
-        await File.objects.filter(experiment_id=experiment_id, is_deleted=False)
-        .order_by("-index")
-        .limit(1)
-        .get_or_none()
-    )
-    return last_index_file
-
-
-async def get_file_extensions(experiment_id: int) -> list[str]:
-    extensions = await File.objects.filter(
-        experiment_id=experiment_id, is_deleted=False
-    ).values_list(fields={"extension"}, flatten=True)
-
-    return list(set(extensions))
-
-
-async def search_files(
-    experiment_id: int, path: str, extension: str, paging_param: GetModelsByPageParam
-) -> list[File]:
-    query: QuerySet = File.objects.filter(experiment_id=experiment_id)
-    if path:
-        query = query.filter(path__icontains=path)
-    if extension:
-        query = query.filter(extension__icontains=extension)
-    if not paging_param.include_deleted:
-        query = query.filter(is_deleted=False)
-    files = await query.offset(paging_param.offset).limit(paging_param.limit).all()
-    return files
-
-
-async def search_paradigms(
-    experiment_id: int, paging_param: GetModelsByPageParam
-) -> list[Paradigm]:
-    query: QuerySet = Paradigm.objects.filter(experiment_id=experiment_id)
-    if not paging_param.include_deleted:
-        query = query.filter(is_deleted=False)
-    paradigms = await query.offset(paging_param.offset).limit(paging_param.limit).all()
-    return paradigms
-
-
-def add_common_stuff() -> None:
-    current_module = sys.modules[__name__]
-    async_funcs = get_module_defined_members(
-        current_module, lambda _name, item: inspect.iscoroutinefunction(item)
-    )
-    for name, func in async_funcs:
-        new_func = convert_db_model_timezone(func)
-        if config.DEBUG_MODE:
-            new_func = log_db_operation(name, new_func)
-        setattr(current_module, name, new_func)
-
-
-def convert_db_model_timezone(func: Callable[..., Awaitable[DBModel | list[DBModel] | None]]):
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs) -> DBModel | list[DBModel] | None:
-        result = await func(*args, **kwargs)
+def convert_db_model_timezone(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        result = fn(*args, **kwargs)
         if result is None:
             return None
-        if isinstance(result, ormar.Model):
+        if isinstance(result, BaseModel):
             return convert_timezone_after_get_db(result)
         if isinstance(result, list):
             return [
-                convert_timezone_after_get_db(model) if isinstance(model, ormar.Model) else model
+                convert_timezone_after_get_db(model) if isinstance(model, BaseModel) else model
                 for model in result
             ]
         return result
@@ -255,21 +66,293 @@ def convert_db_model_timezone(func: Callable[..., Awaitable[DBModel | list[DBMod
     return wrapper
 
 
-def log_db_operation(name: str, func: Callable[..., Awaitable[...]]):
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
-        func_sig = inspect.signature(func)
-        real_args = ",".join(
-            f"{param_name}={repr(param_value)}"
-            for param_name, param_value in zip(
-                func_sig.parameters.keys(), itertools.chain(args, kwargs)
+@convert_db_model_timezone
+def get_model(
+    db: Session, table: type[OrmModel], target_model: type[Model], id_: int
+) -> Model | None:
+    stmt = select(table).where(table.id == id_, table.is_deleted == False)
+    row = db.execute(stmt).one_or_none()
+    return target_model.from_orm(row[0]) if row is not None else None
+
+
+def exists_model(db: Session, table: type[OrmModel], id_: int) -> bool:
+    stmt = select(text("1")).select_from(table).where(table.id == id_, table.is_deleted == False)
+    return db.execute(stmt).scalar() is not None
+
+
+def insert_model(db: Session, table: type[OrmModel], model: Model) -> int:
+    model = convert_timezone_before_save(model)
+    result: CursorResult = db.execute(insert(table).values(**model.dict()))
+    db.commit()
+    return result.inserted_primary_key.id
+
+
+def bulk_insert_models(db: Session, table: type[OrmModel], models: list[Model]) -> None:
+    model_dicts = [convert_timezone_before_save(model).dict() for model in models]
+    db.execute(insert(table), model_dicts)
+    db.commit()
+
+
+def update_model(db: Session, table: type[OrmModel], id_: int, **values: Any) -> bool:
+    return bulk_update_models(db, table, table.id == id_, **values) > 0
+
+
+def bulk_update_models(
+    db: Session, table: type[OrmModel], *where: WhereHavingRole, **values: Any
+) -> int:
+    values = values | {"gmt_modified": utc_now()}
+    result: CursorResult = db.execute(update(table).where(*where).values(**values))
+    db.commit()
+    # noinspection PyTypeChecker
+    return result.rowcount
+
+
+def update_model_as_deleted(db: Session, table: type[OrmModel], id_: int) -> bool:
+    return update_model(db, table, id_, is_deleted=True)
+
+
+def bulk_update_models_as_deleted(db: Session, table: type[OrmModel], *where) -> int:
+    return bulk_update_models(db, table, *where, is_deleted=True)
+
+
+def get_user_access_level(db: Session, user_id: int) -> int | None:
+    return db.execute(
+        select(User.access_level).where(User.id == user_id, User.is_deleted == False)
+    ).scalar()
+
+
+@convert_db_model_timezone
+def get_user_auth_by_username(db: Session, username: str) -> UserAuth | None:
+    stmt = select(
+        User.id, User.username, User.staff_id, User.access_level, User.hashed_password
+    ).where(User.username == username, User.is_deleted == False)
+    row = db.execute(stmt).one_or_none()
+    return UserAuth.from_orm(row) if row is not None else None
+
+
+@convert_db_model_timezone
+def search_users(
+    db: Session,
+    username: str | None,
+    staff_id: str | None,
+    access_level: int | None,
+    page_param: GetModelsByPageParam,
+) -> PagedData[UserResponse]:
+    where = []
+    if username:
+        where.append(User.username.ilike(f"%{username}%"))
+    if staff_id:
+        where.append(User.staff_id.ilike(f"%{staff_id}%"))
+    if access_level is not None:
+        where.append(User.access_level == access_level)
+    if not page_param.include_deleted:
+        where.append(User.is_deleted == False)
+    total_count = db.execute(select(func.count()).select_from(User).where(*where)).scalar()
+    users = db.execute(
+        select(User).where(*where).offset(page_param.offset).limit(page_param.limit)
+    ).scalars()
+    return PagedData[UserResponse](
+        total=total_count, items=[UserResponse(**UserInDB.from_orm(user).dict()) for user in users]
+    )
+
+
+def insert_or_update_user(db: Session, user: UserCreate) -> None:
+    user_id = db.execute(select(User.id).where(User.username == user.username)).scalar()
+    if user_id is None:
+        insert_model(db, User, user)
+    else:
+        update_model(db, User, user_id, **user.dict())
+
+
+def get_user_username(db: Session, user_id: int) -> str | None:
+    return db.execute(
+        select(User.username).where(User.id == user_id, User.is_deleted == False)
+    ).scalar()
+
+
+@convert_db_model_timezone
+def search_notifications(
+    db: Session, user_id: int, status: Notification.Status | None, page_param: GetModelsByPageParam
+) -> PagedData[NotificationResponse]:
+    stmt = select(func.count()).select_from(Notification).where(Notification.receiver == user_id)
+    if not page_param.include_deleted:
+        stmt = stmt.where(Notification.is_deleted == False)
+    if status is not None:
+        stmt = stmt.where(Notification.status == status)
+    total = db.execute(stmt).scalar()
+    responses = list_notifications(db, user_id, status, page_param)
+    return PagedData(total=total, items=responses)
+
+
+@convert_db_model_timezone
+def list_notifications(
+    db: Session, user_id: int, status: Notification.Status | None, page_param: GetModelsByPageParam
+) -> list[NotificationResponse]:
+    stmt = (
+        select(Notification, User.username)
+        .join(User, Notification.creator == User.id)
+        .where(Notification.receiver == user_id)
+        .offset(page_param.offset)
+        .limit(page_param.limit)
+        .order_by(Notification.gmt_create.desc())
+    )
+    if not page_param.include_deleted:
+        stmt = stmt.where(Notification.is_deleted == False)
+    if status is not None:
+        stmt = stmt.where(Notification.status == status)
+    rows = db.execute(stmt).all()
+    return [
+        NotificationResponse(**NotificationInDB.from_orm(row[0]).dict(), creator_name=row[1])
+        for row in rows
+    ]
+
+
+def update_notifications_as_read(
+    db: Session, user_id: int, is_all: bool, msg_ids: list[int]
+) -> None:
+    stmt = (
+        update(Notification)
+        .where(
+            Notification.receiver == user_id,
+            Notification.is_deleted == False,
+            Notification.status == Notification.Status.unread,
+        )
+        .values(status=Notification.Status.read)
+    )
+    if not is_all:
+        stmt = stmt.where(Notification.id.in_(msg_ids))
+    db.execute(stmt)
+    db.commit()
+
+
+def list_unread_notifications(
+    db: Session, user_id: int, is_all: bool, msg_ids: list[int]
+) -> list[int]:
+    stmt = select(Notification.id).where(
+        Notification.receiver == user_id,
+        Notification.is_deleted == False,
+        Notification.status == Notification.Status.unread,
+    )
+    if not is_all:
+        stmt = stmt.where(Notification.id.in_(msg_ids))
+    unread_notification_ids = db.execute(stmt).scalars().all()
+    return unread_notification_ids
+
+
+def get_file_last_index(db: Session, experiment_id: int) -> int | None:
+    stmt = (
+        select(File.index)
+        .where(File.experiment_id == experiment_id, File.is_deleted == False)
+        .order_by(File.index.desc())
+        .limit(1)
+    )
+    return db.execute(stmt).scalar()
+
+
+def get_file_extensions(db: Session, experiment_id: int) -> list[str]:
+    stmt = (
+        select(File.extension)
+        .where(File.experiment_id == experiment_id, File.is_deleted == False)
+        .group_by(File.extension)
+    )
+    return db.execute(stmt).scalars().all()
+
+
+@convert_db_model_timezone
+def search_files(
+    db: Session, experiment_id: int, path: str, extension: str, page_param: GetModelsByPageParam
+) -> PagedData[FileResponse]:
+    where = [File.experiment_id == experiment_id]
+    if path:
+        where.append(File.path.ilike(f"%{path}%"))
+    if extension:
+        where.append(File.extension.ilike(f"%{extension}%"))
+    if not page_param.include_deleted:
+        where.append(File.is_deleted == False)
+    total = db.execute(select(func.count()).select_from(File).where(*where)).scalar()
+    files_stmt = (
+        select(File)
+        .where(*where)
+        .offset(page_param.offset)
+        .limit(page_param.limit)
+        .order_by(File.index)
+    )
+    files = db.execute(files_stmt).scalars().all()
+    return PagedData(
+        total=total, items=[FileResponse(**FileInDB.from_orm(file).dict()) for file in files]
+    )
+
+
+def list_experiment_assistants(db: Session, experiment_id: int) -> list[int]:
+    stmt = select(ExperimentAssistant.user_id).where(
+        ExperimentAssistant.experiment_id == experiment_id, ExperimentAssistant.is_deleted == False
+    )
+    return db.execute(stmt).scalars().all()
+
+
+@convert_db_model_timezone
+def search_experiments(
+    db: Session,
+    search: str,
+    sort_by: GetExperimentsByPageSortBy,
+    sort_order: GetExperimentsByPageSortOrder,
+    page_param: GetModelsByPageParam,
+) -> list[ExperimentInDB]:
+    stmt = select(Experiment)
+    if search:
+        stmt = stmt.where(Experiment.name.ilike(f"%{search}%"))
+    if not page_param.include_deleted:
+        stmt = stmt.where(Experiment.is_deleted == False)
+    if sort_by is GetExperimentsByPageSortBy.START_TIME:
+        column = Experiment.start_at
+    elif sort_by is GetExperimentsByPageSortBy.TYPE:
+        column = Experiment.type
+    else:
+        raise ValueError("invalid sort_by")
+    if sort_order is GetExperimentsByPageSortOrder.ASC:
+        stmt = stmt.order_by(column.asc())
+    elif sort_order is GetExperimentsByPageSortOrder.DESC:
+        stmt = stmt.order_by(column.desc())
+    else:
+        raise ValueError("invalid sort_order")
+    rows = db.execute(stmt).scalars().all()
+    return [ExperimentInDB.from_orm(row) for row in rows]
+
+
+def bulk_list_experiment_assistants(db: Session, experiment_ids: list[int]) -> list[list[int]]:
+    with ThreadPoolExecutor() as executor:
+        return list(
+            executor.map(
+                lambda experiment_id: list_experiment_assistants(db, experiment_id), experiment_ids
             )
         )
-        result = await func(*args, **kwargs)
-        logger.info(f"{name}({real_args})->{repr(result)}")
-        return result
-
-    return wrapper
 
 
-add_common_stuff()
+def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
+    stmt = select(ParadigmFile.id).where(
+        ParadigmFile.paradigm_id == paradigm_id, ParadigmFile.is_deleted == False
+    )
+    return db.execute(stmt).scalars().all()
+
+
+@convert_db_model_timezone
+def search_paradigms(
+    db: Session, experiment_id: int, page_param: GetModelsByPageParam
+) -> list[ParadigmInDB]:
+    stmt = (
+        select(Paradigm)
+        .where(Paradigm.experiment_id == experiment_id)
+        .offset(page_param.offset)
+        .limit(page_param.limit)
+    )
+    if not page_param.include_deleted:
+        stmt = stmt.where(Paradigm.is_deleted == False)
+    rows = db.execute(stmt).scalars().all()
+    return [ParadigmInDB.from_orm(row) for row in rows]
+
+
+def bulk_list_paradigm_files(db: Session, paradigm_ids: list[int]) -> list[list[int]]:
+    with ThreadPoolExecutor() as executor:
+        return list(
+            executor.map(lambda paradigm_id: list_paradigm_files(db, paradigm_id), paradigm_ids)
+        )

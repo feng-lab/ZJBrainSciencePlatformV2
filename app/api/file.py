@@ -5,14 +5,15 @@ from pathlib import Path
 from fastapi import APIRouter, Depends
 from fastapi import File as FastApiFile
 from fastapi import Form, Query, UploadFile
+from sqlalchemy.orm import Session
 
-from app.api.auth import get_current_user_as_human_subject, get_current_user_as_researcher
-from app.config import config
+from app.common.config import config
+from app.common.context import Context, human_subject_context, researcher_context
 from app.db import crud
-from app.model.db_model import File, User
+from app.db.orm import File
 from app.model.request import DeleteModelRequest, GetModelsByPageParam, get_models_by_page
-from app.model.response import FileInfo, NoneResponse, Response, wrap_api_response
-from app.util import convert_models
+from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
+from app.model.schema import FileCreate, FileResponse
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +27,14 @@ async def upload_file(
     path: str = Form(description="文件路径"),
     is_original: bool = Form(description="是否是设备产生的原始文件"),
     file: UploadFile = FastApiFile(),
-    _user: User = Depends(get_current_user_as_researcher()),
+    ctx: Context = Depends(researcher_context),
 ) -> int:
-    file_index = await get_next_index(experiment_id)
+    file_index = get_next_index(ctx.db, experiment_id)
     extension = path.rsplit(".", 1)[-1]
     store_path = get_real_store_path(experiment_id, file_index, extension)
     write_file(file, store_path)
     file_size = os.path.getsize(store_path) / 1024 / 1024
-    db_file = File(
+    file_create = FileCreate(
         experiment_id=experiment_id,
         path=path,
         extension=extension,
@@ -41,45 +42,42 @@ async def upload_file(
         size=file_size,
         is_original=is_original,
     )
-    db_file = await crud.create_model(db_file)
-    return db_file.id
+    return crud.insert_model(ctx.db, File, file_create)
 
 
 @router.get("/api/getFileTypes", description="获取当前实验已有的文件类型", response_model=Response[list[str]])
 @wrap_api_response
 async def get_file_types(
-    experiment_id: int = Query(description="实验ID"),
-    _user: User = Depends(get_current_user_as_human_subject()),
+    experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
 ) -> list[str]:
-    extensions = await crud.get_file_extensions(experiment_id)
+    extensions = crud.get_file_extensions(ctx.db, experiment_id)
     return extensions
 
 
-@router.get("/api/getFilesByPage", description="分页获取文件列表", response_model=Response[list[FileInfo]])
+@router.get(
+    "/api/getFilesByPage", description="分页获取文件列表", response_model=Response[list[FileResponse]]
+)
 @wrap_api_response
 async def get_files_by_page(
     experiment_id: int = Query(description="实验ID"),
     path: str = Query(description="文件名，模糊查找", default=""),
     file_type: str = Query(description="文件类型，模糊查找", default=""),
     paging_param: GetModelsByPageParam = Depends(get_models_by_page),
-    _user: User = Depends(get_current_user_as_human_subject()),
-) -> list[FileInfo]:
-    files = await crud.search_files(experiment_id, path, file_type, paging_param)
-    return convert_models(files, FileInfo)
+    ctx: Context = Depends(human_subject_context),
+) -> PagedData[FileResponse]:
+    files = crud.search_files(ctx.db, experiment_id, path, file_type, paging_param)
+    return files
 
 
 @router.delete("/api/deleteFile", description="删除文件", response_model=NoneResponse)
 @wrap_api_response
-async def delete_file(
-    request: DeleteModelRequest, _user: User = Depends(get_current_user_as_researcher())
-):
-    file = await crud.get_model_by_id(File, request.id)
-    await crud.update_model(file, is_deleted=True)
+async def delete_file(request: DeleteModelRequest, ctx: Context = Depends(researcher_context)):
+    crud.update_model(ctx.db, File, request.id, is_deleted=True)
 
 
-async def get_next_index(experiment_id: int) -> int:
-    last_index_file = await crud.get_last_index_file(experiment_id)
-    return last_index_file.index + 1 if last_index_file is not None else 1
+def get_next_index(db: Session, experiment_id: int) -> int:
+    last_index = crud.get_file_last_index(db, experiment_id)
+    return last_index + 1 if last_index is not None else 1
 
 
 def get_real_store_path(experiment_id: int, file_index: int, extension: str) -> Path:

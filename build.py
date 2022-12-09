@@ -31,20 +31,20 @@ def up_backend():
 
 
 @app.command()
-def start_database():
+def up_database():
     docker_compose("up", "--detach", "--build", "database")
 
 
 @app.command()
 def run_alembic_bash():
-    start_database()
+    up_database()
     build_base_image()
     docker_compose("run", "--rm", "alembic", "bash")
 
 
 @app.command()
 def clear():
-    docker_compose("down", "--rmi", "all", "--remove-orphans")
+    docker_compose("down", "--rmi", "all", "--remove-orphans", check=False)
     run("docker", "system", "prune")
     run("docker", "image", "rm", base_image_tag)
 
@@ -67,18 +67,18 @@ def build_base_image():
     )
 
 
-def docker_compose(*args: str) -> CompletedProcess:
-    return run("docker", "compose", "--file", str(docker_compose_file), *args)
+def docker_compose(*args: str, check: bool = True) -> CompletedProcess:
+    return run("docker", "compose", "--file", str(docker_compose_file), *args, check=check)
 
 
-def poetry_run(*args: str) -> CompletedProcess:
+def poetry_run(*args: str, check: bool = True) -> CompletedProcess:
     with InProject(os.getcwd(), project_dir):
-        return run("poetry", "run", *args)
+        return run("poetry", "run", *args, check=check)
 
 
-def run(*command: str) -> CompletedProcess:
+def run(*command: str, check: bool = True) -> CompletedProcess:
     print(f"[bold green]RUN {' '.join(command)}[/bold green]")
-    return subprocess.run(command, check=True)
+    return subprocess.run(command, check=check)
 
 
 class InProject:

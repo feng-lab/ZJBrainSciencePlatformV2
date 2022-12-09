@@ -1,10 +1,10 @@
 import logging
-from datetime import date, datetime
+from datetime import datetime
 from http import HTTPStatus
 from typing import Callable
 from urllib.parse import parse_qsl, urlencode
 
-from fastapi import FastAPI, HTTPException, Query, Request, UploadFile
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from jose import ExpiredSignatureError
@@ -19,52 +19,9 @@ from app.api.file import router as file_router
 from app.api.notification import router as notification_router
 from app.api.paradigm import router as paradigm_router
 from app.api.user import router as user_router
-from app.config import config
-from app.db.database import database
-from app.log import ACCESS_LOGGER_NAME, log_queue_listener
-from app.model.request import (
-    AddDeviceRequest,
-    AddHumanSubjectRequest,
-    AddTaskRequest,
-    DeleteDeviceRequest,
-    DeleteHumanSubjectRequest,
-    DisplayEEGRequest,
-    GoSearchRequest,
-    UpdateDeviceRequest,
-    UpdateHumanSubjectRequest,
-)
-from app.model.response import (
-    CODE_FAIL,
-    CODE_SESSION_TIMEOUT,
-    CODE_SUCCESS,
-    AddDeviceResponse,
-    AddHumanSubjectResponse,
-    AddTaskResponse,
-    DeleteDeviceResponse,
-    DeleteHumanSubjectResponse,
-    DisplayEEGResponse,
-    GetAnalysisStepResultByIDResponse,
-    GetDeviceByIdResponse,
-    GetDeviceByPageResponse,
-    GetFilesResponse,
-    GetFilterStepResultByIDResponse,
-    GetHumanSubjectByPageResponse,
-    GetStatisticResponse,
-    GetStatisticWithDataResponse,
-    GetStatisticWithDataTypeResponse,
-    GetStatisticWithServerResponse,
-    GetStatisticWithSickResponse,
-    GetStatisticWithSubjectResponse,
-    GetTaskByIDResponse,
-    GetTaskByPageResponse,
-    GetTaskStepsByIDResponse,
-    GoSearchResponse,
-    NoneResponse,
-    UpdateDeviceResponse,
-    UpdateHumanSubjectResponse,
-    UploadSearchFileResponse,
-)
-from app.model.schema import Device, EEGData, File, Human, SearchFile, SearchResult, Task
+from app.common.config import config
+from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener
+from app.model.response import CODE_FAIL, CODE_SESSION_TIMEOUT, NoneResponse
 
 app_logger = logging.getLogger(__name__)
 access_logger = logging.getLogger(ACCESS_LOGGER_NAME)
@@ -89,8 +46,6 @@ app.include_router(experiment_router)
 app.include_router(file_router)
 app.include_router(paradigm_router)
 
-app.state.database = database
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -103,19 +58,11 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup() -> None:
     log_queue_listener.start()
-
-    database_ = app.state.database
-    if not database_.is_connected:
-        await database_.connect()
-    await user.create_root_user()
+    user.create_root_user()
 
 
 @app.on_event("shutdown")
 async def shutdown() -> None:
-    database_ = app.state.database
-    if database_.is_connected:
-        await database_.disconnect()
-
     log_queue_listener.stop()
 
 
@@ -176,308 +123,3 @@ async def index():
         return RedirectResponse(url="/docs")
     else:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-
-
-@app.get(
-    "/api/getStatistic",
-    response_model=GetStatisticResponse,
-    name="获取统计信息",
-    description="获取首页实验、文件、被试、任务四个卡片的统计数据",
-)
-def get_statistic():
-    return GetStatisticResponse(
-        code=CODE_SUCCESS,
-        data=GetStatisticResponse.Data(experiments=7, files=8, human=7, taskmaster=8),
-    )
-
-
-@app.get(
-    "/api/getStatisticWithDataType",
-    response_model=GetStatisticWithDataTypeResponse,
-    name="获取平台数据量按类型的统计数据",
-    description="获取平台已上传的各类型数据的占比统计",
-)
-def get_statistic_with_data_type():
-    return GetStatisticWithDataTypeResponse(
-        code=CODE_SUCCESS,
-        data=[
-            GetStatisticWithDataTypeResponse.Data(name="EEG", value=61.41),
-            GetStatisticWithDataTypeResponse.Data(name="spike", value=16.84),
-            GetStatisticWithDataTypeResponse.Data(name="EOG", value=10.85),
-            GetStatisticWithDataTypeResponse.Data(name="iEEG", value=6.67),
-            GetStatisticWithDataTypeResponse.Data(name="MP4", value=15.18),
-        ],
-    )
-
-
-@app.get(
-    "/api/getStatisticWithSubject",
-    response_model=GetStatisticWithSubjectResponse,
-    name="获取被试分布的统计数据",
-    description="获取平台已记录的被试对象的特性分布统计",
-)
-def get_statistic_with_subject():
-    return GetStatisticWithSubjectResponse(
-        code=CODE_SUCCESS,
-        data=[
-            GetStatisticWithSubjectResponse.Data(
-                type="男性", below_30=5, between_30_and_60=5, over_60=3
-            ),
-            GetStatisticWithSubjectResponse.Data(
-                type="女性", below_30=9, between_30_and_60=5, over_60=7
-            ),
-        ],
-    )
-
-
-@app.get(
-    "/api/getStatisticWithServer",
-    response_model=GetStatisticWithServerResponse,
-    name="获取计算服务器水位",
-    description="返回当前计算服务器资源利用率的百分比数值，精确到小数点后两位",
-)
-def get_statistic_with_server():
-    return GetStatisticWithServerResponse(code=CODE_SUCCESS, data=70.53)
-
-
-@app.get(
-    "/api/getStatisticWithData",
-    response_model=GetStatisticWithDataResponse,
-    name="获取平台上传数据量增长趋势的统计结果",
-    description="获取一定周期内平台上传数据量的按天统计结果，默认周期为一周",
-)
-def get_statistic_with_data(
-    start: date = Query(title="周期起始日期，YYYY-MM-DD"), end: date = Query(title="周期截止日期，YYYY-MM-DD")
-):
-    return GetStatisticWithDataResponse(
-        code=CODE_SUCCESS,
-        data=[
-            [1370131200000, 0.7695],
-            [1370217600000, 0.7648],
-            [1370304000000, 0.7645],
-            [1370390400000, 0.7638],
-            [1370476800000, 0.7549],
-        ],
-    )
-
-
-@app.get(
-    "/api/getStatisticWithSick",
-    response_model=GetStatisticWithSickResponse,
-    name="获取疾病种类的统计结果",
-    description="获取各种疾病的分布统计",
-)
-def get_statistic_with_sick():
-    return GetStatisticWithSickResponse(
-        code=CODE_SUCCESS,
-        data=[
-            GetStatisticWithSickResponse.Data(sick="癫痫", part1=107, part2=133, part3=93),
-            GetStatisticWithSickResponse.Data(sick="睡眠障碍", part1=31, part2=156, part3=14),
-            GetStatisticWithSickResponse.Data(sick="老年痴呆", part1=5, part2=92, part3=14),
-            GetStatisticWithSickResponse.Data(sick="中风", part1=23, part2=48, part3=32),
-            GetStatisticWithSickResponse.Data(sick="其他", part1=2, part2=6, part3=34),
-        ],
-    )
-
-
-@app.get(
-    "/api/getHumanSubjectByPage",
-    response_model=GetHumanSubjectByPageResponse,
-    name="获取人类被试列表",
-    description="分页获取人类被试列表，默认每页返回10个元素",
-)
-def get_human_subject_by_page(
-    experiment_id: str = Query(title="实验编号"),
-    offset: int = Query(title="分页起始位置", default=0),
-    limit: int = Query(title="分页大小", default=10),
-):
-    return GetHumanSubjectByPageResponse(code=CODE_SUCCESS, data=[Human()])
-
-
-@app.post(
-    "/api/addHumanSubject",
-    response_model=AddHumanSubjectResponse,
-    name="新增人类被试",
-    description="新增一条人类被试记录",
-)
-def add_human_subject(request: AddHumanSubjectRequest):
-    return AddHumanSubjectResponse(code=CODE_SUCCESS)
-
-
-@app.post(
-    "/api/updateHumanSubject",
-    response_model=UpdateHumanSubjectResponse,
-    name="编辑人类被试",
-    description="更新某一个人类被试的信息",
-)
-def update_human_subject(request: UpdateHumanSubjectRequest):
-    return UpdateHumanSubjectResponse(code=CODE_SUCCESS)
-
-
-@app.delete(
-    "/api/deleteHumanSubject",
-    response_model=DeleteHumanSubjectResponse,
-    name="删除人类被试",
-    description="删除某个实验下的某个人类被试",
-)
-def delete_human_subject(request: DeleteHumanSubjectRequest):
-    return DeleteHumanSubjectResponse(code=CODE_SUCCESS)
-
-
-@app.get(
-    "/api/getDeviceByPage",
-    response_model=GetDeviceByPageResponse,
-    name="获取设备列表",
-    description="分页获取设备列表，默认每页返回10个元素",
-)
-def get_device_by_page(
-    experiment_id: str = Query(title="实验编号"),
-    offset: int = Query(title="分页起始位置", default=0),
-    limit: int = Query(title="分页大小", default=10),
-):
-    return GetDeviceByPageResponse(code=CODE_SUCCESS, data=[Device()])
-
-
-@app.post("/api/addDevice", response_model=AddDeviceResponse, name="新增设备", description="新增实验设备")
-def add_device(request: AddDeviceRequest):
-    return AddDeviceResponse(code=CODE_SUCCESS)
-
-
-@app.get(
-    "/api/getDeviceById",
-    response_model=GetDeviceByIdResponse,
-    name="获取设备详情",
-    description="根据设备ID获取设备详情",
-)
-def get_device_by_id(
-    experiment_id: str = Query(title="实验编号"), equipment_id: str = Query(title="设备编号")
-):
-    return GetDeviceByIdResponse(code=CODE_SUCCESS, data=Device())
-
-
-@app.post(
-    "/api/updateDevice", response_model=UpdateDeviceResponse, name="编辑设备", description="更新设备信息"
-)
-def update_device(request: UpdateDeviceRequest):
-    return UpdateDeviceResponse(code=CODE_SUCCESS)
-
-
-@app.delete(
-    "/api/deleteDevice",
-    response_model=DeleteDeviceResponse,
-    name="删除设备",
-    description="删除某个实验下的某个设备",
-)
-def delete_device(request: DeleteDeviceRequest):
-    return DeleteDeviceResponse(code=CODE_SUCCESS)
-
-
-@app.post(
-    "/api/data/displayEEG",
-    response_model=DisplayEEGResponse,
-    name="查看EEG数据",
-    description="查看EEG数据文件指定段",
-)
-def display_eeg(request: DisplayEEGRequest):
-    return DisplayEEGResponse(code=CODE_SUCCESS, data=EEGData())
-
-
-@app.get(
-    "/api/getFiles",
-    response_model=GetFilesResponse,
-    name="获取任务可用目标文件列表",
-    description="新建任务时获取任务可用的目标数据文件列表",
-)
-def get_files():
-    return GetFilesResponse(code=CODE_SUCCESS, data=[File()])
-
-
-@app.get(
-    "/api/getTaskByPage",
-    response_model=GetTaskByPageResponse,
-    name="获取任务列表",
-    description="分页获取任务列表，支持按任务名称、开始时间、类型、状态过滤",
-)
-def get_task_by_page(
-    offset: int = Query(title="分页起始位置", default=0),
-    limit: int = Query(title="分页大小", default=20),
-    task_name: str | None = Query(title="任务名称", default=None),
-    start_time: str | None = Query(title="开始时间", default=None),
-    task_type: str | None = Query(title="任务类型", default=None),
-    status: str | None = Query(title="任务状态", default=None),
-):
-    return GetTaskByPageResponse(code=CODE_SUCCESS, data=[Task()])
-
-
-@app.post("/api/addTask", response_model=AddTaskResponse, name="新增任务", description="新增任务")
-def add_task(request: AddTaskRequest):
-    return AddTaskResponse(code=CODE_SUCCESS, data=[Task()])
-
-
-@app.get(
-    "/api/getTaskByID",
-    response_model=GetTaskByIDResponse,
-    name="获取任务详细信息",
-    description="获取指定任务的相关信息，包括基础信息和步骤执行信息",
-)
-def get_task_by_id(task_id: str = Query(title="任务ID")):
-    return GetTaskByIDResponse(code=CODE_SUCCESS, data=Task())
-
-
-@app.get(
-    "/api/getTaskStepsByID",
-    response_model=GetTaskStepsByIDResponse,
-    name="获取任务流程的步骤信息",
-    description="获取指定任务的相关信息，包括基础信息和步骤执行信息",
-)
-def get_task_steps_by_id(task_id: str = Query(title="任务ID")):
-    return GetTaskStepsByIDResponse(code=CODE_SUCCESS, data=[Task.Steps()])
-
-
-@app.get(
-    "/api/getFilterStepResultByID",
-    response_model=GetFilterStepResultByIDResponse,
-    name="获取滤波类型步骤的执行结果",
-    description="页面点击滤波类型步骤后，获取对应步骤的执行结果，即波形图数据",
-)
-def get_filter_step_result_by_id(
-    task_id: str = Query(title="任务ID"), operation_id: str = Query(title="操作步骤ID")
-):
-    return GetFilterStepResultByIDResponse(
-        code=CODE_SUCCESS,
-        data=[[1370131200000, 0.7695], [1370217600000, 0.7648], [1370304000000, 0.7645]],
-    )
-
-
-@app.get(
-    "/api/getAnalysisStepResultByID",
-    response_model=GetAnalysisStepResultByIDResponse,
-    name="获取分析类型步骤的执行结果",
-    description="页面点击分析步骤后，获取分析步骤的执行结果，即生成的png图片路径",
-)
-def get_analysis_step_result_by_id(
-    task_id: str = Query(title="任务ID"), operation_id: str = Query(title="操作步骤ID")
-):
-    return GetAnalysisStepResultByIDResponse(
-        code=CODE_SUCCESS, data="http://xxx.xxx/result_img.png"
-    )
-
-
-@app.post(
-    "/api/search/uploadSearchFile",
-    response_model=UploadSearchFileResponse,
-    name="上传待检索文件",
-    description="将本地EEG数据上传至服务端并解析返回波形图数据",
-)
-def upload_search_file(file: UploadFile):
-    return UploadSearchFileResponse(code=CODE_SUCCESS, data=SearchFile())
-
-
-@app.post(
-    "/api/search/goSearch",
-    response_model=GoSearchResponse,
-    name="搜索信号",
-    description="根据选择的待检索信号，由服务端检索并返回相似的信号数组",
-)
-def go_search(request: GoSearchRequest):
-    return GoSearchResponse(code=CODE_SUCCESS, data=[SearchResult()])

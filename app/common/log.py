@@ -1,16 +1,17 @@
 import logging
 from datetime import datetime
-from logging import ERROR, INFO, Formatter, Handler, Logger, LogRecord, getLogger
+from logging import DEBUG, ERROR, INFO, Formatter, Handler, Logger, LogRecord, getLogger
 from logging.handlers import QueueHandler, QueueListener, TimedRotatingFileHandler
 from pathlib import Path
 from queue import Queue
 from typing import Callable
 
-from app.config import config
-from app.time import CURRENT_TIMEZONE
+from app.common.config import config
+from app.common.time import CURRENT_TIMEZONE
 
 ACCESS_LOGGER_NAME = "access"
 UVICORN_LOGGER_NAME = "uvicorn.access"
+SQLALCHEMY_LOGGER_NAME = "sqlalchemy.engine"
 LOGGER_NAMES = {ACCESS_LOGGER_NAME, UVICORN_LOGGER_NAME}
 
 DEFAULT_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(pathname)s:%(lineno)d|%(message)s"
@@ -62,6 +63,9 @@ access_handler = init_handler(
 uvicorn_handler = init_handler(
     config.LOG_ROOT / "uvicorn.log", name_logger_filter(UVICORN_LOGGER_NAME)
 )
+sqlalchemy_handler = init_handler(
+    config.LOG_ROOT / "sqlalchemy.log", name_logger_filter(SQLALCHEMY_LOGGER_NAME), level=DEBUG
+)
 
 log_queue = Queue()
 log_queue_handler = QueueHandler(log_queue)
@@ -71,6 +75,7 @@ log_queue_listener = QueueListener(
     access_handler,
     error_handler,
     uvicorn_handler,
+    sqlalchemy_handler,
     respect_handler_level=True,
 )
 
@@ -86,3 +91,4 @@ def init_logger(name: str | None, level: int = INFO, log_handler: Handler | None
 root_logger = init_logger(None)
 access_logger = init_logger(ACCESS_LOGGER_NAME)
 uvicorn_logger = init_logger(UVICORN_LOGGER_NAME)
+sqlalchemy_logger = init_logger(ACCESS_LOGGER_NAME, level=DEBUG)

@@ -3,17 +3,14 @@ db -> (UTC none->current) -> backend -> (format) -> response
 request -> (none->current) -> backend -> (current->UTC) -> db
 """
 
-from datetime import datetime, timedelta, timezone, tzinfo
+from datetime import datetime, timezone, tzinfo
 
 from dateutil import tz
 
-from app.config import config
-from app.util import Model, modify_model_field_by_type
+from app.common.config import config
+from app.common.util import Model, modify_model_field_by_type
 
 CURRENT_TIMEZONE: tzinfo = tz.gettz(config.TIMEZONE)
-
-UTC_OFFSET: timedelta = datetime.now(tz=timezone.utc).utcoffset()
-CURRENT_TIMEZONE_OFFSET: timedelta = datetime.now(tz=CURRENT_TIMEZONE).utcoffset()
 
 
 def convert_timezone(dt: datetime, from_tz: tzinfo, to_tz: tzinfo) -> datetime:
@@ -42,3 +39,7 @@ def convert_timezone_before_handle_request(model: Model):
 
 def utc_now() -> datetime:
     return datetime.now(tz=tz.UTC)
+
+
+def now() -> datetime:
+    return datetime.now(tz=CURRENT_TIMEZONE)

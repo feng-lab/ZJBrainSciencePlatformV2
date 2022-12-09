@@ -1,16 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
-from app.api.auth import get_current_user_as_human_subject, get_current_user_as_researcher
+from app.common.context import Context, human_subject_context, researcher_context
 from app.db import crud
-from app.model.db_model import Experiment, Paradigm, ParadigmFile, User
-from app.model.request import (
+from app.db.orm import Experiment, Paradigm, ParadigmFile
+from app.model.request import DeleteModelRequest, GetModelsByPageParam, get_models_by_page
+from app.model.response import NoneResponse, Response, wrap_api_response
+from app.model.schema import (
     CreateParadigmRequest,
-    DeleteModelRequest,
-    GetModelsByPageParam,
-    get_models_by_page,
+    ParadigmCreate,
+    ParadigmFileBase,
+    ParadigmInDB,
+    ParadigmResponse,
 )
-from app.model.response import NoneResponse, ParadigmInfo, Response, wrap_api_response
 
 router = APIRouter(tags=["paradigm"])
 
@@ -18,71 +20,65 @@ router = APIRouter(tags=["paradigm"])
 @router.post("/api/createParadigm", description="创建实验范式", response_model=Response[int])
 @wrap_api_response
 async def create_paradigm(
-    request: CreateParadigmRequest, user: User = Depends(get_current_user_as_researcher())
+    request: CreateParadigmRequest, ctx: Context = Depends(researcher_context)
 ) -> int:
-    if not await crud.model_exists(Experiment, request.experiment_id):
+    if not crud.exists_model(ctx.db, Experiment, request.experiment_id):
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="experiment not exists")
 
-    paradigm = Paradigm(
-        experiment_id=request.experiment_id, creator=user.id, description=request.description
+    paradigm_create = ParadigmCreate(
+        experiment_id=request.experiment_id, creator=ctx.user_id, description=request.description
     )
-    paradigm = await crud.create_model(paradigm)
+    paradigm_id = crud.insert_model(ctx.db, Paradigm, paradigm_create)
     paradigm_files = [
-        ParadigmFile(paradigm_id=paradigm.id, file_id=file_id) for file_id in request.images
+        ParadigmFileBase(paradigm_id=paradigm_id, file_id=file_id) for file_id in request.images
     ]
-    await crud.bulk_create_models(paradigm_files)
-    return paradigm.id
+    crud.bulk_insert_models(ctx.db, ParadigmFile, paradigm_files)
+    return paradigm_id
 
 
-@router.get("/api/getParadigmInfo", description="获取范式详情", response_model=Response[ParadigmInfo])
+@router.get("/api/getParadigmInfo", description="获取范式详情", response_model=Response[ParadigmResponse])
 @wrap_api_response
 async def get_paradigm_info(
     paradigm_id: int = Query(description="范式ID", ge=0),
-    _user: User = Depends(get_current_user_as_human_subject()),
-) -> ParadigmInfo:
-    paradigm = await crud.get_model_by_id(Paradigm, paradigm_id)
+    ctx: Context = Depends(human_subject_context),
+) -> ParadigmResponse:
+    paradigm = crud.get_model(ctx.db, Paradigm, ParadigmInDB, paradigm_id)
     if paradigm is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="paradigm not found")
-    paradigm_files = await crud.search_models(ParadigmFile, paradigm_id=paradigm.id)
-    images = [paradigm_file.file_id for paradigm_file in paradigm_files]
-    paradigm_info = ParadigmInfo(**paradigm.dict(), images=images)
+    paradigm_files = crud.list_paradigm_files(ctx.db, paradigm_id)
+    paradigm_info = ParadigmResponse(**paradigm.dict(), images=paradigm_files)
     return paradigm_info
 
 
 @router.get(
-    "/api/getParadigmsByPage", description="分页获取范式详情", response_model=Response[list[ParadigmInfo]]
+    "/api/getParadigmsByPage",
+    description="分页获取范式详情",
+    response_model=Response[list[ParadigmResponse]],
 )
 @wrap_api_response
 async def get_paradigms_by_page(
     experiment_id: int | None = Query(description="实验ID", default=None),
     paging_param: GetModelsByPageParam = Depends(get_models_by_page),
-    _user: User = Depends(get_current_user_as_human_subject()),
-) -> list[ParadigmInfo]:
-    if not await crud.model_exists(Experiment, experiment_id):
+    ctx: Context = Depends(human_subject_context),
+) -> list[ParadigmResponse]:
+    if not crud.exists_model(ctx.db, Experiment, experiment_id):
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="experiment not exists")
 
-    paradigms = await crud.search_paradigms(experiment_id, paging_param)
-    paradigm_files_list = await crud.bulk_search_models_by_key(
-        ParadigmFile, [paradigm.id for paradigm in paradigms], "paradigm_id"
+    paradigms = crud.search_paradigms(ctx.db, experiment_id, paging_param)
+    paradigm_files_list = crud.bulk_list_paradigm_files(
+        ctx.db, [paradigm.id for paradigm in paradigms]
     )
-    paradigm_infos = [
-        ParadigmInfo(
-            **paradigm.dict(), images=[paradigm_file.file_id for paradigm_file in paradigm_files]
-        )
+    paradigm_responses = [
+        ParadigmResponse(**paradigm.dict(), images=paradigm_files)
         for paradigm, paradigm_files in zip(paradigms, paradigm_files_list)
     ]
-    return paradigm_infos
+    return paradigm_responses
 
 
 @router.delete("/api/deleteParadigm", description="删除范式", response_model=NoneResponse)
 @wrap_api_response
 async def delete_paradigm(
-    request: DeleteModelRequest, _user: User = Depends(get_current_user_as_researcher())
+    request: DeleteModelRequest, ctx: Context = Depends(researcher_context)
 ) -> None:
-    paradigm = await crud.get_model_by_id(Paradigm, request.id)
-    if paradigm is None:
-        return
-    await crud.update_model(paradigm, is_deleted=True)
-
-    paradigm_files = await crud.search_models(ParadigmFile, paradigm_id=paradigm.id)
-    await crud.bulk_update_models(paradigm_files, is_deleted=False)
+    crud.update_model_as_deleted(ctx.db, Paradigm, request.id)
+    crud.bulk_update_models_as_deleted(ctx.db, ParadigmFile, ParadigmFile.id == request.id)

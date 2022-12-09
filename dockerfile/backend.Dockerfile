@@ -4,4 +4,4 @@ WORKDIR /code
 
 COPY app /code/app
 
-CMD uvicorn app.main:app --host 0.0.0.0 --port 80
+CMD /bin/sh -c "uvicorn app.main:app --host 0.0.0.0 --port 80 >/root/log/ZJBrainSciencePlatform/app/stdout_stderr.log 2>&1"

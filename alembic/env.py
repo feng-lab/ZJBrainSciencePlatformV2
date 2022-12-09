@@ -15,9 +15,9 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from app.model.db_model import User
+from app.db.orm import User
 
-target_metadata = User.Meta.metadata
+target_metadata = User.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

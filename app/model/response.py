@@ -4,14 +4,11 @@ from datetime import datetime
 from json import JSONEncoder
 from typing import Any, Awaitable, Callable, Generic, TypeVar
 
-import pydantic
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 from starlette.responses import JSONResponse
 
-from app.model import db_model
-from app.model.db_model import Experiment, User
-from app.model.schema import Device, EEGData, File, Human, SearchFile, SearchResult, Task
+from app.common.util import Model
 
 CODE_SUCCESS: int = 0
 """请求成功的code"""
@@ -25,7 +22,6 @@ CODE_SESSION_TIMEOUT: int = 2
 MESSAGE_SUCCESS: str = "success"
 
 Data = TypeVar("Data")
-Model = TypeVar("Model", bound=BaseModel)
 
 
 class Response(GenericModel, Generic[Data]):
@@ -68,13 +64,6 @@ def wrap_api_response(func: Callable[..., Awaitable[Data]]):
     return wrapper
 
 
-class BaseDBModelInfo(BaseModel):
-    id: int
-    gmt_create: datetime
-    gmt_modified: datetime
-    is_deleted: bool
-
-
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str
@@ -83,154 +72,6 @@ class LoginResponse(BaseModel):
 class PagedData(GenericModel, Generic[Model]):
     total: int
     items: list[Model]
-
-
-UserInfo = User.get_pydantic(exclude={"hashed_password"})
-
-
-class NotificationInfo(BaseDBModelInfo):
-    type: str
-    creator: int
-    creator_name: str
-    receiver: int
-    status: str
-    content: str
-
-
-ExperimentInfo = pydantic.create_model(
-    "ExperimentInfo", __base__=Experiment, assistants=(list[int] | None, None)
-)
-
-FileInfo = db_model.File.get_pydantic()
-
-
-class ParadigmInfo(BaseDBModelInfo):
-    experiment_id: int
-    creator: int
-    description: str
-    images: list[int]
-
-
-class GetStatisticResponse(Response):
-    class Data(BaseModel):
-        experiments: int = Field(title="实验数量", ge=0)
-        files: int = Field(title="文件数量", ge=0)
-        human: int = Field(title="被试数量", ge=0)
-        taskmaster: int = Field(title="任务数量", ge=0)
-
-    data: Data | None
-
-
-class GetStatisticWithDataTypeResponse(Response):
-    class Data(BaseModel):
-        name: str = Field(title="类型名")
-        value: float = Field(title="类型占比", ge=0.0, allow_inf_nan=False)
-
-    data: list[Data] | None
-
-
-class GetStatisticWithSubjectResponse(Response):
-    class Data(BaseModel):
-        type: str = Field(title="性别", description="男性或女性")
-        below_30: int = Field(title="30岁以下", ge=0)
-        between_30_and_60: int = Field(title="30岁到60岁之间", ge=0)
-        over_60: int = Field(title="60岁以上", ge=0)
-
-    data: list[Data] | None
-
-
-class GetStatisticWithServerResponse(Response):
-    data: float = Field(title="服务器资源利用率", ge=0.0, le=100.0)
-
-
-class GetStatisticWithDataResponse(Response):
-    data: list[list[float]] = Field(title="每天数据", description="每天数据的格式：[UTC毫秒时间戳，数值(GB)]")
-
-
-class GetStatisticWithSickResponse(Response):
-    class Data(BaseModel):
-        sick: str = Field(title="疾病")
-        part1: int = Field(title="单位1")
-        part2: int = Field(title="单位2")
-        part3: int = Field(title="单位3")
-
-    data: list[Data]
-
-
-class GetHumanSubjectByPageResponse(Response):
-    data: list[Human]
-
-
-class AddHumanSubjectResponse(Response):
-    pass
-
-
-class UpdateHumanSubjectResponse(Response):
-    pass
-
-
-class DeleteHumanSubjectResponse(Response):
-    pass
-
-
-class GetDeviceByPageResponse(Response):
-    data: list[Device]
-
-
-class AddDeviceResponse(Response):
-    pass
-
-
-class GetDeviceByIdResponse(Response):
-    data: Device
-
-
-class UpdateDeviceResponse(Response):
-    pass
-
-
-class DeleteDeviceResponse(Response):
-    pass
-
-
-class DisplayEEGResponse(Response):
-    data: EEGData
-
-
-class GetFilesResponse(Response):
-    data: list[File]
-
-
-class GetTaskByPageResponse(Response):
-    data: list[Task]
-
-
-class AddTaskResponse(Response):
-    pass
-
-
-class GetTaskByIDResponse(Response):
-    data: Task
-
-
-class GetTaskStepsByIDResponse(Response):
-    data: list[Task.Steps]
-
-
-class GetFilterStepResultByIDResponse(Response):
-    data: list[list[float]]
-
-
-class GetAnalysisStepResultByIDResponse(Response):
-    data: str
-
-
-class UploadSearchFileResponse(Response):
-    data: SearchFile
-
-
-class GoSearchResponse(Response):
-    data: list[SearchResult]
 
 
 class AccessTokenData(BaseModel):

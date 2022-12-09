@@ -1,14 +1,16 @@
-import databases
-import sqlalchemy
-from ormar import ModelMeta
+import sqlalchemy.ext.declarative
+import sqlalchemy.orm
 
-from app.config import config
+from app.common.config import config
 
-metadata = sqlalchemy.MetaData()
-database = databases.Database(config.DATABASE_URL, **config.DATABASE_CONFIG)
 engine = sqlalchemy.create_engine(config.DATABASE_URL, **config.DATABASE_CONFIG)
+SessionLocal = sqlalchemy.orm.sessionmaker(bind=engine)
+Base = sqlalchemy.ext.declarative.declarative_base()
 
 
-class BaseMeta(ModelMeta):
-    database = database
-    metadata = metadata
+def get_db_session():
+    db_session = SessionLocal()
+    try:
+        yield db_session
+    finally:
+        db_session.close()
