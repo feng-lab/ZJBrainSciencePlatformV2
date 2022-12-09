@@ -1,6 +1,7 @@
 import os
 import subprocess
 from pathlib import Path
+from subprocess import CompletedProcess
 
 from rich import print
 from typer import Typer
@@ -48,6 +49,12 @@ def clear():
     run("docker", "image", "rm", base_image_tag)
 
 
+@app.command()
+def format():
+    poetry_run("isort", str(project_dir))
+    poetry_run("black", str(project_dir))
+
+
 def build_base_image():
     run(
         "docker",
@@ -60,13 +67,30 @@ def build_base_image():
     )
 
 
-def docker_compose(*args: str) -> subprocess.CompletedProcess:
+def docker_compose(*args: str) -> CompletedProcess:
     return run("docker", "compose", "--file", str(docker_compose_file), *args)
 
 
-def run(*command: str) -> subprocess.CompletedProcess:
-    print(f"[bold]RUN {' '.join(command)}[/bold]")
+def poetry_run(*args: str) -> CompletedProcess:
+    with InProject(os.getcwd(), project_dir):
+        return run("poetry", "run", *args)
+
+
+def run(*command: str) -> CompletedProcess:
+    print(f"[bold green]RUN {' '.join(command)}[/bold green]")
     return subprocess.run(command, check=True)
+
+
+class InProject:
+    def __init__(self, prev_cwd: Path | str, new_cwd: Path | str):
+        self.prev_cwd = prev_cwd
+        self.new_cwd = new_cwd
+
+    def __enter__(self):
+        os.chdir(self.new_cwd)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        os.chdir(self.prev_cwd)
 
 
 if __name__ == "__main__":
