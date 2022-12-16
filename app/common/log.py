@@ -1,6 +1,7 @@
 import logging
+import sys
 from datetime import datetime
-from logging import DEBUG, ERROR, INFO, Formatter, Handler, Logger, LogRecord, getLogger
+from logging import ERROR, INFO, Formatter, Handler, Logger, LogRecord, getLogger
 from logging.handlers import QueueHandler, QueueListener, TimedRotatingFileHandler
 from pathlib import Path
 from queue import Queue
@@ -11,10 +12,10 @@ from app.common.time import CURRENT_TIMEZONE
 
 ACCESS_LOGGER_NAME = "access"
 UVICORN_LOGGER_NAME = "uvicorn.access"
-SQLALCHEMY_LOGGER_NAME = "sqlalchemy.engine"
+SQLALCHEMY_LOGGER_NAME = "sqlalchemy.engine.Engine"
 LOGGER_NAMES = {ACCESS_LOGGER_NAME, UVICORN_LOGGER_NAME}
 
-DEFAULT_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(pathname)s:%(lineno)d|%(message)s"
+DEFAULT_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(module_name)s:%(lineno)d|%(message)s"
 ACCESS_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(message)s"
 
 
@@ -27,7 +28,7 @@ logging.Formatter.converter = current_time_tuple
 
 def init_handler(
     path: Path,
-    log_filter: Callable[[LogRecord], bool],
+    *log_filters: Callable[[LogRecord], bool],
     level: int | None = None,
     log_format: str = DEFAULT_LOG_FORMAT,
 ) -> Handler:
@@ -38,7 +39,8 @@ def init_handler(
         log_handler.setLevel(level)
     log_formatter = Formatter(fmt=log_format)
     log_handler.setFormatter(log_formatter)
-    log_handler.addFilter(log_filter)
+    for log_filter in log_filters:
+        log_handler.addFilter(log_filter)
     return log_handler
 
 
@@ -53,18 +55,48 @@ def name_logger_filter(name: str) -> Callable[[LogRecord], bool]:
     return log_filter
 
 
-root_handler = init_handler(config.LOG_ROOT / "app.log", root_logger_filter)
-error_handler = init_handler(config.LOG_ROOT / "error.log", root_logger_filter, level=ERROR)
+SYS_PATHS = []
+for sys_path in {Path(path).absolute() for path in sys.path}:
+    for i, added_path in enumerate(SYS_PATHS):
+        if sys_path.is_relative_to(added_path):
+            SYS_PATHS.insert(i, sys_path)
+            break
+    else:
+        SYS_PATHS.append(sys_path)
+print(SYS_PATHS)
+
+
+def get_module_name(module_path: Path | str) -> str | None:
+    module_path = Path(module_path).absolute()
+    for path in SYS_PATHS:
+        if module_path.is_relative_to(path):
+            return ".".join(module_path.relative_to(path).parts).rstrip(".py")
+    return None
+
+
+def get_module_name_filter(record: LogRecord) -> bool:
+    record.module_name = get_module_name(record.pathname)
+    return True
+
+
+root_handler = init_handler(config.LOG_ROOT / "app.log", root_logger_filter, get_module_name_filter)
+error_handler = init_handler(
+    config.LOG_ROOT / "error.log", root_logger_filter, get_module_name_filter, level=ERROR
+)
 access_handler = init_handler(
     config.LOG_ROOT / "access.log",
     name_logger_filter(ACCESS_LOGGER_NAME),
+    get_module_name_filter,
     log_format=ACCESS_LOG_FORMAT,
 )
 uvicorn_handler = init_handler(
-    config.LOG_ROOT / "uvicorn.log", name_logger_filter(UVICORN_LOGGER_NAME)
+    config.LOG_ROOT / "uvicorn.log", name_logger_filter(UVICORN_LOGGER_NAME), get_module_name_filter
 )
 sqlalchemy_handler = init_handler(
-    config.LOG_ROOT / "sqlalchemy.log", name_logger_filter(SQLALCHEMY_LOGGER_NAME), level=DEBUG
+    config.LOG_ROOT / "sqlalchemy.log",
+    name_logger_filter(SQLALCHEMY_LOGGER_NAME),
+    get_module_name_filter,
+    level=INFO,
 )
 
 log_queue = Queue()
@@ -91,4 +123,4 @@ def init_logger(name: str | None, level: int = INFO, log_handler: Handler | None
 root_logger = init_logger(None)
 access_logger = init_logger(ACCESS_LOGGER_NAME)
 uvicorn_logger = init_logger(UVICORN_LOGGER_NAME)
-sqlalchemy_logger = init_logger(ACCESS_LOGGER_NAME, level=DEBUG)
+sqlalchemy_logger = init_logger(ACCESS_LOGGER_NAME, level=INFO)
