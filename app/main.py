@@ -56,13 +56,13 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-async def startup() -> None:
+def startup() -> None:
     log_queue_listener.start()
     user.create_root_user()
 
 
 @app.on_event("shutdown")
-async def shutdown() -> None:
+def shutdown() -> None:
     log_queue_listener.stop()
 
 
@@ -95,14 +95,14 @@ async def filter_blank_query_params(request: Request, call_next: Callable):
 
 
 @app.exception_handler(HTTPException)
-async def handle_http_exception(_request: Request, e: HTTPException):
+def handle_http_exception(_request: Request, e: HTTPException):
     return JSONResponse(
         status_code=e.status_code, content=NoneResponse(code=CODE_FAIL, message=e.detail).dict()
     )
 
 
 @app.exception_handler(RequestValidationError)
-async def handle_http_exception(_request: Request, e: RequestValidationError):
+def handle_http_exception(_request: Request, e: RequestValidationError):
     return JSONResponse(
         status_code=HTTP_400_BAD_REQUEST,
         content=NoneResponse(code=CODE_FAIL, message=repr(e)).dict(),
@@ -110,7 +110,7 @@ async def handle_http_exception(_request: Request, e: RequestValidationError):
 
 
 @app.exception_handler(ExpiredSignatureError)
-async def handle_expired_token_exception(_request: Request, _e: ExpiredSignatureError):
+def handle_expired_token_exception(_request: Request, _e: ExpiredSignatureError):
     return JSONResponse(
         status_code=HTTP_401_UNAUTHORIZED,
         content=NoneResponse(code=CODE_SESSION_TIMEOUT, message="session timeout").dict(),
@@ -118,7 +118,7 @@ async def handle_expired_token_exception(_request: Request, _e: ExpiredSignature
 
 
 @app.get("/")
-async def index():
+def index():
     if config.DEBUG_MODE:
         return RedirectResponse(url="/docs")
     else:

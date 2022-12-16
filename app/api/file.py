@@ -22,7 +22,7 @@ router = APIRouter(tags=["file"])
 
 @router.post("/api/uploadFile", description="上传文件", response_model=Response[int])
 @wrap_api_response
-async def upload_file(
+def upload_file(
     experiment_id: int = Form(description="实验ID"),
     path: str = Form(description="文件路径"),
     is_original: bool = Form(description="是否是设备产生的原始文件"),
@@ -47,7 +47,7 @@ async def upload_file(
 
 @router.get("/api/getFileTypes", description="获取当前实验已有的文件类型", response_model=Response[list[str]])
 @wrap_api_response
-async def get_file_types(
+def get_file_types(
     experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
 ) -> list[str]:
     extensions = crud.get_file_extensions(ctx.db, experiment_id)
@@ -58,7 +58,7 @@ async def get_file_types(
     "/api/getFilesByPage", description="分页获取文件列表", response_model=Response[list[FileResponse]]
 )
 @wrap_api_response
-async def get_files_by_page(
+def get_files_by_page(
     experiment_id: int = Query(description="实验ID"),
     path: str = Query(description="文件名，模糊查找", default=""),
     file_type: str = Query(description="文件类型，模糊查找", default=""),
@@ -71,7 +71,7 @@ async def get_files_by_page(
 
 @router.delete("/api/deleteFile", description="删除文件", response_model=NoneResponse)
 @wrap_api_response
-async def delete_file(request: DeleteModelRequest, ctx: Context = Depends(researcher_context)):
+def delete_file(request: DeleteModelRequest, ctx: Context = Depends(researcher_context)):
     crud.update_model(ctx.db, File, request.id, is_deleted=True)
 
 

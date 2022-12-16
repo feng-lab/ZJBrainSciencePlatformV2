@@ -19,7 +19,7 @@ router = APIRouter(tags=["paradigm"])
 
 @router.post("/api/createParadigm", description="创建实验范式", response_model=Response[int])
 @wrap_api_response
-async def create_paradigm(
+def create_paradigm(
     request: CreateParadigmRequest, ctx: Context = Depends(researcher_context)
 ) -> int:
     if not crud.exists_model(ctx.db, Experiment, request.experiment_id):
@@ -38,7 +38,7 @@ async def create_paradigm(
 
 @router.get("/api/getParadigmInfo", description="获取范式详情", response_model=Response[ParadigmResponse])
 @wrap_api_response
-async def get_paradigm_info(
+def get_paradigm_info(
     paradigm_id: int = Query(description="范式ID", ge=0),
     ctx: Context = Depends(human_subject_context),
 ) -> ParadigmResponse:
@@ -56,7 +56,7 @@ async def get_paradigm_info(
     response_model=Response[list[ParadigmResponse]],
 )
 @wrap_api_response
-async def get_paradigms_by_page(
+def get_paradigms_by_page(
     experiment_id: int | None = Query(description="实验ID", default=None),
     paging_param: GetModelsByPageParam = Depends(get_models_by_page),
     ctx: Context = Depends(human_subject_context),
@@ -77,7 +77,7 @@ async def get_paradigms_by_page(
 
 @router.delete("/api/deleteParadigm", description="删除范式", response_model=NoneResponse)
 @wrap_api_response
-async def delete_paradigm(
+def delete_paradigm(
     request: DeleteModelRequest, ctx: Context = Depends(researcher_context)
 ) -> None:
     crud.update_model_as_deleted(ctx.db, Paradigm, request.id)

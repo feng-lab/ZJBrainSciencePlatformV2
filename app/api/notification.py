@@ -18,7 +18,7 @@ router = APIRouter(tags=["notification"])
 
 @router.post("/api/sendNotification", description="发送通知", response_model=Response[int])
 @wrap_api_response
-async def send_notification(
+def send_notification(
     request: NotificationBase, ctx: Context = Depends(human_subject_context)
 ) -> int:
     request = convert_timezone_before_handle_request(request)
@@ -35,7 +35,7 @@ async def send_notification(
     response_model=Response[list[NotificationResponse]],
 )
 @wrap_api_response
-async def get_recent_unread_notifications(
+def get_recent_unread_notifications(
     count: int = Query(description="数量", default=config.GET_RECENT_NOTIFICATIONS_COUNT, ge=0),
     ctx: Context = Depends(human_subject_context),
 ) -> list[NotificationResponse]:
@@ -49,7 +49,7 @@ async def get_recent_unread_notifications(
     response_model=Response[PagedData[NotificationResponse]],
 )
 @wrap_api_response
-async def get_notifications_by_page(
+def get_notifications_by_page(
     paging_param: GetModelsByPageParam = Depends(get_models_by_page),
     ctx: Context = Depends(human_subject_context),
 ) -> PagedData[NotificationResponse]:
@@ -60,7 +60,7 @@ async def get_notifications_by_page(
     "/api/markNotificationsAsRead", description="批量将通知标记为已读", response_model=Response[list[int]]
 )
 @wrap_api_response
-async def mark_notifications_as_read(
+def mark_notifications_as_read(
     request: MarkNotificationsAsReadRequest, ctx: Context = Depends(human_subject_context)
 ) -> list[int]:
     notification_ids = list(set(request.notification_ids))

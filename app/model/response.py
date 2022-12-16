@@ -2,7 +2,7 @@ import functools
 import json
 from datetime import datetime
 from json import JSONEncoder
-from typing import Any, Awaitable, Callable, Generic, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
@@ -53,10 +53,10 @@ class JsonResponse(JSONResponse):
         ).encode("UTF-8")
 
 
-def wrap_api_response(func: Callable[..., Awaitable[Data]]):
+def wrap_api_response(func: Callable[..., Data]):
     @functools.wraps(func)
-    async def wrapper(*args, **kwargs) -> JsonResponse:
-        response_data = await func(*args, **kwargs)
+    def wrapper(*args, **kwargs) -> JsonResponse:
+        response_data = func(*args, **kwargs)
         response = Response[Data](data=response_data)
         json_response = JsonResponse(response.dict())
         return json_response

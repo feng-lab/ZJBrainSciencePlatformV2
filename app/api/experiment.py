@@ -24,7 +24,7 @@ router = APIRouter(tags=["experiment"])
 
 @router.post("/api/createExperiment", description="创建实验", response_model=Response[int])
 @wrap_api_response
-async def create_experiment(
+def create_experiment(
     request: CreateExperimentRequest, ctx: Context = Depends(researcher_context)
 ) -> int:
     request = convert_timezone_before_handle_request(request)
@@ -42,7 +42,7 @@ async def create_experiment(
     "/api/getExperimentInfo", description="获取实验详情", response_model=Response[ExperimentResponse]
 )
 @wrap_api_response
-async def get_experiment_info(
+def get_experiment_info(
     experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
 ) -> ExperimentResponse:
     experiment = crud.get_model(ctx.db, Experiment, ExperimentInDB, experiment_id)
@@ -56,7 +56,7 @@ async def get_experiment_info(
     response_model=Response[list[ExperimentResponse]],
 )
 @wrap_api_response
-async def get_experiments_by_page(
+def get_experiments_by_page(
     search: str = Query(description="搜索任务名", default=""),
     sort_by: GetExperimentsByPageSortBy = Query(
         description="排序依据", default=GetExperimentsByPageSortBy.START_TIME

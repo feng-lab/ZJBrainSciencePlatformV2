@@ -20,7 +20,7 @@ router = APIRouter(tags=["auth"])
 
 
 @router.post("/api/login", description="用户登录，获取AccessToken", response_model=LoginResponse)
-async def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db_session)):
+def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db_session)):
     # 验证用户名与密码是否匹配
     user_id = verify_password(db, form.username, form.password)
     if user_id is None:
@@ -37,5 +37,5 @@ async def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depen
 
 @router.post("/api/logout", description="用户登出", response_model=NoneResponse)
 @wrap_api_response
-async def logout(ctx: Context = Depends(all_user_context)) -> None:
+def logout(ctx: Context = Depends(all_user_context)) -> None:
     crud.update_model(ctx.db, User, ctx.user_id, last_logout_time=utc_now())
