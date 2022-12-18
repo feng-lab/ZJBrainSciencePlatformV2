@@ -21,6 +21,10 @@ mkdirs = [
     "~/mysql/ZJBrainSciencePlatform/data",
 ]
 
+alias = {
+    # "docker": "podman",
+}
+
 
 @app.command()
 def up_backend():
@@ -76,9 +80,12 @@ def poetry_run(*args: str, check: bool = True) -> CompletedProcess:
         return run("poetry", "run", *args, check=check)
 
 
-def run(*command: str, check: bool = True) -> CompletedProcess:
+def run(executable: str, *args: str, check: bool = True) -> CompletedProcess:
+    if executable in alias:
+        executable = alias[executable]
+    command = [executable, *args]
     print(f"[bold green]RUN {' '.join(command)}[/bold green]")
-    return subprocess.run(command, check=check)
+    return subprocess.run(*command, check=check)
 
 
 class InProject:
