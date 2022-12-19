@@ -1,17 +1,23 @@
 import functools
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, TypeVar
+from datetime import datetime
+from typing import Any, Callable, TypeVar
 
 from pydantic import BaseModel
 from sqlalchemy import func, insert, select, text, update
-from sqlalchemy.engine import CursorResult, Result
+from sqlalchemy.engine import CursorResult, Result, Row
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import Executable
-from sqlalchemy.sql.roles import WhereHavingRole
+from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
-from app.common.time import convert_timezone_after_get_db, convert_timezone_before_save, utc_now
-from app.common.util import Model
+from app.common.time import (
+    convert_timezone_after_get_db,
+    convert_timezone_before_save,
+    current_timezone_to_utc,
+    utc_now,
+)
+from app.common.util import Model, T
 from app.db.database import Base
 from app.db.orm import (
     Experiment,
@@ -64,6 +70,93 @@ def convert_db_model_timezone(fn):
         return result
 
     return wrapper
+
+
+class SearchModel:
+    def __init__(self, db: Session, table: type[OrmModel]):
+        self.db: Session = db
+        self.table: type[OrmModel] = table
+        self.columns: list = []
+        self.join_spec: (type[OrmModel], Any) = None
+        self.offset: int | None = None
+        self.limit: int | None = None
+        self.order: OrderByRole | None = None
+        self.where: list = []
+        self.map_model: Callable[[Row], Model] | None = None
+
+    def select(self, *columns) -> "SearchModel":
+        self.columns = columns
+        return self
+
+    def join(self, another_table, on_clause) -> "SearchModel":
+        self.join_spec = (another_table, on_clause)
+        return self
+
+    def page_param(self, page_param: GetModelsByPageParam) -> "SearchModel":
+        self.offset = page_param.offset
+        self.limit = page_param.limit
+        if not page_param.include_deleted:
+            self.where.append(self.table.is_deleted == False)
+        return self
+
+    def order_by(self, order_by: OrderByRole) -> "SearchModel":
+        self.order = order_by
+        return self
+
+    def where_eq(self, field, value: T | None) -> "SearchModel":
+        if value is not None:
+            self.where.append(field == value)
+        return self
+
+    def where_ge(self, field, value: T | None) -> "SearchModel":
+        if value is not None:
+            self.where.append(field >= value)
+        return self
+
+    def where_le(self, field, value: T | None) -> "SearchModel":
+        if value is not None:
+            self.where.append(field <= value)
+        return self
+
+    def map_model_with(self, map_model: Callable[[Row], Model]) -> "SearchModel":
+        self.map_model = map_model
+        return self
+
+    def total_count(self) -> int:
+        stmt = select(func.count(self.table.id)).where(*self.where)
+        if self.join_spec is not None:
+            stmt = stmt.join(*self.join_spec)
+        return self.db.execute(stmt).scalar()
+
+    @convert_db_model_timezone
+    def items(self, target_model: type[Model]) -> list[Model]:
+        columns = self.columns if self.columns else [self.table]
+        stmt = select(columns).where(*self.where)
+        if self.join_spec is not None:
+            stmt = stmt.join(*self.join_spec)
+        if self.offset is not None:
+            stmt = stmt.offset(self.offset)
+        if self.limit is not None:
+            stmt = stmt.limit(self.limit)
+        if self.order is not None:
+            stmt = stmt.order_by(self.order)
+        rows = self.db.execute(stmt).all()
+        map_model = self.map_model
+        if map_model is None:
+
+            def default_map_model(row: Row) -> Model:
+                return target_model.from_orm(row[0])
+
+            map_model = default_map_model
+        return [map_model(row) for row in rows]
+
+    def paged_data(self, target_model: type[Model]) -> PagedData[Model]:
+        total = self.total_count()
+        if total < 1:
+            items = []
+        else:
+            items = self.items(target_model)
+        return PagedData(total=total, items=items)
 
 
 @convert_db_model_timezone
@@ -179,41 +272,52 @@ def get_notification_unread_count(db: Session, user_id: int) -> int:
     return db.execute(stmt).scalar()
 
 
-@convert_db_model_timezone
+def build_search_notification(db: Session) -> SearchModel:
+    return (
+        SearchModel(db, Notification)
+        .select(Notification, User.username)
+        .join(User, Notification.receiver == User.id)
+        .map_model_with(
+            lambda row: NotificationResponse(
+                **NotificationInDB.from_orm(row[0]).dict(), creator_name=row[1]
+            )
+        )
+    )
+
+
 def search_notifications(
-    db: Session, user_id: int, status: Notification.Status | None, page_param: GetModelsByPageParam
+    db: Session,
+    user_id: int,
+    notification_type: Notification.Type | None,
+    status: Notification.Status | None,
+    create_time_start: datetime | None,
+    create_time_end: datetime | None,
+    page_param: GetModelsByPageParam,
 ) -> PagedData[NotificationResponse]:
-    stmt = select(func.count()).select_from(Notification).where(Notification.receiver == user_id)
-    if not page_param.include_deleted:
-        stmt = stmt.where(Notification.is_deleted == False)
-    if status is not None:
-        stmt = stmt.where(Notification.status == status)
-    total = db.execute(stmt).scalar()
-    responses = list_notifications(db, user_id, status, page_param)
-    return PagedData(total=total, items=responses)
+    return (
+        build_search_notification(db)
+        .page_param(page_param)
+        .where_eq(Notification.receiver, user_id)
+        .where_eq(Notification.type, notification_type)
+        .where_eq(Notification.status, status)
+        .where_ge(Notification.gmt_create, current_timezone_to_utc(create_time_start))
+        .where_le(Notification.gmt_create, current_timezone_to_utc(create_time_end))
+        .order_by(Notification.gmt_create.desc())
+        .paged_data(NotificationResponse)
+    )
 
 
-@convert_db_model_timezone
 def list_notifications(
     db: Session, user_id: int, status: Notification.Status | None, page_param: GetModelsByPageParam
 ) -> list[NotificationResponse]:
-    stmt = (
-        select(Notification, User.username)
-        .join(User, Notification.creator == User.id)
-        .where(Notification.receiver == user_id)
-        .offset(page_param.offset)
-        .limit(page_param.limit)
+    return (
+        build_search_notification(db)
+        .page_param(page_param)
+        .where_eq(Notification.receiver, user_id)
+        .where_eq(Notification.status, status)
         .order_by(Notification.gmt_create.desc())
+        .items(NotificationResponse)
     )
-    if not page_param.include_deleted:
-        stmt = stmt.where(Notification.is_deleted == False)
-    if status is not None:
-        stmt = stmt.where(Notification.status == status)
-    rows = db.execute(stmt).all()
-    return [
-        NotificationResponse(**NotificationInDB.from_orm(row[0]).dict(), creator_name=row[1])
-        for row in rows
-    ]
 
 
 def update_notifications_as_read(

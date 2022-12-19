@@ -19,6 +19,14 @@ def convert_timezone(dt: datetime, from_tz: tzinfo, to_tz: tzinfo) -> datetime:
     return dt.astimezone(to_tz)
 
 
+def current_timezone_to_utc(dt: datetime) -> datetime:
+    return convert_timezone(dt, CURRENT_TIMEZONE, timezone.utc)
+
+
+def utc_to_current_timezone(dt: datetime) -> datetime:
+    return convert_timezone(dt, timezone.utc, CURRENT_TIMEZONE)
+
+
 def convert_timezone_before_save(model: Model):
     return modify_model_field_by_type(
         model, datetime, lambda dt: convert_timezone(dt, CURRENT_TIMEZONE, timezone.utc)

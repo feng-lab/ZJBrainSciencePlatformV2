@@ -55,28 +55,29 @@ def name_logger_filter(name: str) -> Callable[[LogRecord], bool]:
     return log_filter
 
 
-def get_module_name_filter(record: LogRecord) -> bool:
+def common_filter(record: LogRecord) -> bool:
     record.module_name = get_module_name(record.pathname)
+    record.message = record.message.replace("\n", " ")
     return True
 
 
-root_handler = init_handler(config.LOG_ROOT / "app.log", root_logger_filter, get_module_name_filter)
+root_handler = init_handler(config.LOG_ROOT / "app.log", root_logger_filter, common_filter)
 error_handler = init_handler(
-    config.LOG_ROOT / "error.log", root_logger_filter, get_module_name_filter, level=ERROR
+    config.LOG_ROOT / "error.log", root_logger_filter, common_filter, level=ERROR
 )
 access_handler = init_handler(
     config.LOG_ROOT / "access.log",
     name_logger_filter(ACCESS_LOGGER_NAME),
-    get_module_name_filter,
+    common_filter,
     log_format=ACCESS_LOG_FORMAT,
 )
 uvicorn_handler = init_handler(
-    config.LOG_ROOT / "uvicorn.log", name_logger_filter(UVICORN_LOGGER_NAME), get_module_name_filter
+    config.LOG_ROOT / "uvicorn.log", name_logger_filter(UVICORN_LOGGER_NAME), common_filter
 )
 sqlalchemy_handler = init_handler(
     config.LOG_ROOT / "sqlalchemy.log",
     name_logger_filter(SQLALCHEMY_LOGGER_NAME),
-    get_module_name_filter,
+    common_filter,
     level=INFO,
 )
 
