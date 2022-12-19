@@ -8,7 +8,7 @@ services:
       - "1919:80"
     environment:
       DATABASE_URL: mysql+pymysql://zjlab:zjlab2022@database:3306/zj_brain_science_platform
-      DATABASE_CONFIG: '{}'
+      DATABASE_CONFIG: '{"echo": true}'
     volumes:
       - ~/log/ZJBrainSciencePlatform/app:/root/log/ZJBrainSciencePlatform/app
       - ~/data/ZJBrainSciencePlatform/file:/root/data/ZJBrainSciencePlatform/file

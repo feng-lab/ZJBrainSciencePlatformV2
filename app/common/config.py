@@ -40,3 +40,4 @@ class Config(BaseSettings):
 
 
 config = Config()
+print(config.json())
