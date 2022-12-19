@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.common.config import config
-from app.common.context import Context, human_subject_context
+from app.common.context import Context, all_user_context, human_subject_context
 from app.common.time import convert_timezone_before_handle_request
 from app.db import crud
 from app.db.orm import Notification
@@ -27,6 +27,13 @@ def send_notification(
     )
     notification_id = crud.insert_model(ctx.db, Notification, notification_create)
     return notification_id
+
+
+@router.get("/api/getUnreadNotificationCount", description="获取未读通知总数", response_model=Response[int])
+@wrap_api_response
+def get_unread_notification_count(ctx: Context = Depends(all_user_context)) -> int:
+    unread_count = crud.get_notification_unread_count(ctx.db, ctx.user_id)
+    return unread_count
 
 
 @router.get(

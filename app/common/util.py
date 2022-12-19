@@ -16,7 +16,6 @@ for sys_path in {Path(path).absolute() for path in sys.path}:
             break
     else:
         SYS_PATHS.append(sys_path)
-print(SYS_PATHS)
 
 
 def modify_model_field_by_type(model: Model, field_type: Type[T], map_func: Callable[[T], T]):

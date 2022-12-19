@@ -170,6 +170,15 @@ def get_user_username(db: Session, user_id: int) -> str | None:
     ).scalar()
 
 
+def get_notification_unread_count(db: Session, user_id: int) -> int:
+    stmt = select(func.count(Notification.id)).where(
+        Notification.receiver == user_id,
+        Notification.status == Notification.Status.unread,
+        Notification.is_deleted == False,
+    )
+    return db.execute(stmt).scalar()
+
+
 @convert_db_model_timezone
 def search_notifications(
     db: Session, user_id: int, status: Notification.Status | None, page_param: GetModelsByPageParam
