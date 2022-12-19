@@ -35,9 +35,6 @@ class Config(BaseSettings):
     # 获取最近消息的数量
     GET_RECENT_NOTIFICATIONS_COUNT: int = 10
 
-    # 获取消息列表分页默认大小
-    LIST_NOTIFICATIONS_LIMIT: int = 20
-
 
 config = Config()
 print(config.json())
