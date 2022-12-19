@@ -1,5 +1,4 @@
 import logging
-import sys
 from datetime import datetime
 from logging import ERROR, INFO, Formatter, Handler, Logger, LogRecord, getLogger
 from logging.handlers import QueueHandler, QueueListener, TimedRotatingFileHandler
@@ -9,6 +8,7 @@ from typing import Callable
 
 from app.common.config import config
 from app.common.time import CURRENT_TIMEZONE
+from app.common.util import get_module_name
 
 ACCESS_LOGGER_NAME = "access"
 UVICORN_LOGGER_NAME = "uvicorn.access"
@@ -53,25 +53,6 @@ def name_logger_filter(name: str) -> Callable[[LogRecord], bool]:
         return record.name == name
 
     return log_filter
-
-
-SYS_PATHS = []
-for sys_path in {Path(path).absolute() for path in sys.path}:
-    for i, added_path in enumerate(SYS_PATHS):
-        if sys_path.is_relative_to(added_path):
-            SYS_PATHS.insert(i, sys_path)
-            break
-    else:
-        SYS_PATHS.append(sys_path)
-print(SYS_PATHS)
-
-
-def get_module_name(module_path: Path | str) -> str | None:
-    module_path = Path(module_path).absolute()
-    for path in SYS_PATHS:
-        if module_path.is_relative_to(path):
-            return ".".join(module_path.relative_to(path).parts).rstrip(".py")
-    return None
 
 
 def get_module_name_filter(record: LogRecord) -> bool:
