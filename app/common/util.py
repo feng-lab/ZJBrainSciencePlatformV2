@@ -6,6 +6,7 @@ from typing import Callable, Type, TypeVar
 from pydantic import BaseModel
 
 Model = TypeVar("Model", bound=BaseModel)
+AnotherModel = TypeVar("AnotherModel", bound=BaseModel)
 T = TypeVar("T")
 
 SYS_PATHS = []

@@ -108,6 +108,11 @@ class SearchModel:
             self.where.append(field == value)
         return self
 
+    def where_contains(self, field, value: str | None) -> "SearchModel":
+        if value:
+            self.where.append(field.ilike(f"%{value}%"))
+        return self
+
     def where_ge(self, field, value: T | None) -> "SearchModel":
         if value is not None:
             self.where.append(field >= value)
@@ -223,7 +228,6 @@ def get_user_auth_by_username(db: Session, username: str) -> UserAuth | None:
     return UserAuth.from_orm(row) if row is not None else None
 
 
-@convert_db_model_timezone
 def search_users(
     db: Session,
     username: str | None,
@@ -231,21 +235,14 @@ def search_users(
     access_level: int | None,
     page_param: GetModelsByPageParam,
 ) -> PagedData[UserResponse]:
-    where = []
-    if username:
-        where.append(User.username.ilike(f"%{username}%"))
-    if staff_id:
-        where.append(User.staff_id.ilike(f"%{staff_id}%"))
-    if access_level is not None:
-        where.append(User.access_level == access_level)
-    if not page_param.include_deleted:
-        where.append(User.is_deleted == False)
-    total_count = db.execute(select(func.count()).select_from(User).where(*where)).scalar()
-    users = db.execute(
-        select(User).where(*where).offset(page_param.offset).limit(page_param.limit)
-    ).scalars()
-    return PagedData[UserResponse](
-        total=total_count, items=[UserResponse(**UserInDB.from_orm(user).dict()) for user in users]
+    return (
+        SearchModel(db, User)
+        .where_contains(User.username, username)
+        .where_contains(User.staff_id, staff_id)
+        .where_eq(User.access_level, access_level)
+        .page_param(page_param)
+        .map_model_with(lambda row: UserResponse(**UserInDB.from_orm(row[0]).dict()))
+        .paged_data(UserResponse)
     )
 
 
@@ -371,28 +368,18 @@ def get_file_extensions(db: Session, experiment_id: int) -> list[str]:
     return db.execute(stmt).scalars().all()
 
 
-@convert_db_model_timezone
 def search_files(
     db: Session, experiment_id: int, path: str, extension: str, page_param: GetModelsByPageParam
 ) -> PagedData[FileResponse]:
-    where = [File.experiment_id == experiment_id]
-    if path:
-        where.append(File.path.ilike(f"%{path}%"))
-    if extension:
-        where.append(File.extension.ilike(f"%{extension}%"))
-    if not page_param.include_deleted:
-        where.append(File.is_deleted == False)
-    total = db.execute(select(func.count()).select_from(File).where(*where)).scalar()
-    files_stmt = (
-        select(File)
-        .where(*where)
-        .offset(page_param.offset)
-        .limit(page_param.limit)
-        .order_by(File.index)
-    )
-    files = db.execute(files_stmt).scalars().all()
-    return PagedData(
-        total=total, items=[FileResponse(**FileInDB.from_orm(file).dict()) for file in files]
+    return (
+        SearchModel(db, Experiment)
+        .where_eq(File.experiment_id, experiment_id)
+        .where_contains(File.path, path)
+        .where_contains(File.extension, extension)
+        .page_param(page_param)
+        .order_by(File.index.asc())
+        .map_model_with(lambda row: FileResponse(**FileInDB.from_orm(row[0]).dict()))
+        .paged_data(FileResponse)
     )
 
 
@@ -403,7 +390,6 @@ def list_experiment_assistants(db: Session, experiment_id: int) -> list[int]:
     return db.execute(stmt).scalars().all()
 
 
-@convert_db_model_timezone
 def search_experiments(
     db: Session,
     search: str,
@@ -411,11 +397,6 @@ def search_experiments(
     sort_order: GetExperimentsByPageSortOrder,
     page_param: GetModelsByPageParam,
 ) -> list[ExperimentInDB]:
-    stmt = select(Experiment)
-    if search:
-        stmt = stmt.where(Experiment.name.ilike(f"%{search}%"))
-    if not page_param.include_deleted:
-        stmt = stmt.where(Experiment.is_deleted == False)
     if sort_by is GetExperimentsByPageSortBy.START_TIME:
         column = Experiment.start_at
     elif sort_by is GetExperimentsByPageSortBy.TYPE:
@@ -423,13 +404,18 @@ def search_experiments(
     else:
         raise ValueError("invalid sort_by")
     if sort_order is GetExperimentsByPageSortOrder.ASC:
-        stmt = stmt.order_by(column.asc())
+        sort_by_spec = column.asc()
     elif sort_order is GetExperimentsByPageSortOrder.DESC:
-        stmt = stmt.order_by(column.desc())
+        sort_by_spec = column.desc()
     else:
         raise ValueError("invalid sort_order")
-    rows = db.execute(stmt).scalars().all()
-    return [ExperimentInDB.from_orm(row) for row in rows]
+    return (
+        SearchModel(db, Experiment)
+        .where_contains(Experiment.name, search)
+        .page_param(page_param)
+        .order_by(sort_by_spec)
+        .items(ExperimentInDB)
+    )
 
 
 def bulk_list_experiment_assistants(db: Session, experiment_ids: list[int]) -> list[list[int]]:
@@ -448,20 +434,15 @@ def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
     return db.execute(stmt).scalars().all()
 
 
-@convert_db_model_timezone
 def search_paradigms(
     db: Session, experiment_id: int, page_param: GetModelsByPageParam
 ) -> list[ParadigmInDB]:
-    stmt = (
-        select(Paradigm)
-        .where(Paradigm.experiment_id == experiment_id)
-        .offset(page_param.offset)
-        .limit(page_param.limit)
+    return (
+        SearchModel(db, Paradigm)
+        .where_eq(Paradigm.experiment_id, experiment_id)
+        .page_param(page_param)
+        .items(ParadigmInDB)
     )
-    if not page_param.include_deleted:
-        stmt = stmt.where(Paradigm.is_deleted == False)
-    rows = db.execute(stmt).scalars().all()
-    return [ParadigmInDB.from_orm(row) for row in rows]
 
 
 def bulk_list_paradigm_files(db: Session, paradigm_ids: list[int]) -> list[list[int]]:

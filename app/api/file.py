@@ -62,10 +62,10 @@ def get_files_by_page(
     experiment_id: int = Query(description="实验ID"),
     path: str = Query(description="文件名，模糊查找", default=""),
     file_type: str = Query(description="文件类型，模糊查找", default=""),
-    paging_param: GetModelsByPageParam = Depends(get_models_by_page),
+    page_param: GetModelsByPageParam = Depends(get_models_by_page),
     ctx: Context = Depends(human_subject_context),
 ) -> PagedData[FileResponse]:
-    files = crud.search_files(ctx.db, experiment_id, path, file_type, paging_param)
+    files = crud.search_files(ctx.db, experiment_id, path, file_type, page_param)
     return files
 
 

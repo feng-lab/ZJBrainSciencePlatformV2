@@ -8,16 +8,14 @@ from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 from starlette.responses import JSONResponse
 
-from app.common.util import Model
+from app.common.util import AnotherModel, Model
 
+# 请求成功的code
 CODE_SUCCESS: int = 0
-"""请求成功的code"""
-
+# 响应失败的code
 CODE_FAIL: int = 1
-"""响应失败的code"""
-
+# 会话超时的失败code
 CODE_SESSION_TIMEOUT: int = 2
-"""会话超时的失败code"""
 
 MESSAGE_SUCCESS: str = "success"
 
@@ -72,6 +70,19 @@ class LoginResponse(BaseModel):
 class PagedData(GenericModel, Generic[Model]):
     total: int
     items: list[Model]
+
+    def map_items(
+        self,
+        target_model: type[AnotherModel] | None = None,
+        func: Callable[[Model], AnotherModel] | None = None,
+    ) -> None:
+        def default_map_func(item: Model) -> AnotherModel:
+            return target_model(**item.dict())
+
+        if func is None:
+            func = default_map_func
+        for i, item in enumerate(self.items):
+            self.items[i] = func(item)
 
 
 class AccessTokenData(BaseModel):

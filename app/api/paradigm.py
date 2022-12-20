@@ -58,13 +58,13 @@ def get_paradigm_info(
 @wrap_api_response
 def get_paradigms_by_page(
     experiment_id: int | None = Query(description="实验ID", default=None),
-    paging_param: GetModelsByPageParam = Depends(get_models_by_page),
+    page_param: GetModelsByPageParam = Depends(get_models_by_page),
     ctx: Context = Depends(human_subject_context),
 ) -> list[ParadigmResponse]:
     if not crud.exists_model(ctx.db, Experiment, experiment_id):
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="experiment not exists")
 
-    paradigms = crud.search_paradigms(ctx.db, experiment_id, paging_param)
+    paradigms = crud.search_paradigms(ctx.db, experiment_id, page_param)
     paradigm_files_list = crud.bulk_list_paradigm_files(
         ctx.db, [paradigm.id for paradigm in paradigms]
     )
