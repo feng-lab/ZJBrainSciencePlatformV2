@@ -4,7 +4,7 @@ from typing import Any
 
 from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, String, Text
 
-from app.db.database import Base
+from app.db import Base
 
 
 class ModelMixin:

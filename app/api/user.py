@@ -4,7 +4,7 @@ from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 from app.common.context import Context, administrator_context, all_user_context
 from app.common.user_auth import AccessLevel, hash_password, verify_password
 from app.db import crud
-from app.db.database import SessionLocal
+from app.db.__init__ import SessionLocal
 from app.db.orm import User
 from app.model.request import (
     DeleteModelRequest,

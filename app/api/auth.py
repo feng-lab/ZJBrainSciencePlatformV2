@@ -11,8 +11,7 @@ from app.common.user_auth import (
     raise_unauthorized_exception,
     verify_password,
 )
-from app.db import crud
-from app.db.database import get_db_session
+from app.db import crud, get_db_session
 from app.db.orm import User
 from app.model.response import LoginResponse, NoneResponse, wrap_api_response
 

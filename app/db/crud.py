@@ -18,7 +18,7 @@ from app.common.time import (
     utc_now,
 )
 from app.common.util import Model, T
-from app.db.database import Base
+from app.db import Base
 from app.db.orm import (
     Experiment,
     ExperimentAssistant,
