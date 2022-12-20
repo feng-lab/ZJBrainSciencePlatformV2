@@ -1,13 +1,9 @@
 import os
 import subprocess
+from argparse import ArgumentParser
 from pathlib import Path
 from subprocess import CompletedProcess
 from typing import Any
-
-from rich import print
-from typer import Typer
-
-app = Typer()
 
 current_file = Path(__file__)
 project_dir = current_file.parent
@@ -26,8 +22,16 @@ alias = {
     # "docker": "podman",
 }
 
+commands = {}
 
-@app.command()
+
+def add_command(func):
+    command_name = func.__name__.replace("_", "-")
+    commands[command_name] = func
+    return func
+
+
+@add_command
 def up_backend():
     for dir_ in mkdirs:
         os.makedirs(dir_, exist_ok=True)
@@ -35,33 +39,33 @@ def up_backend():
     docker_compose("up", "--detach", "--build", "backend")
 
 
-@app.command()
+@add_command
 def up_database():
     if not docker_compose_service_running("database"):
         docker_compose("up", "--detach", "--build", "database")
 
 
-@app.command()
+@add_command
 def run_alembic_bash():
     up_database()
     build_base_image()
     docker_compose("run", "--rm", "alembic", "bash")
 
 
-@app.command()
+@add_command
 def start_dev_backend():
     up_database()
-    poetry_run("uvicorn", "app.main:app", "--reload", env={"DEBUG_MODE": "on"})
+    poetry_run("python", "-m", "uvicorn", "app.main:app", "--reload", env={"DEBUG_MODE": "on"})
 
 
-@app.command()
+@add_command
 def clear():
     docker_compose("down", "--rmi", "all", "--remove-orphans", check=False)
     run("docker", "system", "prune")
     run("docker", "image", "rm", base_image_tag)
 
 
-@app.command()
+@add_command
 def format():
     poetry_run("isort", str(project_dir))
     poetry_run("black", str(project_dir))
@@ -97,7 +101,7 @@ def run(executable: str, *args: str, **kwargs: Any) -> CompletedProcess:
     if executable in alias:
         executable = alias[executable]
     command = [executable, *args]
-    print(f"[bold green]RUN {' '.join(command)}[/bold green]")
+    print(f"RUN {' '.join(command)}")
     return subprocess.run(command, text=True, **kwargs)
 
 
@@ -116,4 +120,8 @@ class InProject:
 
 
 if __name__ == "__main__":
-    app()
+    parser = ArgumentParser()
+    parser.add_argument("command", help="command to run", choices=commands.keys())
+    args = parser.parse_args()
+    command_func = commands[args.command]
+    command_func()
