@@ -2,40 +2,31 @@
 
 ## 依赖版本
 
-* Python >= 3.10
+* Python >= 3.11
+* Docker & Docker Compose
 
-其他依赖版本见 requirements.txt 文件
+详细依赖版本见 [pyproject.toml](./pyproject.toml) 文件。
 
 ## 启动应用
 
 ### 1 配置开发环境
 
-#### 1.1 创建虚拟环境
+#### 1.1 安装 Poetry
 
-方法1：Anaconda / Miniconda
-
-```shell
-conda create -n ZJBrainSciencePlatform python=3.10
-conda activate ZJBrainSciencePlatform
-```
-
-方法2：virtualenv
+本项目使用 Poetry 管理项目依赖和虚拟环境，需要 [安装 Poetry](https://python-poetry.org/docs/#installation)。
 
 ```shell
-python -V # 确认 Python 版本高于 3.10 
-python -m venv .venv
+# Linux, macOS, Windows (WSL)
+curl -sSL https://install.python-poetry.org | python3 -
 
-# Linux bash
-source ./.venv/bin/activate
-
-# Windows PowerShell
-.\.venv\Scripts\Activate.ps1
+# Windows (Powershell)
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
 ```
 
 ### 1.2 安装依赖
 
 ```shell
-python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+poetry install --without alembic --sync
 ```
 
 ### 2 启动 MySQL 数据库
@@ -61,12 +52,14 @@ $env:DATABASE_CONFIG='{}'
 建议使用 Docker
 
 ```shell
-docker compose up -d --build database
+python ./build.py up-database
 ```
 
 #### 2.3 迁移数据库
 
 ```shell
+python ./build.py run-alembic-bash
+
 alembic upgrade head
 ```
 
@@ -83,5 +76,5 @@ python -m uvicorn app.main:app --reload
 #### 3.2 Docker Compose 部署
 
 ```shell
-docker-compose up -d --build
+python ./build.py up-backend
 ```
