@@ -19,11 +19,15 @@ def convert_timezone(dt: datetime, from_tz: tzinfo, to_tz: tzinfo) -> datetime:
     return dt.astimezone(to_tz)
 
 
-def current_timezone_to_utc(dt: datetime) -> datetime:
+def current_timezone_to_utc(dt: datetime | None) -> datetime | None:
+    if dt is None:
+        return None
     return convert_timezone(dt, CURRENT_TIMEZONE, timezone.utc)
 
 
-def utc_to_current_timezone(dt: datetime) -> datetime:
+def utc_to_current_timezone(dt: datetime | None) -> datetime | None:
+    if dt is None:
+        return None
     return convert_timezone(dt, timezone.utc, CURRENT_TIMEZONE)
 
 
