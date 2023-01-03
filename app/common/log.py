@@ -1,6 +1,15 @@
-import logging
 from datetime import datetime
-from logging import ERROR, INFO, Formatter, Handler, Logger, LogRecord, getLogger
+from logging import (
+    ERROR,
+    INFO,
+    Formatter,
+    Handler,
+    Logger,
+    LogRecord,
+    getLogger,
+    getLogRecordFactory,
+    setLogRecordFactory,
+)
 from logging.handlers import QueueHandler, QueueListener, TimedRotatingFileHandler
 from pathlib import Path
 from queue import Queue
@@ -17,13 +26,24 @@ LOGGER_NAMES = {ACCESS_LOGGER_NAME, UVICORN_LOGGER_NAME}
 
 DEFAULT_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(module_name)s:%(lineno)d|%(message)s"
 ACCESS_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(message)s"
+DEFAULT_LOG_RECORD_FACTORY = getLogRecordFactory()
 
 
 def current_time_tuple(_second, _what):
     return datetime.now(CURRENT_TIMEZONE).timetuple()
 
 
-logging.Formatter.converter = current_time_tuple
+Formatter.converter = current_time_tuple
+
+
+def log_record_factory(*args, **kwargs) -> LogRecord:
+    record = DEFAULT_LOG_RECORD_FACTORY(*args, **kwargs)
+    record.module_name = get_module_name(record.pathname)
+    record.message = record.getMessage().replace("\n", " ")
+    return record
+
+
+setLogRecordFactory(log_record_factory)
 
 
 def init_handler(
@@ -55,30 +75,18 @@ def name_logger_filter(name: str) -> Callable[[LogRecord], bool]:
     return log_filter
 
 
-def common_filter(record: LogRecord) -> bool:
-    record.module_name = get_module_name(record.pathname)
-    record.message = record.message.replace("\n", " ")
-    return True
-
-
-root_handler = init_handler(config.LOG_ROOT / "app.log", root_logger_filter, common_filter)
-error_handler = init_handler(
-    config.LOG_ROOT / "error.log", root_logger_filter, common_filter, level=ERROR
-)
+root_handler = init_handler(config.LOG_ROOT / "app.log", root_logger_filter)
+error_handler = init_handler(config.LOG_ROOT / "error.log", root_logger_filter, level=ERROR)
 access_handler = init_handler(
     config.LOG_ROOT / "access.log",
     name_logger_filter(ACCESS_LOGGER_NAME),
-    common_filter,
     log_format=ACCESS_LOG_FORMAT,
 )
 uvicorn_handler = init_handler(
-    config.LOG_ROOT / "uvicorn.log", name_logger_filter(UVICORN_LOGGER_NAME), common_filter
+    config.LOG_ROOT / "uvicorn.log", name_logger_filter(UVICORN_LOGGER_NAME)
 )
 sqlalchemy_handler = init_handler(
-    config.LOG_ROOT / "sqlalchemy.log",
-    name_logger_filter(SQLALCHEMY_LOGGER_NAME),
-    common_filter,
-    level=INFO,
+    config.LOG_ROOT / "sqlalchemy.log", name_logger_filter(SQLALCHEMY_LOGGER_NAME), level=INFO
 )
 
 log_queue = Queue()
@@ -94,15 +102,14 @@ log_queue_listener = QueueListener(
 )
 
 
-def init_logger(name: str | None, level: int = INFO, log_handler: Handler | None = None) -> Logger:
+def init_logger(name: str | None, level: int = INFO) -> Logger:
     logger = getLogger(name)
     logger.setLevel(level)
-    if log_handler is None:
-        logger.addHandler(log_queue_handler)
+    logger.addHandler(log_queue_handler)
     return logger
 
 
 root_logger = init_logger(None)
 access_logger = init_logger(ACCESS_LOGGER_NAME)
 uvicorn_logger = init_logger(UVICORN_LOGGER_NAME)
-sqlalchemy_logger = init_logger(ACCESS_LOGGER_NAME, level=INFO)
+sqlalchemy_logger = init_logger(SQLALCHEMY_LOGGER_NAME, level=INFO)
