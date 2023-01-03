@@ -1,7 +1,7 @@
 import functools
 import sys
 from pathlib import Path
-from typing import Callable, Type, TypeVar
+from typing import Callable, MutableSequence, Type, TypeVar
 
 from pydantic import BaseModel
 
@@ -30,6 +30,16 @@ def modify_model_field_by_type(model: Model, field_type: Type[T], map_func: Call
         if isinstance(field_value, BaseModel):
             modify_model_field_by_type(field_value, field_type, map_func)
     return model
+
+
+def protobuf_to_pydantic(model: T | None, target: type[Model]) -> Model | None:
+    if model is None:
+        return None
+    fields = {field.name: getattr(model, field.name) for field in model.DESCRIPTOR.fields}
+    for field_name, field_value in fields.items():
+        if isinstance(field_value, MutableSequence):
+            fields[field_name] = list(field_value)
+    return target(**fields)
 
 
 @functools.lru_cache(maxsize=None)

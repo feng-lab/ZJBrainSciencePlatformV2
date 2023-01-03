@@ -45,3 +45,16 @@ class GetExperimentsByPageSortBy(Enum):
 class GetExperimentsByPageSortOrder(Enum):
     ASC = "asc"
     DESC = "desc"
+
+
+class DisplayEEGRequest(BaseModel):
+    class FileType(str, Enum):
+        EDF = "edf"
+        BDF = "bdf"
+
+    file_id: int = Field(ge=0)
+    window: int = Field(ge=0)
+    page_index: int = Field(ge=0)
+    channels: list[str]
+    file_path: str
+    file_type: FileType

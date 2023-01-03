@@ -13,6 +13,7 @@ from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
 from app.api import user
+from app.api.algorithm import router as algorithm_router
 from app.api.auth import router as auth_router
 from app.api.experiment import router as experiment_router
 from app.api.file import router as file_router
@@ -36,6 +37,7 @@ app = FastAPI(
         {"name": "experiment"},
         {"name": "file"},
         {"name": "paradigm"},
+        {"name": "algorithm"},
     ],
 )
 
@@ -45,6 +47,7 @@ app.include_router(notification_router)
 app.include_router(experiment_router)
 app.include_router(file_router)
 app.include_router(paradigm_router)
+app.include_router(algorithm_router)
 
 app.add_middleware(
     CORSMiddleware,

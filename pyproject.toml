@@ -17,6 +17,8 @@ python-multipart = "^0.0.5"
 starlette = "^0.22.0"
 uvicorn = "^0.20.0"
 python-dateutil = "^2.8.2"
+grpcio = "^1.51.1"
+protobuf = "^4.21.12"
 
 
 [tool.poetry.group.dev.dependencies]

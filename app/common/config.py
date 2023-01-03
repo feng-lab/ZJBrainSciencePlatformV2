@@ -35,6 +35,15 @@ class Config(BaseSettings):
     # 获取最近消息的数量
     GET_RECENT_NOTIFICATIONS_COUNT: int = 10
 
+    # 算法GRPC服务的地址
+    ALGORITHM_GRPC_ADDRESS: str = "localhost"
+
+    # 算法GRPC服务的端口
+    ALGORITHM_GRPC_PORT: int = 12345
+
+    def get_algorithm_grpc_address(self):
+        return f"{self.ALGORITHM_GRPC_ADDRESS}:{self.ALGORITHM_GRPC_PORT}"
+
 
 config = Config()
 print(config.json())

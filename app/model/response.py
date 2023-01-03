@@ -90,3 +90,20 @@ class AccessTokenData(BaseModel):
     sub: str
     # 过期时间，UTC
     exp: datetime
+
+
+class DisplayEEGData(BaseModel):
+    class Dataset(BaseModel):
+        name: str
+        data: list[float]
+        unit: str
+        type: str
+        x_label: bool
+        value_decimals: int
+
+    x_data: list[float]
+    stimulation: list[int]
+    datasets: list[Dataset]
+
+    class Config:
+        orm_mode = True
