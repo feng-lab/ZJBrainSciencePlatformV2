@@ -32,11 +32,11 @@ def add_command(func):
 
 
 @add_command
-def up_backend():
+def up_platform():
     for dir_ in mkdirs:
         os.makedirs(dir_, exist_ok=True)
     build_base_image()
-    docker_compose("up", "--detach", "--build", "backend")
+    docker_compose("up", "--detach", "--build", "platform")
 
 
 @add_command

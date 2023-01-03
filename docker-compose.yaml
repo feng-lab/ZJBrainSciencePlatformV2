@@ -1,20 +1,25 @@
 version: "3"
+# noinspection ComposeUnknownKeys
+name: zj-brain-science-platform
 services:
-  backend:
+  platform:
     build:
       context: .
-      dockerfile: dockerfile/backend.Dockerfile
+      dockerfile: dockerfile/platform.Dockerfile
     ports:
       - "1919:80"
     environment:
       DATABASE_URL: mysql+pymysql://zjlab:zjlab2022@database:3306/zj_brain_science_platform
       # DATABASE_CONFIG: '{"echo": true}'
+      ALGORITHM_GRPC_ADDRESS: algorithm
     volumes:
       - ~/log/ZJBrainSciencePlatform/app:/root/log/ZJBrainSciencePlatform/app
       - ~/data/ZJBrainSciencePlatform/file:/root/data/ZJBrainSciencePlatform/file
     restart: always
     depends_on:
       - database
+    networks:
+      - platform-net
 
   database:
     build:
@@ -33,6 +38,8 @@ services:
       - ~/mysql/ZJBrainSciencePlatform/data:/var/lib/mysql
       - ~/log/ZJBrainSciencePlatform/mysql:/var/log/mysql
     restart: always
+    networks:
+      - platform-net
 
   alembic:
     build:
@@ -45,3 +52,9 @@ services:
       - database
     profiles:
       - alembic
+    networks:
+      - platform-net
+
+networks:
+  platform-net:
+    driver: bridge
