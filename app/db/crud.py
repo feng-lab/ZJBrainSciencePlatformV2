@@ -427,6 +427,17 @@ def bulk_list_experiment_assistants(db: Session, experiment_ids: list[int]) -> l
         )
 
 
+def search_experiment_assistants(
+    db: Session, experiment_id: int, assistant_ids: list[int]
+) -> list[int]:
+    stmt = select(ExperimentAssistant.user_id).where(
+        ExperimentAssistant.experiment_id == experiment_id,
+        ExperimentAssistant.user_id.in_(assistant_ids),
+        ExperimentAssistant.is_deleted == False,
+    )
+    return db.execute(stmt).scalars().all()
+
+
 def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
     stmt = select(ParadigmFile.id).where(
         ParadigmFile.paradigm_id == paradigm_id, ParadigmFile.is_deleted == False

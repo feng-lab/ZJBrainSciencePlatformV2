@@ -1,7 +1,10 @@
+from datetime import datetime
 from enum import Enum
 
 from fastapi import Query
 from pydantic import BaseModel, Field
+
+from app.db.orm import Experiment
 
 
 class GetModelsByPageParam(BaseModel):
@@ -47,6 +50,29 @@ class GetExperimentsByPageSortOrder(Enum):
     DESC = "desc"
 
 
+class UpdateExperimentRequest(BaseModel):
+    id: int = Field(ge=0)
+    name: str | None = Field(max_length=255)
+    type: Experiment.Type | None
+    location: str | None = Field(max_length=255)
+    start_at: datetime | None
+    end_at: datetime | None
+    main_operator: int | None = Field(ge=0)
+    is_non_invasive: bool | None
+    subject_type: str | None = Field(max_length=50)
+    subject_num: int | None = Field(ge=0)
+    neuron_source: str | None = Field(50)
+    stimulation_type: str | None = Field(50)
+    session_num: int | None = Field(ge=0)
+    trail_num: int | None = Field(ge=0)
+    is_shared: bool | None
+
+
+class ModifyExperimentAssistantsRequest(BaseModel):
+    experiment_id: int = Field(ge=0)
+    assistant_ids: list[int] = Field(min_items=1)
+
+
 class DisplayEEGRequest(BaseModel):
     class FileType(str, Enum):
         EDF = "edf"
@@ -56,5 +82,3 @@ class DisplayEEGRequest(BaseModel):
     window: int = Field(ge=0)
     page_index: int = Field(ge=0)
     channels: list[str]
-    file_path: str
-    file_type: FileType

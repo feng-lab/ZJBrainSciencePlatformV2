@@ -5,12 +5,15 @@ from app.common.time import convert_timezone_before_handle_request
 from app.db import crud
 from app.db.orm import Experiment, ExperimentAssistant
 from app.model.request import (
+    DeleteModelRequest,
     GetExperimentsByPageSortBy,
     GetExperimentsByPageSortOrder,
     GetModelsByPageParam,
+    ModifyExperimentAssistantsRequest,
+    UpdateExperimentRequest,
     get_models_by_page,
 )
-from app.model.response import Response, wrap_api_response
+from app.model.response import NoneResponse, Response, wrap_api_response
 from app.model.schema import (
     CreateExperimentRequest,
     ExperimentAssistantCreate,
@@ -75,3 +78,51 @@ def get_experiments_by_page(
         ExperimentResponse(**experiment.dict(), assistants=assistants)
         for experiment, assistants in zip(experiments, assistants_lists)
     ]
+
+
+@router.post("/api/updateExperiment", description="修改实验", response_model=NoneResponse)
+@wrap_api_response
+def update_experiment(request: UpdateExperimentRequest, ctx: Context = Depends(researcher_context)):
+    update_dict = {
+        field_name: field_value
+        for field_name, field_value in request.dict(exclude={"id"}).items()
+        if field_value is not None
+    }
+    crud.update_model(ctx.db, Experiment, request.id, **update_dict)
+
+
+@router.post("/api/deleteExperiment", description="删除实验", response_model=NoneResponse)
+@wrap_api_response
+def delete_experiment(
+    request: DeleteModelRequest, ctx: Context = Depends(researcher_context)
+) -> None:
+    crud.update_model(ctx.db, Experiment, request.id, is_deleted=True)
+
+
+@router.post("/api/addExperimentAssistants", description="添加实验助手", response_model=NoneResponse)
+@wrap_api_response
+def add_experiment_assistants(
+    request: ModifyExperimentAssistantsRequest, ctx: Context = Depends(researcher_context)
+) -> None:
+    exist_assistants = set(
+        crud.search_experiment_assistants(ctx.db, request.experiment_id, request.assistant_ids)
+    )
+    assistants = [
+        ExperimentAssistantCreate(user_id=assistant_id, experiment_id=request.experiment_id)
+        for assistant_id in request.assistant_ids
+        if assistant_id not in exist_assistants
+    ]
+    crud.bulk_insert_models(ctx.db, ExperimentAssistant, assistants)
+
+
+@router.post("/api/deleteExperimentAssistants", description="删除实验助手", response_model=NoneResponse)
+@wrap_api_response
+def delete_experiment_assistants(
+    request: ModifyExperimentAssistantsRequest, ctx: Context = Depends(researcher_context)
+) -> None:
+    crud.bulk_update_models_as_deleted(
+        ctx.db,
+        ExperimentAssistant,
+        ExperimentAssistant.experiment_id == request.experiment_id,
+        ExperimentAssistant.user_id.in_(request.assistant_ids),
+    )
