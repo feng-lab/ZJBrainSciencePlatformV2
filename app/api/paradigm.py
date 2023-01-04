@@ -4,7 +4,13 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from app.common.context import Context, human_subject_context, researcher_context
 from app.db import crud
 from app.db.orm import Experiment, Paradigm, ParadigmFile
-from app.model.request import DeleteModelRequest, GetModelsByPageParam, get_models_by_page
+from app.model.request import (
+    DeleteModelRequest,
+    GetModelsByPageParam,
+    UpdateParadigmFilesRequest,
+    UpdateParadigmRequest,
+    get_models_by_page,
+)
 from app.model.response import NoneResponse, Response, wrap_api_response
 from app.model.schema import (
     CreateParadigmRequest,
@@ -69,6 +75,46 @@ def get_paradigms_by_page(
     for paradigm, paradigm_files in zip(paradigms, paradigm_files_list):
         paradigm.images = paradigm_files
     return paradigms
+
+
+@router.post("/api/updateParadigm", description="更新范式", response_model=NoneResponse)
+@wrap_api_response
+def update_paradigm(
+    request: UpdateParadigmRequest, ctx: Context = Depends(researcher_context)
+) -> None:
+    update_dict = {
+        field_name: field_value
+        for field_name, field_value in request.dict(exclude={"id"}).items()
+        if field_value is not None
+    }
+    crud.update_model(ctx.db, Paradigm, request.id, **update_dict)
+
+
+@router.post("/api/addParadigmImages", description="添加范式图片", response_model=NoneResponse)
+@wrap_api_response
+def add_paradigm_images(
+    request: UpdateParadigmFilesRequest, ctx: Context = Depends(researcher_context)
+) -> None:
+    exist_paradigm_files = set(crud.list_paradigm_files(ctx.db, request.paradigm_id))
+    add_files = [
+        ParadigmFileCreate(paradigm_id=request.paradigm_id, file_id=file_id)
+        for file_id in request.file_ids
+        if file_id not in exist_paradigm_files
+    ]
+    crud.bulk_insert_models(ctx.db, ParadigmFile, add_files)
+
+
+@router.post("/api/deleteParadigmImages", description="删除范式图片", response_model=NoneResponse)
+@wrap_api_response
+def delete_paradigm_images(
+    request: UpdateParadigmFilesRequest, ctx: Context = Depends(researcher_context)
+) -> None:
+    crud.bulk_update_models_as_deleted(
+        ctx.db,
+        ParadigmFile,
+        ParadigmFile.paradigm_id == request.paradigm_id,
+        ParadigmFile.file_id.in_(request.file_ids),
+    )
 
 
 @router.delete("/api/deleteParadigm", description="删除范式", response_model=NoneResponse)

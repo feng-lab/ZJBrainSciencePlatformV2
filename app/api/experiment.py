@@ -10,7 +10,7 @@ from app.model.request import (
     GetExperimentsByPageSortBy,
     GetExperimentsByPageSortOrder,
     GetModelsByPageParam,
-    ModifyExperimentAssistantsRequest,
+    UpdateExperimentAssistantsRequest,
     UpdateExperimentRequest,
     get_models_by_page,
 )
@@ -105,7 +105,7 @@ def delete_experiment(
 @router.post("/api/addExperimentAssistants", description="添加实验助手", response_model=NoneResponse)
 @wrap_api_response
 def add_experiment_assistants(
-    request: ModifyExperimentAssistantsRequest, ctx: Context = Depends(researcher_context)
+    request: UpdateExperimentAssistantsRequest, ctx: Context = Depends(researcher_context)
 ) -> None:
     exist_assistants = set(
         crud.search_experiment_assistants(ctx.db, request.experiment_id, request.assistant_ids)
@@ -121,7 +121,7 @@ def add_experiment_assistants(
 @router.post("/api/deleteExperimentAssistants", description="删除实验助手", response_model=NoneResponse)
 @wrap_api_response
 def delete_experiment_assistants(
-    request: ModifyExperimentAssistantsRequest, ctx: Context = Depends(researcher_context)
+    request: UpdateExperimentAssistantsRequest, ctx: Context = Depends(researcher_context)
 ) -> None:
     crud.bulk_update_models_as_deleted(
         ctx.db,

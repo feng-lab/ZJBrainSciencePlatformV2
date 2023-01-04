@@ -68,9 +68,21 @@ class UpdateExperimentRequest(BaseModel):
     is_shared: bool | None
 
 
-class ModifyExperimentAssistantsRequest(BaseModel):
+class UpdateExperimentAssistantsRequest(BaseModel):
     experiment_id: int = Field(ge=0)
     assistant_ids: list[int] = Field(min_items=1)
+
+
+class UpdateParadigmRequest(BaseModel):
+    id: int = Field(ge=0)
+    experiment_id: int | None = Field(ge=0)
+    creator: int | None = Field(ge=0)
+    description: str | None
+
+
+class UpdateParadigmFilesRequest(BaseModel):
+    paradigm_id: int = Field(ge=0)
+    file_ids: list[int] = Field(min_items=1)
 
 
 class DisplayEEGRequest(BaseModel):
