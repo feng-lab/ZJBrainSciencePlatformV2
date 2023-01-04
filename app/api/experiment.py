@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from starlette.status import HTTP_404_NOT_FOUND
 
 from app.common.context import Context, human_subject_context, researcher_context
 from app.common.time import convert_timezone_before_handle_request
@@ -18,7 +19,6 @@ from app.model.schema import (
     CreateExperimentRequest,
     ExperimentAssistantCreate,
     ExperimentCreate,
-    ExperimentInDB,
     ExperimentResponse,
 )
 
@@ -48,9 +48,11 @@ def create_experiment(
 def get_experiment_info(
     experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
 ) -> ExperimentResponse:
-    experiment = crud.get_model(ctx.db, Experiment, ExperimentInDB, experiment_id)
-    assistants = crud.list_experiment_assistants(ctx.db, experiment_id)
-    return ExperimentResponse(**experiment.dict(), assistants=assistants)
+    experiment = crud.get_experiment_by_id(ctx.db, experiment_id)
+    if experiment is None:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="experiment not exists")
+    experiment.assistants = crud.list_experiment_assistants(ctx.db, experiment_id)
+    return experiment
 
 
 @router.get(
@@ -71,13 +73,14 @@ def get_experiments_by_page(
     ctx: Context = Depends(human_subject_context),
 ) -> list[ExperimentResponse]:
     experiments = crud.search_experiments(ctx.db, search, sort_by, sort_order, page_param)
+    if len(experiments) < 1:
+        return []
     assistants_lists = crud.bulk_list_experiment_assistants(
         ctx.db, [experiment.id for experiment in experiments]
     )
-    return [
-        ExperimentResponse(**experiment.dict(), assistants=assistants)
-        for experiment, assistants in zip(experiments, assistants_lists)
-    ]
+    for experiment, assistants in zip(experiments, assistants_lists):
+        experiment.assistants = assistants
+    return experiments
 
 
 @router.post("/api/updateExperiment", description="修改实验", response_model=NoneResponse)

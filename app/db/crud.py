@@ -36,6 +36,7 @@ from app.model.request import (
 from app.model.response import PagedData
 from app.model.schema import (
     ExperimentInDB,
+    ExperimentResponse,
     FileInDB,
     FileResponse,
     NotificationInDB,
@@ -43,6 +44,7 @@ from app.model.schema import (
     ParadigmInDB,
     UserAuth,
     UserCreate,
+    UserIdName,
     UserInDB,
     UserResponse,
 )
@@ -77,7 +79,7 @@ class SearchModel:
         self.db: Session = db
         self.table: type[OrmModel] = table
         self.columns: list = []
-        self.join_spec: (type[OrmModel], Any) = None
+        self.join_spec: (type[OrmModel], Any, bool) = None
         self.offset: int | None = None
         self.limit: int | None = None
         self.order: OrderByRole | None = None
@@ -88,8 +90,8 @@ class SearchModel:
         self.columns = columns
         return self
 
-    def join(self, another_table, on_clause) -> "SearchModel":
-        self.join_spec = (another_table, on_clause)
+    def join(self, another_table, on_clause, is_outer=False) -> "SearchModel":
+        self.join_spec = (another_table, on_clause, is_outer)
         return self
 
     def page_param(self, page_param: GetModelsByPageParam) -> "SearchModel":
@@ -130,7 +132,7 @@ class SearchModel:
     def total_count(self) -> int:
         stmt = select(func.count(self.table.id)).where(*self.where)
         if self.join_spec is not None:
-            stmt = stmt.join(*self.join_spec)
+            stmt = stmt.join(self.join_spec[0], self.join_spec[1], isouter=self.join_spec[2])
         return self.db.execute(stmt).scalar()
 
     @convert_db_model_timezone
@@ -138,7 +140,7 @@ class SearchModel:
         columns = self.columns if self.columns else [self.table]
         stmt = select(columns).where(*self.where)
         if self.join_spec is not None:
-            stmt = stmt.join(*self.join_spec)
+            stmt = stmt.join(self.join_spec[0], self.join_spec[1], isouter=self.join_spec[2])
         if self.offset is not None:
             stmt = stmt.offset(self.offset)
         if self.limit is not None:
@@ -383,11 +385,41 @@ def search_files(
     )
 
 
-def list_experiment_assistants(db: Session, experiment_id: int) -> list[int]:
-    stmt = select(ExperimentAssistant.user_id).where(
-        ExperimentAssistant.experiment_id == experiment_id, ExperimentAssistant.is_deleted == False
+def get_experiment_by_id(db: Session, experiment_id: int) -> ExperimentResponse | None:
+    stmt = (
+        select(Experiment, User.username)
+        .select_from(Experiment)
+        .outerjoin(User, Experiment.main_operator == User.id)
+        .where(
+            Experiment.id == experiment_id, Experiment.is_deleted == False, User.is_deleted == False
+        )
+        .limit(1)
     )
-    return db.execute(stmt).scalars().all()
+    row = db.execute(stmt).first()
+    if row is None:
+        return None
+    experiment_in_db = ExperimentInDB.from_orm(row[0])
+    experiment = ExperimentResponse(
+        main_operator=UserIdName(id=experiment_in_db.main_operator, username=row[1]),
+        assistants=[],
+        **experiment_in_db.dict(exclude={"main_operator"}),
+    )
+    return experiment
+
+
+def list_experiment_assistants(db: Session, experiment_id: int) -> list[UserIdName]:
+    stmt = (
+        select(User.id, User.username)
+        .select_from(ExperimentAssistant)
+        .outerjoin(User, ExperimentAssistant.user_id == User.id)
+        .where(
+            ExperimentAssistant.experiment_id == experiment_id,
+            ExperimentAssistant.is_deleted == False,
+            User.is_deleted == False,
+        )
+    )
+    rows = db.execute(stmt).all()
+    return [UserIdName(id=row[0], username=row[1]) for row in rows]
 
 
 def search_experiments(
@@ -396,7 +428,7 @@ def search_experiments(
     sort_by: GetExperimentsByPageSortBy,
     sort_order: GetExperimentsByPageSortOrder,
     page_param: GetModelsByPageParam,
-) -> list[ExperimentInDB]:
+) -> list[ExperimentResponse]:
     if sort_by is GetExperimentsByPageSortBy.START_TIME:
         column = Experiment.start_at
     elif sort_by is GetExperimentsByPageSortBy.TYPE:
@@ -411,14 +443,25 @@ def search_experiments(
         raise ValueError("invalid sort_order")
     return (
         SearchModel(db, Experiment)
+        .select(Experiment, User.username)
+        .join(User, Experiment.main_operator == User.id, is_outer=True)
         .where_contains(Experiment.name, search)
         .page_param(page_param)
         .order_by(sort_by_spec)
-        .items(ExperimentInDB)
+        .map_model_with(
+            lambda row: ExperimentResponse(
+                main_operator=UserIdName(id=row[0].main_operator, username=row[1]),
+                assistants=[],
+                **ExperimentInDB.from_orm(row[0]).dict(exclude={"main_operator"}),
+            )
+        )
+        .items(ExperimentResponse)
     )
 
 
-def bulk_list_experiment_assistants(db: Session, experiment_ids: list[int]) -> list[list[int]]:
+def bulk_list_experiment_assistants(
+    db: Session, experiment_ids: list[int]
+) -> list[list[UserIdName]]:
     with ThreadPoolExecutor() as executor:
         return list(
             executor.map(

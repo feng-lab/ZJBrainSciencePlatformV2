@@ -120,8 +120,17 @@ class ExperimentInDB(ExperimentBase, BaseModelInDB):
         orm_mode = True
 
 
-class ExperimentResponse(CreateExperimentRequest, BaseModelInDB):
-    pass
+class UserIdName(BaseModel):
+    id: int = Field(ge=0)
+    username: str
+
+    class Config:
+        orm_mode = True
+
+
+class ExperimentResponse(ExperimentBase, BaseModelInDB):
+    main_operator: UserIdName
+    assistants: list[UserIdName]
 
 
 class ExperimentAssistantBase(BaseModel):
