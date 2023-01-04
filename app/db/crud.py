@@ -42,6 +42,7 @@ from app.model.schema import (
     NotificationInDB,
     NotificationResponse,
     ParadigmInDB,
+    ParadigmResponse,
     UserAuth,
     UserCreate,
     UserIdNameStaffId,
@@ -150,6 +151,7 @@ class SearchModel:
         rows = self.db.execute(stmt).all()
         map_model = self.map_model
         if map_model is None:
+
             def default_map_model(row: Row) -> Model:
                 return target_model.from_orm(row[0])
 
@@ -399,7 +401,9 @@ def get_experiment_by_id(db: Session, experiment_id: int) -> ExperimentResponse 
         return None
     experiment_in_db = ExperimentInDB.from_orm(row[0])
     experiment = ExperimentResponse(
-        main_operator=UserIdNameStaffId(id=experiment_in_db.main_operator, username=row[1], staff_id=row[2]),
+        main_operator=UserIdNameStaffId(
+            id=experiment_in_db.main_operator, username=row[1], staff_id=row[2]
+        ),
         assistants=[],
         **experiment_in_db.dict(exclude={"main_operator"}),
     )
@@ -449,7 +453,9 @@ def search_experiments(
         .order_by(sort_by_spec)
         .map_model_with(
             lambda row: ExperimentResponse(
-                main_operator=UserIdNameStaffId(id=row[0].main_operator, username=row[1], staff_id=row[2]),
+                main_operator=UserIdNameStaffId(
+                    id=row[0].main_operator, username=row[1], staff_id=row[2]
+                ),
                 assistants=[],
                 **ExperimentInDB.from_orm(row[0]).dict(exclude={"main_operator"}),
             )
@@ -480,6 +486,24 @@ def search_experiment_assistants(
     return db.execute(stmt).scalars().all()
 
 
+def get_paradigm_by_id(db: Session, paradigm_id: int) -> ParadigmResponse | None:
+    stmt = (
+        select(Paradigm, User.username, User.staff_id)
+        .select_from(Paradigm)
+        .outerjoin(User, Paradigm.creator == User.id)
+        .where(Paradigm.id == paradigm_id, Paradigm.is_deleted == False, User.is_deleted == False)
+        .limit(1)
+    )
+    row = db.execute(stmt).first()
+    if row is None:
+        return None
+    return ParadigmResponse(
+        creator=UserIdNameStaffId(id=row[0].creator, username=row[1], staff_id=row[2]),
+        images=[],
+        **ParadigmInDB.from_orm(row[0]).dict(exclude={"creator"}),
+    )
+
+
 def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
     stmt = select(ParadigmFile.id).where(
         ParadigmFile.paradigm_id == paradigm_id, ParadigmFile.is_deleted == False
@@ -489,12 +513,21 @@ def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
 
 def search_paradigms(
     db: Session, experiment_id: int, page_param: GetModelsByPageParam
-) -> list[ParadigmInDB]:
+) -> list[ParadigmResponse]:
     return (
         SearchModel(db, Paradigm)
+        .select(Paradigm, User.username, User.staff_id)
+        .join(User, Paradigm.creator == User.id, is_outer=True)
         .where_eq(Paradigm.experiment_id, experiment_id)
         .page_param(page_param)
-        .items(ParadigmInDB)
+        .map_model_with(
+            lambda row: ParadigmResponse(
+                creator=UserIdNameStaffId(id=row[0].creator, username=row[1], staff_id=row[2]),
+                images=[],
+                **ParadigmInDB.from_orm(row[0]).dict(exclude={"creator"}),
+            )
+        )
+        .items(ParadigmResponse)
     )
 
 

@@ -9,8 +9,7 @@ from app.model.response import NoneResponse, Response, wrap_api_response
 from app.model.schema import (
     CreateParadigmRequest,
     ParadigmCreate,
-    ParadigmFileBase,
-    ParadigmInDB,
+    ParadigmFileCreate,
     ParadigmResponse,
 )
 
@@ -30,7 +29,7 @@ def create_paradigm(
     )
     paradigm_id = crud.insert_model(ctx.db, Paradigm, paradigm_create)
     paradigm_files = [
-        ParadigmFileBase(paradigm_id=paradigm_id, file_id=file_id) for file_id in request.images
+        ParadigmFileCreate(paradigm_id=paradigm_id, file_id=file_id) for file_id in request.images
     ]
     crud.bulk_insert_models(ctx.db, ParadigmFile, paradigm_files)
     return paradigm_id
@@ -42,12 +41,11 @@ def get_paradigm_info(
     paradigm_id: int = Query(description="范式ID", ge=0),
     ctx: Context = Depends(human_subject_context),
 ) -> ParadigmResponse:
-    paradigm = crud.get_model(ctx.db, Paradigm, ParadigmInDB, paradigm_id)
+    paradigm = crud.get_paradigm_by_id(ctx.db, paradigm_id)
     if paradigm is None:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="paradigm not found")
-    paradigm_files = crud.list_paradigm_files(ctx.db, paradigm_id)
-    paradigm_info = ParadigmResponse(**paradigm.dict(), images=paradigm_files)
-    return paradigm_info
+    paradigm.images = crud.list_paradigm_files(ctx.db, paradigm_id)
+    return paradigm
 
 
 @router.get(
@@ -68,11 +66,9 @@ def get_paradigms_by_page(
     paradigm_files_list = crud.bulk_list_paradigm_files(
         ctx.db, [paradigm.id for paradigm in paradigms]
     )
-    paradigm_responses = [
-        ParadigmResponse(**paradigm.dict(), images=paradigm_files)
-        for paradigm, paradigm_files in zip(paradigms, paradigm_files_list)
-    ]
-    return paradigm_responses
+    for paradigm, paradigm_files in zip(paradigms, paradigm_files_list):
+        paradigm.images = paradigm_files
+    return paradigms
 
 
 @router.delete("/api/deleteParadigm", description="删除范式", response_model=NoneResponse)

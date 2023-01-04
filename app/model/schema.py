@@ -182,15 +182,19 @@ class ParadigmCreate(ParadigmBase, BaseModelCreate):
     creator: int = Field(ge=0)
 
 
-class ParadigmInDB(ParadigmBase, BaseModelInDB):
+class ParadigmInDB(ParadigmCreate, BaseModelInDB):
     class Config:
         orm_mode = True
 
 
 class ParadigmResponse(CreateParadigmRequest, BaseModelInDB):
-    pass
+    creator: UserIdNameStaffId
 
 
 class ParadigmFileBase(BaseModel):
     paradigm_id: int = Field(ge=0)
     file_id: int = Field(ge=0)
+
+
+class ParadigmFileCreate(ParadigmFileBase, BaseModelCreate):
+    pass
