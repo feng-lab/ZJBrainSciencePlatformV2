@@ -120,17 +120,18 @@ class ExperimentInDB(ExperimentBase, BaseModelInDB):
         orm_mode = True
 
 
-class UserIdName(BaseModel):
-    id: int = Field(ge=0)
+class UserIdNameStaffId(BaseModel):
+    id: int
     username: str
+    staff_id: str
 
     class Config:
         orm_mode = True
 
 
 class ExperimentResponse(ExperimentBase, BaseModelInDB):
-    main_operator: UserIdName
-    assistants: list[UserIdName]
+    main_operator: UserIdNameStaffId
+    assistants: list[UserIdNameStaffId]
 
 
 class ExperimentAssistantBase(BaseModel):

@@ -44,7 +44,7 @@ from app.model.schema import (
     ParadigmInDB,
     UserAuth,
     UserCreate,
-    UserIdName,
+    UserIdNameStaffId,
     UserInDB,
     UserResponse,
 )
@@ -150,7 +150,6 @@ class SearchModel:
         rows = self.db.execute(stmt).all()
         map_model = self.map_model
         if map_model is None:
-
             def default_map_model(row: Row) -> Model:
                 return target_model.from_orm(row[0])
 
@@ -387,7 +386,7 @@ def search_files(
 
 def get_experiment_by_id(db: Session, experiment_id: int) -> ExperimentResponse | None:
     stmt = (
-        select(Experiment, User.username)
+        select(Experiment, User.username, User.staff_id)
         .select_from(Experiment)
         .outerjoin(User, Experiment.main_operator == User.id)
         .where(
@@ -400,16 +399,16 @@ def get_experiment_by_id(db: Session, experiment_id: int) -> ExperimentResponse 
         return None
     experiment_in_db = ExperimentInDB.from_orm(row[0])
     experiment = ExperimentResponse(
-        main_operator=UserIdName(id=experiment_in_db.main_operator, username=row[1]),
+        main_operator=UserIdNameStaffId(id=experiment_in_db.main_operator, username=row[1], staff_id=row[2]),
         assistants=[],
         **experiment_in_db.dict(exclude={"main_operator"}),
     )
     return experiment
 
 
-def list_experiment_assistants(db: Session, experiment_id: int) -> list[UserIdName]:
+def list_experiment_assistants(db: Session, experiment_id: int) -> list[UserIdNameStaffId]:
     stmt = (
-        select(User.id, User.username)
+        select(User.id, User.username, User.staff_id)
         .select_from(ExperimentAssistant)
         .outerjoin(User, ExperimentAssistant.user_id == User.id)
         .where(
@@ -419,7 +418,7 @@ def list_experiment_assistants(db: Session, experiment_id: int) -> list[UserIdNa
         )
     )
     rows = db.execute(stmt).all()
-    return [UserIdName(id=row[0], username=row[1]) for row in rows]
+    return [UserIdNameStaffId(id=row[0], username=row[1], staff_id=row[2]) for row in rows]
 
 
 def search_experiments(
@@ -443,14 +442,14 @@ def search_experiments(
         raise ValueError("invalid sort_order")
     return (
         SearchModel(db, Experiment)
-        .select(Experiment, User.username)
+        .select(Experiment, User.username, User.staff_id)
         .join(User, Experiment.main_operator == User.id, is_outer=True)
         .where_contains(Experiment.name, search)
         .page_param(page_param)
         .order_by(sort_by_spec)
         .map_model_with(
             lambda row: ExperimentResponse(
-                main_operator=UserIdName(id=row[0].main_operator, username=row[1]),
+                main_operator=UserIdNameStaffId(id=row[0].main_operator, username=row[1], staff_id=row[2]),
                 assistants=[],
                 **ExperimentInDB.from_orm(row[0]).dict(exclude={"main_operator"}),
             )
@@ -461,7 +460,7 @@ def search_experiments(
 
 def bulk_list_experiment_assistants(
     db: Session, experiment_ids: list[int]
-) -> list[list[UserIdName]]:
+) -> list[list[UserIdNameStaffId]]:
     with ThreadPoolExecutor() as executor:
         return list(
             executor.map(
