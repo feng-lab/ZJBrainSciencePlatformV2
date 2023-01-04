@@ -91,6 +91,7 @@ class TaskStepStatusNotification(BaseModel):
 
 class ExperimentBase(BaseModel):
     name: str = Field(max_length=255)
+    description: str
     type: Experiment.Type
     location: str = Field(max_length=255)
     start_at: datetime

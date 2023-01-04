@@ -88,6 +88,7 @@ class Experiment(Base, ModelMixin):
 
     name = Column(String(255), nullable=False, comment="实验名称")
     type = Column(Enum(Type), nullable=False, comment="实验类型")
+    description = Column(Text, nullable=False, comment="实验描述")
     location = Column(String(255), nullable=False, comment="实验地点")
     start_at = Column(DateTime, nullable=False, index=True, comment="实验开始时间")
     end_at = Column(DateTime, nullable=False, comment="实验结束时间")
@@ -105,6 +106,7 @@ class Experiment(Base, ModelMixin):
         return self.make_repr(
             name=self.name,
             type=self.type,
+            description=self.description,
             location=self.location,
             start_at=self.start_at,
             end_at=self.end_at,
