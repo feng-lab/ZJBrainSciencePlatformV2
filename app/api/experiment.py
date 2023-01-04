@@ -83,7 +83,7 @@ def get_experiments_by_page(
     return experiments
 
 
-@router.post("/api/updateExperiment", description="修改实验", response_model=NoneResponse)
+@router.post("/api/updateExperiment", description="更新实验", response_model=NoneResponse)
 @wrap_api_response
 def update_experiment(request: UpdateExperimentRequest, ctx: Context = Depends(researcher_context)):
     update_dict = {
@@ -118,7 +118,7 @@ def add_experiment_assistants(
     crud.bulk_insert_models(ctx.db, ExperimentAssistant, assistants)
 
 
-@router.post("/api/deleteExperimentAssistants", description="删除实验助手", response_model=NoneResponse)
+@router.delete("/api/deleteExperimentAssistants", description="删除实验助手", response_model=NoneResponse)
 @wrap_api_response
 def delete_experiment_assistants(
     request: UpdateExperimentAssistantsRequest, ctx: Context = Depends(researcher_context)
