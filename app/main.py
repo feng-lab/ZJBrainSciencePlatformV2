@@ -1,4 +1,5 @@
 import logging
+import sys
 from datetime import datetime
 from http import HTTPStatus
 from typing import Callable
@@ -22,6 +23,7 @@ from app.api.paradigm import router as paradigm_router
 from app.api.user import router as user_router
 from app.common.config import config
 from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener
+from app.db import check_database_is_up_to_date
 from app.model.response import CODE_FAIL, CODE_SESSION_TIMEOUT, NoneResponse
 
 app_logger = logging.getLogger(__name__)
@@ -61,6 +63,9 @@ app.add_middleware(
 @app.on_event("startup")
 def startup() -> None:
     log_queue_listener.start()
+    if not check_database_is_up_to_date():
+        app_logger.error("database is not up-to-date, run alembic to upgrade")
+        sys.exit(1)
     user.create_root_user()
 
 
