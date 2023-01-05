@@ -26,6 +26,9 @@ class Config(BaseSettings):
     # 读取文件的块大小
     FILE_CHUNK_SIZE: int = 64 * 1024
 
+    # 图片文件后缀
+    IMAGE_FILE_EXTENSIONS: list[str] = ["jpg", "jpeg", "png", "webp", "bmp", "gif"]
+
     # 日志轮换天数
     LOG_ROTATING_DAYS: int = 7
 

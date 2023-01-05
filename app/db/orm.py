@@ -138,7 +138,7 @@ class File(Base, ModelMixin):
     __table_args__ = {"comment": "文件"}
 
     experiment_id = Column(Integer, nullable=False, index=True, comment="实验ID")
-    path = Column(String(255), nullable=False, comment="逻辑路径")
+    name = Column(String(255), nullable=False, comment="逻辑路径")
     extension = Column(String(50), nullable=False, comment="文件扩展名")
     index = Column(Integer, nullable=False, index=True, comment="同一实验下的文件序号")
     size = Column(Float, nullable=False, comment="同一实验下的文件序号")
@@ -147,7 +147,7 @@ class File(Base, ModelMixin):
     def __repr__(self):
         return self.make_repr(
             experiment_id=self.experiment_id,
-            path=self.path,
+            name=self.name,
             extension=self.extension,
             index=self.index,
             size=self.size,

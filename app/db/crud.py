@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import Executable
 from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
+from app.common.config import config
 from app.common.time import (
     convert_timezone_after_get_db,
     convert_timezone_before_save,
@@ -372,16 +373,22 @@ def get_file_extensions(db: Session, experiment_id: int) -> list[str]:
 
 
 def search_files(
-    db: Session, experiment_id: int, path: str, extension: str, page_param: GetModelsByPageParam
+    db: Session, experiment_id: int, name: str, extension: str, page_param: GetModelsByPageParam
 ) -> PagedData[FileResponse]:
+    def map_model(row: Row) -> FileResponse:
+        file = FileResponse(**FileInDB.from_orm(row[0]).dict())
+        if file.extension in config.IMAGE_FILE_EXTENSIONS:
+            file.url = f"/api/downloadFile/{file.id}"
+        return file
+
     return (
-        SearchModel(db, Experiment)
+        SearchModel(db, File)
         .where_eq(File.experiment_id, experiment_id)
-        .where_contains(File.path, path)
+        .where_contains(File.name, name)
         .where_contains(File.extension, extension)
         .page_param(page_param)
         .order_by(File.index.asc())
-        .map_model_with(lambda row: FileResponse(**FileInDB.from_orm(row[0]).dict()))
+        .map_model_with(map_model)
         .paged_data(FileResponse)
     )
 

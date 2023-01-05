@@ -150,7 +150,7 @@ class ExperimentAssistantInDB(ExperimentAssistantBase, BaseModelInDB):
 class FileBase(BaseModel):
     experiment_id: int = Field(ge=0)
     index: int = Field(ge=0)
-    path: str = Field(max_length=255)
+    name: str = Field(max_length=255)
     extension: str = Field(max_length=50)
     size: float
     is_original: bool
@@ -166,7 +166,7 @@ class FileInDB(FileBase, BaseModelInDB):
 
 
 class FileResponse(FileInDB):
-    pass
+    url: str | None
 
 
 class ParadigmBase(BaseModel):
