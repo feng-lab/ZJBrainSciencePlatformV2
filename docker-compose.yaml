@@ -42,9 +42,7 @@ services:
       - platform-net
 
   alembic:
-    build:
-      context: .
-      dockerfile: dockerfile/alembic.Dockerfile
+    image: zj-brain-science-platform-base:latest
     restart: "no"
     volumes:
       - .:/code

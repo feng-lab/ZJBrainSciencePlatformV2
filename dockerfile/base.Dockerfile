@@ -6,4 +6,4 @@ RUN pip install --no-cache-dir poetry && \
 
 COPY poetry.lock pyproject.toml /code/
 
-RUN poetry install --only=main --no-interaction --no-cache
+RUN poetry install --with=alembic --no-interaction --no-cache
