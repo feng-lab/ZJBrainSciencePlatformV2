@@ -1,6 +1,5 @@
 import functools
 import logging
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import Any, Callable, TypeVar
 
@@ -474,12 +473,7 @@ def search_experiments(
 def bulk_list_experiment_assistants(
     db: Session, experiment_ids: list[int]
 ) -> list[list[UserIdNameStaffId]]:
-    with ThreadPoolExecutor() as executor:
-        return list(
-            executor.map(
-                lambda experiment_id: list_experiment_assistants(db, experiment_id), experiment_ids
-            )
-        )
+    return [list_experiment_assistants(db, experiment_id) for experiment_id in experiment_ids]
 
 
 def search_experiment_assistants(
@@ -539,7 +533,4 @@ def search_paradigms(
 
 
 def bulk_list_paradigm_files(db: Session, paradigm_ids: list[int]) -> list[list[int]]:
-    with ThreadPoolExecutor() as executor:
-        return list(
-            executor.map(lambda paradigm_id: list_paradigm_files(db, paradigm_id), paradigm_ids)
-        )
+    return [list_paradigm_files(db, paradigm_id) for paradigm_id in paradigm_ids]

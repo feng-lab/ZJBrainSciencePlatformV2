@@ -99,7 +99,9 @@ def update_paradigm(
         if len(add_files) > 0:
             crud.bulk_insert_models(ctx.db, ParadigmFile, add_files)
 
-        delete_files = [file_id for file_id in exist_paradigm_files if file_id not in request.images]
+        delete_files = [
+            file_id for file_id in exist_paradigm_files if file_id not in request.images
+        ]
         if len(delete_files) > 0:
             crud.bulk_update_models_as_deleted(
                 ctx.db,
