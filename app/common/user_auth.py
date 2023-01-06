@@ -52,7 +52,7 @@ def raise_unauthorized_exception(**data) -> NoReturn:
     )
 
 
-def verify_current_user(db: Session, cache: Redis, token: str, api_access_level: int | None) -> int:
+def verify_current_user(db: Session, cache: Redis, token: str, api_access_level: int) -> int:
     try:
         # 从token中解码AccessTokenData
         payload_dict = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -63,7 +63,7 @@ def verify_current_user(db: Session, cache: Redis, token: str, api_access_level:
         user_access_level = get_user_access_level(db, cache, user_id)
         if user_access_level is None:
             raise_unauthorized_exception(user_id={user_id})
-        if api_access_level is not None and user_access_level < api_access_level:
+        if user_access_level < api_access_level:
             logger.error(f"unauthorized api invocation, {user_id=}")
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="用户没有调用本API的权限")
         return user_id

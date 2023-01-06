@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from starlette.status import HTTP_404_NOT_FOUND
 
 from app.common.config import config
-from app.common.context import Context, human_subject_context, researcher_context
+from app.common.context import Context, human_subject_context, researcher_context, not_logon_context
 from app.db import crud
 from app.db.orm import File
 from app.model.request import DeleteModelRequest, GetModelsByPageParam, get_models_by_page
@@ -26,12 +26,12 @@ router = APIRouter(tags=["file"])
 @wrap_api_response
 def upload_file(
     experiment_id: int = Form(description="实验ID", default=0),
-    name: str = Form(description="文件路径"),
     is_original: bool = Form(description="是否是设备产生的原始文件"),
     file: UploadFile = FastApiFile(),
     ctx: Context = Depends(researcher_context),
 ) -> int:
     file_index = get_next_index(ctx.db, experiment_id)
+    name = file.filename
     extension = name.rsplit(".", 1)[-1].lower()
     store_path = get_os_path(experiment_id, file_index, extension)
     write_file(file, store_path)
@@ -73,7 +73,7 @@ def get_files_by_page(
 
 @router.get("/api/downloadFile/{file_id}", description="下载文件")
 def download_file(
-    file_id: int = Path(description="文件ID"), ctx: Context = Depends(human_subject_context)
+    file_id: int = Path(description="文件ID"), ctx: Context = Depends(not_logon_context)
 ) -> FastApiFileResponse:
     file: FileInDB = crud.get_model(ctx.db, File, FileInDB, file_id)
     if file is None:
