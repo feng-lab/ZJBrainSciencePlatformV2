@@ -17,9 +17,7 @@ class Context:
             self.user_id: int | None = verify_current_user(db, self.cache, token, api_access_level)
 
 
-def not_logon_context(
-    db: Session = Depends(get_db_session)
-) -> Context:
+def not_logon_context(db: Session = Depends(get_db_session)) -> Context:
     return Context(db, None, None)
 
 

@@ -10,11 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_redis() -> Redis:
-    return Redis(
-        host=config.CACHE_HOST,
-        port=config.CACHE_PORT,
-        decode_responses=True
-    )
+    return Redis(host=config.CACHE_HOST, port=config.CACHE_PORT, decode_responses=True)
 
 
 USER_ACCESS_LEVEL_FORMAT: str = "ual_{}"

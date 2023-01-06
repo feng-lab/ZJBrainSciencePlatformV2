@@ -20,6 +20,7 @@ from app.model.schema import (
     ExperimentAssistantCreate,
     ExperimentCreate,
     ExperimentResponse,
+    UserIdNameStaffId,
 )
 
 router = APIRouter(tags=["experiment"])
@@ -83,6 +84,18 @@ def get_experiments_by_page(
     return experiments
 
 
+@router.get(
+    "/api/getExperimentAssistants",
+    description="获取实验助手列表",
+    response_model=Response[list[UserIdNameStaffId]],
+)
+@wrap_api_response
+def get_experiment_assistants(
+    experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
+) -> list[UserIdNameStaffId]:
+    return crud.list_experiment_assistants(ctx.db, experiment_id)
+
+
 @router.post("/api/updateExperiment", description="更新实验", response_model=NoneResponse)
 @wrap_api_response
 def update_experiment(request: UpdateExperimentRequest, ctx: Context = Depends(researcher_context)):
@@ -94,7 +107,7 @@ def update_experiment(request: UpdateExperimentRequest, ctx: Context = Depends(r
     crud.update_model(ctx.db, Experiment, request.id, **update_dict)
 
 
-@router.post("/api/deleteExperiment", description="删除实验", response_model=NoneResponse)
+@router.delete("/api/deleteExperiment", description="删除实验", response_model=NoneResponse)
 @wrap_api_response
 def delete_experiment(
     request: DeleteModelRequest, ctx: Context = Depends(researcher_context)
