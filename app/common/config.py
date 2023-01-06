@@ -44,6 +44,15 @@ class Config(BaseSettings):
     # 算法GRPC服务的端口
     ALGORITHM_GRPC_PORT: int = 12345
 
+    # Redis缓存地址
+    CACHE_HOST: str = "localhost"
+
+    # Redis缓存端口
+    CACHE_PORT: int = 8200
+
+    # Redis缓存默认失效时间，默认一天
+    CACHE_EXPIRE_SECONDS: int = 24 * 60 * 60
+
     def get_algorithm_grpc_address(self):
         return f"{self.ALGORITHM_GRPC_ADDRESS}:{self.ALGORITHM_GRPC_PORT}"
 

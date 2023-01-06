@@ -1,14 +1,17 @@
 from fastapi import Depends
+from redis import Redis
 from sqlalchemy.orm import Session
 
 from app.common.user_auth import AccessLevel, oauth2_scheme, verify_current_user
 from app.db import get_db_session
+from app.db.cache import get_redis
 
 
 class Context:
     def __init__(self, db: Session, token: str, api_access_level: int | None):
-        self.db = db
-        self.user_id = verify_current_user(db, token, api_access_level)
+        self.db: Session = db
+        self.cache: Redis = get_redis()
+        self.user_id: int = verify_current_user(db, self.cache, token, api_access_level)
 
 
 def all_user_context(

@@ -46,6 +46,12 @@ def up_database():
 
 
 @add_command
+def up_cache():
+    if not docker_compose_service_running("cache"):
+        docker_compose("up", "--detach", "--build", "cache")
+
+
+@add_command
 def run_alembic_bash():
     up_database()
     build_base_image()

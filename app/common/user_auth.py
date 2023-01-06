@@ -7,11 +7,13 @@ from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
+from redis import Redis
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_401_UNAUTHORIZED
 
 from app.common.time import utc_now
 from app.db import crud
+from app.db.cache import get_user_access_level
 from app.model.response import AccessTokenData
 
 logger = logging.getLogger(__name__)
@@ -50,7 +52,7 @@ def raise_unauthorized_exception(**data) -> NoReturn:
     )
 
 
-def verify_current_user(db: Session, token: str, api_access_level: int | None) -> int:
+def verify_current_user(db: Session, cache: Redis, token: str, api_access_level: int | None) -> int:
     try:
         # 从token中解码AccessTokenData
         payload_dict = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -58,7 +60,7 @@ def verify_current_user(db: Session, token: str, api_access_level: int | None) -
         user_id = int(token_data.sub)
 
         # 验证用户是否存在，权限是否够
-        user_access_level = crud.get_user_access_level(db, user_id)
+        user_access_level = get_user_access_level(db, cache, user_id)
         if user_access_level is None:
             raise_unauthorized_exception(user_id={user_id})
         if api_access_level is not None and user_access_level < api_access_level:

@@ -12,12 +12,15 @@ services:
       DATABASE_URL: mysql+pymysql://zjlab:zjlab2022@database:3306/zj_brain_science_platform
       # DATABASE_CONFIG: '{"echo": true}'
       ALGORITHM_GRPC_ADDRESS: algorithm
+      CACHE_HOST: cache
+      CACHE_PORT: 6379
     volumes:
       - ~/log/ZJBrainSciencePlatform/app:/root/log/ZJBrainSciencePlatform/app
       - ~/data/ZJBrainSciencePlatform/file:/root/data/ZJBrainSciencePlatform/file
-    restart: always
+    restart: on-failure
     depends_on:
       - database
+      - cache
     networks:
       - platform-net
 
@@ -37,7 +40,15 @@ services:
       - ./mysql/initdb.d:/docker-entrypoint-initdb.d
       - ~/mysql/ZJBrainSciencePlatform/data:/var/lib/mysql
       - ~/log/ZJBrainSciencePlatform/mysql:/var/log/mysql
-    restart: always
+    restart: on-failure
+    networks:
+      - platform-net
+
+  cache:
+    image: redis:7.0
+    ports:
+      - "8200:6379"
+    restart: on-failure
     networks:
       - platform-net
 
