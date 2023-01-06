@@ -17,7 +17,7 @@ services:
     volumes:
       - ~/log/ZJBrainSciencePlatform/app:/root/log/ZJBrainSciencePlatform/app
       - ~/data/ZJBrainSciencePlatform/file:/root/data/ZJBrainSciencePlatform/file
-    restart: on-failure
+    restart: always
     depends_on:
       - database
       - cache

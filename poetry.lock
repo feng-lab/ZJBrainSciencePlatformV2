@@ -1197,6 +1197,7 @@ files = [
 
 [package.dependencies]
 greenlet = {version = "!=0.4.17", markers = "python_version >= \"3\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\")"}
+pymysql = {version = "*", optional = true, markers = "python_version >= \"3\" and extra == \"pymysql\""}
 
 [package.extras]
 aiomysql = ["aiomysql", "greenlet (!=0.4.17)"]
@@ -1319,4 +1320,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "dd6ea7596d8c505ac7b2b88d8ef974d229fa720f07ee719049f6f527f1488dd6"
+content-hash = "415dbdba28290f33fbcb7b76ab0b983fc0404e85594810a9e3e32ecb2a64dc86"
