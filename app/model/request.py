@@ -78,6 +78,7 @@ class UpdateParadigmRequest(BaseModel):
     experiment_id: int | None = Field(ge=0)
     creator: int | None = Field(ge=0)
     description: str | None
+    images: list[int] | None
 
 
 class UpdateParadigmFilesRequest(BaseModel):

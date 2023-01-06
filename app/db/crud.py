@@ -512,7 +512,7 @@ def get_paradigm_by_id(db: Session, paradigm_id: int) -> ParadigmResponse | None
 
 
 def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
-    stmt = select(ParadigmFile.id).where(
+    stmt = select(ParadigmFile.file_id).where(
         ParadigmFile.paradigm_id == paradigm_id, ParadigmFile.is_deleted == False
     )
     return db.execute(stmt).scalars().all()

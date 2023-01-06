@@ -7,7 +7,6 @@ from app.db.orm import Experiment, Paradigm, ParadigmFile
 from app.model.request import (
     DeleteModelRequest,
     GetModelsByPageParam,
-    UpdateParadigmFilesRequest,
     UpdateParadigmRequest,
     get_models_by_page,
 )
@@ -84,37 +83,30 @@ def update_paradigm(
 ) -> None:
     update_dict = {
         field_name: field_value
-        for field_name, field_value in request.dict(exclude={"id"}).items()
+        for field_name, field_value in request.dict(exclude={"id", "images"}).items()
         if field_value is not None
     }
-    crud.update_model(ctx.db, Paradigm, request.id, **update_dict)
+    if len(update_dict) > 0:
+        crud.update_model(ctx.db, Paradigm, request.id, **update_dict)
 
+    if request.images is not None:
+        exist_paradigm_files = crud.list_paradigm_files(ctx.db, request.id)
+        add_files = [
+            ParadigmFileCreate(paradigm_id=request.id, file_id=file_id)
+            for file_id in request.images
+            if file_id not in exist_paradigm_files
+        ]
+        if len(add_files) > 0:
+            crud.bulk_insert_models(ctx.db, ParadigmFile, add_files)
 
-@router.post("/api/addParadigmImages", description="添加范式图片", response_model=NoneResponse)
-@wrap_api_response
-def add_paradigm_images(
-    request: UpdateParadigmFilesRequest, ctx: Context = Depends(researcher_context)
-) -> None:
-    exist_paradigm_files = set(crud.list_paradigm_files(ctx.db, request.paradigm_id))
-    add_files = [
-        ParadigmFileCreate(paradigm_id=request.paradigm_id, file_id=file_id)
-        for file_id in request.file_ids
-        if file_id not in exist_paradigm_files
-    ]
-    crud.bulk_insert_models(ctx.db, ParadigmFile, add_files)
-
-
-@router.post("/api/deleteParadigmImages", description="删除范式图片", response_model=NoneResponse)
-@wrap_api_response
-def delete_paradigm_images(
-    request: UpdateParadigmFilesRequest, ctx: Context = Depends(researcher_context)
-) -> None:
-    crud.bulk_update_models_as_deleted(
-        ctx.db,
-        ParadigmFile,
-        ParadigmFile.paradigm_id == request.paradigm_id,
-        ParadigmFile.file_id.in_(request.file_ids),
-    )
+        delete_files = [file_id for file_id in exist_paradigm_files if file_id not in request.images]
+        if len(delete_files) > 0:
+            crud.bulk_update_models_as_deleted(
+                ctx.db,
+                ParadigmFile,
+                ParadigmFile.paradigm_id == request.id,
+                ParadigmFile.file_id.in_(delete_files),
+            )
 
 
 @router.delete("/api/deleteParadigm", description="删除范式", response_model=NoneResponse)
