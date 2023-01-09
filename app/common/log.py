@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 from logging import (
     ERROR,
@@ -7,8 +8,7 @@ from logging import (
     Logger,
     LogRecord,
     getLogger,
-    getLogRecordFactory,
-    setLogRecordFactory,
+    StreamHandler,
 )
 from logging.handlers import QueueHandler, QueueListener, TimedRotatingFileHandler
 from pathlib import Path
@@ -16,17 +16,17 @@ from queue import Queue
 from typing import Callable
 
 from app.common.config import config
-from app.common.time import CURRENT_TIMEZONE
-from app.common.util import get_module_name
+from app.common.util import CURRENT_TIMEZONE, get_module_name
 
 ACCESS_LOGGER_NAME = "access"
 UVICORN_LOGGER_NAME = "uvicorn.access"
 SQLALCHEMY_LOGGER_NAME = "sqlalchemy.engine.Engine"
-LOGGER_NAMES = {ACCESS_LOGGER_NAME, UVICORN_LOGGER_NAME}
+LOGGER_NAMES = {ACCESS_LOGGER_NAME, UVICORN_LOGGER_NAME, SQLALCHEMY_LOGGER_NAME}
 
 DEFAULT_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(module_name)s:%(lineno)d|%(message)s"
+if config.DEBUG_MODE:
+    DEFAULT_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(name)s|%(module_name)s:%(lineno)d|%(message)s"
 ACCESS_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(message)s"
-DEFAULT_LOG_RECORD_FACTORY = getLogRecordFactory()
 
 
 def current_time_tuple(_second, _what):
@@ -34,16 +34,6 @@ def current_time_tuple(_second, _what):
 
 
 Formatter.converter = current_time_tuple
-
-
-def log_record_factory(*args, **kwargs) -> LogRecord:
-    record = DEFAULT_LOG_RECORD_FACTORY(*args, **kwargs)
-    record.module_name = get_module_name(record.pathname)
-    record.message = record.getMessage().replace("\n", " ")
-    return record
-
-
-setLogRecordFactory(log_record_factory)
 
 
 def init_handler(
@@ -75,6 +65,13 @@ def name_logger_filter(name: str) -> Callable[[LogRecord], bool]:
     return log_filter
 
 
+class CustomFormatQueueHandler(QueueHandler):
+    def prepare(self, record: LogRecord) -> LogRecord:
+        record.module_name = get_module_name(record.pathname)
+        record.msg = record.msg.replace("\n", " ")
+        return super().prepare(record)
+
+
 root_handler = init_handler(config.LOG_ROOT / "app.log", root_logger_filter)
 error_handler = init_handler(config.LOG_ROOT / "error.log", root_logger_filter, level=ERROR)
 access_handler = init_handler(
@@ -90,22 +87,30 @@ sqlalchemy_handler = init_handler(
 )
 
 log_queue = Queue()
-log_queue_handler = QueueHandler(log_queue)
+log_queue_handler = CustomFormatQueueHandler(log_queue)
 log_queue_listener = QueueListener(
     log_queue,
+    respect_handler_level=True,
+)
+handlers = [
     root_handler,
     access_handler,
     error_handler,
     uvicorn_handler,
     sqlalchemy_handler,
-    respect_handler_level=True,
-)
+]
+if config.DEBUG_MODE:
+    stdout_handler = StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(Formatter(fmt=DEFAULT_LOG_FORMAT))
+    handlers.append(stdout_handler)
+log_queue_listener.handlers = tuple(handlers)
 
 
 def init_logger(name: str | None, level: int = INFO) -> Logger:
     logger = getLogger(name)
     logger.setLevel(level)
-    logger.addHandler(log_queue_handler)
+    logger.propagate = False
+    logger.handlers = [log_queue_handler]
     return logger
 
 
