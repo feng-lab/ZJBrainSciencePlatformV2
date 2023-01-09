@@ -11,7 +11,7 @@ from redis import Redis
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from app.common.time import utc_now
+from app.common.util import utc_now
 from app.db import crud
 from app.db.cache import get_user_access_level
 from app.model.response import AccessTokenData

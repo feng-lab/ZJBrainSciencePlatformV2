@@ -1,15 +1,6 @@
 import sys
 from datetime import datetime
-from logging import (
-    ERROR,
-    INFO,
-    Formatter,
-    Handler,
-    Logger,
-    LogRecord,
-    getLogger,
-    StreamHandler,
-)
+from logging import ERROR, INFO, Formatter, Handler, Logger, LogRecord, StreamHandler, getLogger
 from logging.handlers import QueueHandler, QueueListener, TimedRotatingFileHandler
 from pathlib import Path
 from queue import Queue
@@ -88,17 +79,8 @@ sqlalchemy_handler = init_handler(
 
 log_queue = Queue()
 log_queue_handler = CustomFormatQueueHandler(log_queue)
-log_queue_listener = QueueListener(
-    log_queue,
-    respect_handler_level=True,
-)
-handlers = [
-    root_handler,
-    access_handler,
-    error_handler,
-    uvicorn_handler,
-    sqlalchemy_handler,
-]
+log_queue_listener = QueueListener(log_queue, respect_handler_level=True)
+handlers = [root_handler, access_handler, error_handler, uvicorn_handler, sqlalchemy_handler]
 if config.DEBUG_MODE:
     stdout_handler = StreamHandler(sys.stdout)
     stdout_handler.setFormatter(Formatter(fmt=DEFAULT_LOG_FORMAT))

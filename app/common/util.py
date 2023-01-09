@@ -1,13 +1,19 @@
 import functools
 import sys
+from datetime import datetime, timezone, tzinfo
 from pathlib import Path
 from typing import Callable, MutableSequence, Type, TypeVar
 
+from dateutil import tz
 from pydantic import BaseModel
+
+from app.common.config import config
 
 Model = TypeVar("Model", bound=BaseModel)
 AnotherModel = TypeVar("AnotherModel", bound=BaseModel)
 T = TypeVar("T")
+
+CURRENT_TIMEZONE: tzinfo = tz.gettz(config.TIMEZONE)
 
 SYS_PATHS = []
 for sys_path in {Path(path).absolute() for path in sys.path}:
@@ -49,3 +55,11 @@ def get_module_name(module_path: Path | str) -> str | None:
         if module_path.is_relative_to(path):
             return ".".join(module_path.relative_to(path).parts).rstrip(".py")
     return None
+
+
+def now() -> datetime:
+    return datetime.now(tz=CURRENT_TIMEZONE)
+
+
+def utc_now() -> datetime:
+    return datetime.now(tz=timezone.utc)

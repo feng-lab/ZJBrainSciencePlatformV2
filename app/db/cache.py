@@ -24,8 +24,19 @@ def get_user_access_level(db: Session, cache: Redis, user_id: int) -> int | None
     access_level: int | None = crud.get_user_access_level(db, user_id)
     if access_level is None:
         return None
-    if cache.setex(key, config.CACHE_EXPIRE_SECONDS, access_level):
-        logger.info(f"write cache success, {key}={access_level}")
-    else:
-        logger.error(f"write cache failed, {key}={access_level}")
+    result = cache.setex(key, config.CACHE_EXPIRE_SECONDS, access_level)
+    log_cache(result, f"set user_access_level {{}}, {key}={access_level}")
     return access_level
+
+
+def invalidate_user_access_level(cache: Redis, user_id: int) -> None:
+    key = USER_ACCESS_LEVEL_FORMAT.format(user_id)
+    result = cache.delete(key) == 1
+    log_cache(result, f"del user_access_level {{}}, key={key}")
+
+
+def log_cache(is_success: bool, template: str) -> None:
+    if is_success:
+        logger.info(template.format("success"))
+    else:
+        logger.error(template.format("failed"))

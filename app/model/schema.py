@@ -2,28 +2,17 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.common import time
 from app.db.orm import Experiment, Notification
-
-
-class BaseModelCreate(BaseModel):
-    gmt_create: datetime
-    gmt_modified: datetime
-    is_deleted: bool = False
-
-    def __init__(self, **kwargs):
-        # 保证gmt_create与gmt_modified的默认值相同
-        now = time.now()
-        kwargs = kwargs | {"gmt_create": now, "gmt_modified": now}
-        super().__init__(**kwargs)
 
 
 class ModelId(BaseModel):
     id: int = Field(ge=0)
 
 
-class BaseModelInDB(BaseModelCreate, ModelId):
-    pass
+class BaseModelInDB(ModelId):
+    gmt_create: datetime
+    gmt_modified: datetime
+    is_deleted: bool
 
 
 class UserBase(BaseModel):
@@ -45,7 +34,7 @@ class UserAuth(UserBase, ModelId, UserPassword):
         orm_mode = True
 
 
-class UserCreate(UserBase, UserPassword, BaseModelCreate):
+class UserCreate(UserBase, UserPassword):
     pass
 
 
@@ -69,7 +58,7 @@ class NotificationBase(BaseModel):
     content: str
 
 
-class NotificationCreate(NotificationBase, BaseModelCreate):
+class NotificationCreate(NotificationBase):
     creator: int = Field(ge=0)
     status: Notification.Status
 
@@ -111,7 +100,7 @@ class CreateExperimentRequest(ExperimentBase):
     assistants: list[int] = Field(default_factory=list)
 
 
-class ExperimentCreate(ExperimentBase, BaseModelCreate):
+class ExperimentCreate(ExperimentBase):
     pass
 
 
@@ -139,7 +128,7 @@ class ExperimentAssistantBase(BaseModel):
     experiment_id: int = Field(ge=0)
 
 
-class ExperimentAssistantCreate(ExperimentAssistantBase, BaseModelCreate):
+class ExperimentAssistantCreate(ExperimentAssistantBase):
     pass
 
 
@@ -156,7 +145,7 @@ class FileBase(BaseModel):
     is_original: bool
 
 
-class FileCreate(FileBase, BaseModelCreate):
+class FileCreate(FileBase):
     pass
 
 
@@ -178,7 +167,7 @@ class CreateParadigmRequest(ParadigmBase):
     images: list[int]
 
 
-class ParadigmCreate(ParadigmBase, BaseModelCreate):
+class ParadigmCreate(ParadigmBase):
     creator: int = Field(ge=0)
 
 
@@ -196,5 +185,5 @@ class ParadigmFileBase(BaseModel):
     file_id: int = Field(ge=0)
 
 
-class ParadigmFileCreate(ParadigmFileBase, BaseModelCreate):
+class ParadigmFileCreate(ParadigmFileBase):
     pass

@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.status import HTTP_404_NOT_FOUND
 
 from app.common.context import Context, human_subject_context, researcher_context
-from app.common.time import convert_timezone_before_handle_request
 from app.db import crud
 from app.db.orm import Experiment, ExperimentAssistant
 from app.model.request import (
@@ -31,7 +30,6 @@ router = APIRouter(tags=["experiment"])
 def create_experiment(
     request: CreateExperimentRequest, ctx: Context = Depends(researcher_context)
 ) -> int:
-    request = convert_timezone_before_handle_request(request)
     experiment_create = ExperimentCreate(**request.dict())
     experiment_id = crud.insert_model(ctx.db, Experiment, experiment_create)
     assistants = [

@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Query
 
 from app.common.config import config
 from app.common.context import Context, human_subject_context
-from app.common.time import convert_timezone_before_handle_request
 from app.db import crud
 from app.db.orm import Notification
 from app.model.request import (
@@ -23,7 +22,6 @@ router = APIRouter(tags=["notification"])
 def send_notification(
     request: NotificationBase, ctx: Context = Depends(human_subject_context)
 ) -> int:
-    request = convert_timezone_before_handle_request(request)
     notification_create = NotificationCreate(
         **request.dict(), creator=ctx.user_id, status=Notification.Status.unread
     )
@@ -59,7 +57,8 @@ def get_recent_unread_notifications(
 )
 @wrap_api_response
 def get_notifications_by_page(
-    notification_type: Notification.Type | None = Query(alias="type", description="通知类型", default=None),
+    notification_type: Notification.Type
+    | None = Query(alias="type", description="通知类型", default=None),
     status: Notification.Status | None = Query(description="通知状态", default=None),
     create_time_start: datetime | None = Query(description="筛选通知发送时间的开始时间", default=None),
     create_time_end: datetime | None = Query(description="筛选通知发送时间的结束时间", default=None),

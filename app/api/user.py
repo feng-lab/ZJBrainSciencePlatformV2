@@ -3,7 +3,7 @@ from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 
 from app.common.context import Context, administrator_context, all_user_context
 from app.common.user_auth import AccessLevel, hash_password, verify_password
-from app.db import crud
+from app.db import crud, cache
 from app.db.__init__ import SessionLocal
 from app.db.orm import User
 from app.model.request import (
@@ -99,6 +99,8 @@ def update_user_access_level(
     updated = crud.update_model(ctx.db, User, request.id, access_level=request.access_level)
     if not updated:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="用户不存在")
+    else:
+        cache.invalidate_user_access_level(ctx.cache, request.id)
 
 
 @router.post("/api/updatePassword", description="用户修改密码", response_model=NoneResponse)

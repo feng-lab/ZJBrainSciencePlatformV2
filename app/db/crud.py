@@ -1,9 +1,7 @@
-import functools
 import logging
 from datetime import datetime
 from typing import Any, Callable, TypeVar
 
-from pydantic import BaseModel
 from sqlalchemy import func, insert, select, text, update
 from sqlalchemy.engine import CursorResult, Result, Row
 from sqlalchemy.orm import Session
@@ -11,13 +9,7 @@ from sqlalchemy.sql import Executable
 from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
 from app.common.config import config
-from app.common.time import (
-    convert_timezone_after_get_db,
-    convert_timezone_before_save,
-    current_timezone_to_utc,
-    utc_now,
-)
-from app.common.util import Model, T
+from app.common.util import Model, T, now
 from app.db import Base
 from app.db.orm import (
     Experiment,
@@ -55,24 +47,6 @@ logger = logging.getLogger(__name__)
 OrmModel = TypeVar("OrmModel", bound=Base)
 Exec = TypeVar("Exec", bound=Executable)
 Res = TypeVar("Res", bound=Result)
-
-
-def convert_db_model_timezone(fn):
-    @functools.wraps(fn)
-    def wrapper(*args, **kwargs):
-        result = fn(*args, **kwargs)
-        if result is None:
-            return None
-        if isinstance(result, BaseModel):
-            return convert_timezone_after_get_db(result)
-        if isinstance(result, list):
-            return [
-                convert_timezone_after_get_db(model) if isinstance(model, BaseModel) else model
-                for model in result
-            ]
-        return result
-
-    return wrapper
 
 
 class SearchModel:
@@ -136,7 +110,6 @@ class SearchModel:
             stmt = stmt.join(self.join_spec[0], self.join_spec[1], isouter=self.join_spec[2])
         return self.db.execute(stmt).scalar()
 
-    @convert_db_model_timezone
     def items(self, target_model: type[Model]) -> list[Model]:
         columns = self.columns if self.columns else [self.table]
         stmt = select(columns).where(*self.where)
@@ -167,7 +140,6 @@ class SearchModel:
         return PagedData(total=total, items=items)
 
 
-@convert_db_model_timezone
 def get_model(
     db: Session, table: type[OrmModel], target_model: type[Model], id_: int
 ) -> Model | None:
@@ -182,14 +154,13 @@ def exists_model(db: Session, table: type[OrmModel], id_: int) -> bool:
 
 
 def insert_model(db: Session, table: type[OrmModel], model: Model) -> int:
-    model = convert_timezone_before_save(model)
     result: CursorResult = db.execute(insert(table).values(**model.dict()))
     db.commit()
     return result.inserted_primary_key.id
 
 
 def bulk_insert_models(db: Session, table: type[OrmModel], models: list[Model]) -> None:
-    model_dicts = [convert_timezone_before_save(model).dict() for model in models]
+    model_dicts = [model.dict() for model in models]
     db.execute(insert(table), model_dicts)
     db.commit()
 
@@ -201,7 +172,7 @@ def update_model(db: Session, table: type[OrmModel], id_: int, **values: Any) ->
 def bulk_update_models(
     db: Session, table: type[OrmModel], *where: WhereHavingRole, **values: Any
 ) -> int:
-    values = values | {"gmt_modified": utc_now()}
+    values = values | {"gmt_modified": now()}
     result: CursorResult = db.execute(update(table).where(*where).values(**values))
     db.commit()
     # noinspection PyTypeChecker
@@ -222,7 +193,6 @@ def get_user_access_level(db: Session, user_id: int) -> int | None:
     ).scalar()
 
 
-@convert_db_model_timezone
 def get_user_auth_by_username(db: Session, username: str) -> UserAuth | None:
     stmt = select(
         User.id, User.username, User.staff_id, User.access_level, User.hashed_password
@@ -300,8 +270,8 @@ def search_notifications(
         .where_eq(Notification.receiver, user_id)
         .where_eq(Notification.type, notification_type)
         .where_eq(Notification.status, status)
-        .where_ge(Notification.gmt_create, current_timezone_to_utc(create_time_start))
-        .where_le(Notification.gmt_create, current_timezone_to_utc(create_time_end))
+        .where_ge(Notification.gmt_create, create_time_start)
+        .where_le(Notification.gmt_create, create_time_end)
         .order_by(Notification.gmt_create.desc())
         .paged_data(NotificationResponse)
     )

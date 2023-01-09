@@ -2,16 +2,21 @@ import itertools
 from enum import StrEnum
 from typing import Any
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, String, Text, func
+from sqlalchemy.sql import expression
 
 from app.db import Base
 
 
 class ModelMixin:
-    id = Column(Integer, primary_key=True, autoincrement=True, comment="主键")
-    gmt_create = Column(DateTime, nullable=False, index=True, comment="创建时间")
-    gmt_modified = Column(DateTime, nullable=False, comment="修改时间")
-    is_deleted = Column(Boolean, nullable=False, comment="该行是否被删除")
+    id = Column(Integer, nullable=False, primary_key=True, autoincrement=True, comment="主键")
+    gmt_create = Column(
+        DateTime, nullable=False, index=True, server_default=func.now(), comment="创建时间"
+    )
+    gmt_modified = Column(DateTime, nullable=False, server_default=func.now(), comment="修改时间")
+    is_deleted = Column(
+        Boolean, nullable=False, server_default=expression.false(), comment="该行是否被删除"
+    )
 
     def make_repr(self, **fields: Any) -> str:
         common_fields = {

@@ -1,8 +1,8 @@
 """new from sqlalchemy
 
-Revision ID: 4ac5fdfc5d03
+Revision ID: e3b0208314e0
 Revises: 
-Create Date: 2022-12-16 06:54:22.091044
+Create Date: 2023-01-09 03:42:24.126555
 
 """
 import sqlalchemy as sa
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "4ac5fdfc5d03"
+revision = "e3b0208314e0"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,13 +21,32 @@ def upgrade() -> None:
     op.create_table(
         "experiment",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
-        sa.Column("gmt_create", sa.DateTime(), nullable=False, comment="创建时间"),
-        sa.Column("gmt_modified", sa.DateTime(), nullable=False, comment="修改时间"),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False, comment="该行是否被删除"),
+        sa.Column(
+            "gmt_create",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="创建时间",
+        ),
+        sa.Column(
+            "gmt_modified",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="修改时间",
+        ),
+        sa.Column(
+            "is_deleted",
+            sa.Boolean(),
+            server_default=sa.text("false"),
+            nullable=False,
+            comment="该行是否被删除",
+        ),
         sa.Column("name", sa.String(length=255), nullable=False, comment="实验名称"),
         sa.Column(
             "type", sa.Enum("SSVEP", "MI", "neuron", name="type"), nullable=False, comment="实验类型"
         ),
+        sa.Column("description", sa.Text(), nullable=False, comment="实验描述"),
         sa.Column("location", sa.String(length=255), nullable=False, comment="实验地点"),
         sa.Column("start_at", sa.DateTime(), nullable=False, comment="实验开始时间"),
         sa.Column("end_at", sa.DateTime(), nullable=False, comment="实验结束时间"),
@@ -48,9 +67,27 @@ def upgrade() -> None:
     op.create_table(
         "experiment_assistant",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
-        sa.Column("gmt_create", sa.DateTime(), nullable=False, comment="创建时间"),
-        sa.Column("gmt_modified", sa.DateTime(), nullable=False, comment="修改时间"),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False, comment="该行是否被删除"),
+        sa.Column(
+            "gmt_create",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="创建时间",
+        ),
+        sa.Column(
+            "gmt_modified",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="修改时间",
+        ),
+        sa.Column(
+            "is_deleted",
+            sa.Boolean(),
+            server_default=sa.text("false"),
+            nullable=False,
+            comment="该行是否被删除",
+        ),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("experiment_id", sa.Integer(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
@@ -71,11 +108,29 @@ def upgrade() -> None:
     op.create_table(
         "file",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
-        sa.Column("gmt_create", sa.DateTime(), nullable=False, comment="创建时间"),
-        sa.Column("gmt_modified", sa.DateTime(), nullable=False, comment="修改时间"),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False, comment="该行是否被删除"),
+        sa.Column(
+            "gmt_create",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="创建时间",
+        ),
+        sa.Column(
+            "gmt_modified",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="修改时间",
+        ),
+        sa.Column(
+            "is_deleted",
+            sa.Boolean(),
+            server_default=sa.text("false"),
+            nullable=False,
+            comment="该行是否被删除",
+        ),
         sa.Column("experiment_id", sa.Integer(), nullable=False, comment="实验ID"),
-        sa.Column("path", sa.String(length=255), nullable=False, comment="逻辑路径"),
+        sa.Column("name", sa.String(length=255), nullable=False, comment="逻辑路径"),
         sa.Column("extension", sa.String(length=50), nullable=False, comment="文件扩展名"),
         sa.Column("index", sa.Integer(), nullable=False, comment="同一实验下的文件序号"),
         sa.Column("size", sa.Float(), nullable=False, comment="同一实验下的文件序号"),
@@ -89,9 +144,27 @@ def upgrade() -> None:
     op.create_table(
         "notification",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
-        sa.Column("gmt_create", sa.DateTime(), nullable=False, comment="创建时间"),
-        sa.Column("gmt_modified", sa.DateTime(), nullable=False, comment="修改时间"),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False, comment="该行是否被删除"),
+        sa.Column(
+            "gmt_create",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="创建时间",
+        ),
+        sa.Column(
+            "gmt_modified",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="修改时间",
+        ),
+        sa.Column(
+            "is_deleted",
+            sa.Boolean(),
+            server_default=sa.text("false"),
+            nullable=False,
+            comment="该行是否被删除",
+        ),
         sa.Column("type", sa.Enum("task_step_status", name="type"), nullable=False, comment="消息类型"),
         sa.Column("creator", sa.Integer(), nullable=False, comment="消息发送者ID"),
         sa.Column("receiver", sa.Integer(), nullable=False, comment="消息接收者ID"),
@@ -109,9 +182,27 @@ def upgrade() -> None:
     op.create_table(
         "paradigm",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
-        sa.Column("gmt_create", sa.DateTime(), nullable=False, comment="创建时间"),
-        sa.Column("gmt_modified", sa.DateTime(), nullable=False, comment="修改时间"),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False, comment="该行是否被删除"),
+        sa.Column(
+            "gmt_create",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="创建时间",
+        ),
+        sa.Column(
+            "gmt_modified",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="修改时间",
+        ),
+        sa.Column(
+            "is_deleted",
+            sa.Boolean(),
+            server_default=sa.text("false"),
+            nullable=False,
+            comment="该行是否被删除",
+        ),
         sa.Column("experiment_id", sa.Integer(), nullable=False, comment="实验ID"),
         sa.Column("creator", sa.Integer(), nullable=False, comment="创建者ID"),
         sa.Column("description", sa.Text(), nullable=False, comment="描述文字"),
@@ -123,9 +214,27 @@ def upgrade() -> None:
     op.create_table(
         "paradigm_file",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
-        sa.Column("gmt_create", sa.DateTime(), nullable=False, comment="创建时间"),
-        sa.Column("gmt_modified", sa.DateTime(), nullable=False, comment="修改时间"),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False, comment="该行是否被删除"),
+        sa.Column(
+            "gmt_create",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="创建时间",
+        ),
+        sa.Column(
+            "gmt_modified",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="修改时间",
+        ),
+        sa.Column(
+            "is_deleted",
+            sa.Boolean(),
+            server_default=sa.text("false"),
+            nullable=False,
+            comment="该行是否被删除",
+        ),
         sa.Column("paradigm_id", sa.Integer(), nullable=False, comment="实验范式ID"),
         sa.Column("file_id", sa.Integer(), nullable=False, comment="文件ID"),
         sa.PrimaryKeyConstraint("id"),
@@ -140,9 +249,27 @@ def upgrade() -> None:
     op.create_table(
         "user",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
-        sa.Column("gmt_create", sa.DateTime(), nullable=False, comment="创建时间"),
-        sa.Column("gmt_modified", sa.DateTime(), nullable=False, comment="修改时间"),
-        sa.Column("is_deleted", sa.Boolean(), nullable=False, comment="该行是否被删除"),
+        sa.Column(
+            "gmt_create",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="创建时间",
+        ),
+        sa.Column(
+            "gmt_modified",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+            comment="修改时间",
+        ),
+        sa.Column(
+            "is_deleted",
+            sa.Boolean(),
+            server_default=sa.text("false"),
+            nullable=False,
+            comment="该行是否被删除",
+        ),
         sa.Column("username", sa.String(length=255), nullable=False, comment="用户名"),
         sa.Column("hashed_password", sa.String(length=255), nullable=False, comment="密码哈希"),
         sa.Column("staff_id", sa.String(length=255), nullable=False, comment="员工号"),
