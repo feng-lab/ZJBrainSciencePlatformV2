@@ -2,7 +2,19 @@ import itertools
 from enum import StrEnum
 from typing import Any
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, Float, Integer, String, Text, func
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    func,
+)
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
 
 from app.db import Base
@@ -10,9 +22,7 @@ from app.db import Base
 
 class ModelMixin:
     id = Column(Integer, nullable=False, primary_key=True, autoincrement=True, comment="主键")
-    gmt_create = Column(
-        DateTime, nullable=False, index=True, server_default=func.now(), comment="创建时间"
-    )
+    gmt_create = Column(DateTime, nullable=False, server_default=func.now(), comment="创建时间")
     gmt_modified = Column(DateTime, nullable=False, server_default=func.now(), comment="修改时间")
     is_deleted = Column(
         Boolean, nullable=False, server_default=expression.false(), comment="该行是否被删除"
@@ -66,9 +76,12 @@ class Notification(Base, ModelMixin):
     class Type(StrEnum):
         task_step_status = "task_step_status"
 
+    gmt_create = Column(
+        DateTime, nullable=False, index=True, server_default=func.now(), comment="创建时间"
+    )
     type = Column(Enum(Type), nullable=False, comment="消息类型")
-    creator = Column(Integer, nullable=False, comment="消息发送者ID")
-    receiver = Column(Integer, nullable=False, index=True, comment="消息接收者ID")
+    creator = Column(Integer, ForeignKey("user.id"), nullable=False, comment="消息发送者ID")
+    receiver = Column(Integer, ForeignKey("user.id"), nullable=False, index=True, comment="消息接收者ID")
     status = Column(Enum(Status), nullable=False, comment="消息状态")
     content = Column(Text, nullable=False, comment="消息内容")
 
@@ -97,7 +110,7 @@ class Experiment(Base, ModelMixin):
     location = Column(String(255), nullable=False, comment="实验地点")
     start_at = Column(DateTime, nullable=False, index=True, comment="实验开始时间")
     end_at = Column(DateTime, nullable=False, comment="实验结束时间")
-    main_operator = Column(Integer, nullable=False, comment="主操作者ID")
+    main_operator = Column(Integer, ForeignKey("user.id"), nullable=False, comment="主操作者ID")
     is_non_invasive = Column(Boolean, nullable=True, comment="是否为无创实验")
     subject_type = Column(String(50), nullable=True, comment="被试类型")
     subject_num = Column(Integer, nullable=True, comment="被试数量")
@@ -106,6 +119,8 @@ class Experiment(Base, ModelMixin):
     session_num = Column(Integer, nullable=True, comment="实验session数量")
     trail_num = Column(Integer, nullable=True, comment="实验trail数量")
     is_shared = Column(Boolean, nullable=True, comment="实验是否公开")
+
+    assistants = relationship("ExperimentAssistant", back_populates="experiment")
 
     def __repr__(self) -> str:
         return self.make_repr(
@@ -131,8 +146,10 @@ class ExperimentAssistant(Base, ModelMixin):
     __tablename__ = "experiment_assistant"
     __table_args__ = {"comment": "实验助手"}
 
-    user_id = Column(Integer, nullable=False)
-    experiment_id = Column(Integer, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    experiment_id = Column(Integer, ForeignKey("experiment.id"), nullable=False, index=True)
+
+    experiment = relationship("Experiment", back_populates="assistants")
 
     def __repr__(self):
         return self.make_repr(user_id=self.user_id, experiment_id=self.experiment_id)
@@ -142,7 +159,9 @@ class File(Base, ModelMixin):
     __tablename__ = "file"
     __table_args__ = {"comment": "文件"}
 
-    experiment_id = Column(Integer, nullable=False, index=True, comment="实验ID")
+    experiment_id = Column(
+        Integer, ForeignKey("experiment.id"), nullable=False, index=True, comment="实验ID"
+    )
     name = Column(String(255), nullable=False, comment="逻辑路径")
     extension = Column(String(50), nullable=False, comment="文件扩展名")
     index = Column(Integer, nullable=False, index=True, comment="同一实验下的文件序号")
@@ -164,9 +183,13 @@ class Paradigm(Base, ModelMixin):
     __tablename__ = "paradigm"
     __table_args__ = {"comment": "实验范式"}
 
-    experiment_id = Column(Integer, nullable=False, index=True, comment="实验ID")
-    creator = Column(Integer, nullable=False, comment="创建者ID")
+    experiment_id = Column(
+        Integer, ForeignKey("experiment.id"), nullable=False, index=True, comment="实验ID"
+    )
+    creator = Column(Integer, ForeignKey("user.id"), nullable=False, comment="创建者ID")
     description = Column(Text(), nullable=False, comment="描述文字")
+
+    files = relationship("ParadigmFile", back_populates="paradigm")
 
     def __repr__(self):
         return self.make_repr(
@@ -178,8 +201,12 @@ class ParadigmFile(Base, ModelMixin):
     __tablename__ = "paradigm_file"
     __table_args__ = {"comment": "实验范式文件"}
 
-    paradigm_id = Column(Integer, nullable=False, index=True, comment="实验范式ID")
-    file_id = Column(Integer, nullable=False, comment="文件ID")
+    paradigm_id = Column(
+        Integer, ForeignKey("paradigm.id"), nullable=False, index=True, comment="实验范式ID"
+    )
+    file_id = Column(Integer, ForeignKey("file.id"), nullable=False, comment="文件ID")
+
+    paradigm = relationship("Paradigm", back_populates="files")
 
     def __repr__(self):
         return self.make_repr(paradigm_id=self.paradigm_id, file_id=self.file_id)
