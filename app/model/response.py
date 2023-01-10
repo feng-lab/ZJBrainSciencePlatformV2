@@ -16,6 +16,8 @@ CODE_SUCCESS: int = 0
 CODE_FAIL: int = 1
 # 会话超时的失败code
 CODE_SESSION_TIMEOUT: int = 2
+# 数据库操作失败
+CODE_DATABASE_FAIL: int = 3
 
 MESSAGE_SUCCESS: str = "success"
 

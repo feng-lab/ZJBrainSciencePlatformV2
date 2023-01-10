@@ -12,7 +12,11 @@ from jose import ExpiredSignatureError
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import RedirectResponse
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
+from starlette.status import (
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 
 from app.api import user
 from app.api.algorithm import router as algorithm_router
@@ -23,6 +27,7 @@ from app.api.notification import router as notification_router
 from app.api.paradigm import router as paradigm_router
 from app.api.user import router as user_router
 from app.common.config import config
+from app.common.exception import ServiceError
 from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener
 from app.db import check_database_is_up_to_date
 from app.model.response import CODE_FAIL, CODE_SESSION_TIMEOUT, NoneResponse
@@ -108,6 +113,14 @@ async def filter_blank_query_params(request: Request, call_next: Callable):
 def handle_http_exception(_request: Request, e: HTTPException):
     return JSONResponse(
         status_code=e.status_code, content=NoneResponse(code=CODE_FAIL, message=e.detail).dict()
+    )
+
+
+@app.exception_handler(ServiceError)
+def handle_service_error(_request: Request, e: ServiceError):
+    return JSONResponse(
+        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+        content=NoneResponse(code=e.code, message=e.message).dict(),
     )
 
 

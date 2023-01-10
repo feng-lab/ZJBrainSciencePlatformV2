@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.status import HTTP_404_NOT_FOUND
 
 from app.common.context import Context, human_subject_context, researcher_context
+from app.common.exception import ServiceError
 from app.db import crud
 from app.db.orm import Experiment, ExperimentAssistant
 from app.model.request import (
@@ -17,7 +18,6 @@ from app.model.response import NoneResponse, Response, wrap_api_response
 from app.model.schema import (
     CreateExperimentRequest,
     ExperimentAssistantCreate,
-    ExperimentCreate,
     ExperimentResponse,
     UserIdNameStaffId,
 )
@@ -30,13 +30,23 @@ router = APIRouter(tags=["experiment"])
 def create_experiment(
     request: CreateExperimentRequest, ctx: Context = Depends(researcher_context)
 ) -> int:
-    experiment_create = ExperimentCreate(**request.dict())
-    experiment_id = crud.insert_model(ctx.db, Experiment, experiment_create)
-    assistants = [
-        ExperimentAssistantCreate(user_id=assistant_id, experiment_id=experiment_id)
-        for assistant_id in request.assistants
-    ]
-    crud.bulk_insert_models(ctx.db, ExperimentAssistant, assistants)
+    error_message = "创建实验失败"
+
+    experiment_id = crud.insert_table(
+        ctx.db, Experiment, request.dict(exclude={"assistants"}), commit=False
+    )
+    if experiment_id is None:
+        raise ServiceError.database_fail(error_message)
+
+    if len(request.assistants) > 0:
+        assistants = [
+            {"user_id": assistant_id, "experiment_id": experiment_id}
+            for assistant_id in set(request.assistants)
+        ]
+        all_inserted = crud.bulk_insert_table(ctx.db, ExperimentAssistant, assistants, commit=True)
+        if not all_inserted:
+            raise ServiceError.database_fail(error_message)
+
     return experiment_id
 
 
