@@ -59,9 +59,9 @@ def run_alembic_bash():
 
 
 @add_command
-def start_dev_backend():
+def up_platform_depends():
     up_database()
-    poetry_run("python", "-m", "uvicorn", "app.main:app", "--reload", env={"DEBUG_MODE": "on"})
+    up_cache()
 
 
 @add_command
