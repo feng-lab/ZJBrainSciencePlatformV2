@@ -26,8 +26,6 @@ from app.model.request import (
 )
 from app.model.response import PagedData
 from app.model.schema import (
-    ExperimentInDB,
-    ExperimentResponse,
     FileInDB,
     FileResponse,
     NotificationInDB,
@@ -376,6 +374,41 @@ def get_experiment_by_id(db: Session, experiment_id: int) -> Experiment | None:
     return experiment
 
 
+SEARCH_EXPERIMENT_SORT_BY_COLUMN = {
+    GetExperimentsByPageSortBy.START_TIME: Experiment.start_at,
+    GetExperimentsByPageSortBy.TYPE: Experiment.type,
+}
+
+
+def search_experiments(
+    db: Session,
+    search: str,
+    sort_by: GetExperimentsByPageSortBy,
+    sort_order: GetExperimentsByPageSortOrder,
+    page_param: GetModelsByPageParam,
+) -> list[Experiment]:
+    stmt = (
+        select(Experiment)
+        .offset(page_param.offset)
+        .limit(page_param.limit)
+        .options(
+            load_user_info_option(joinedload, Experiment.main_operator_obj),
+            load_user_info_option(subqueryload, Experiment.assistants),
+        )
+    )
+    if search:
+        stmt = stmt.where(Experiment.name.ilike(f"%{search}%"))
+    if not page_param.include_deleted:
+        stmt = stmt.where(Experiment.is_deleted == False)
+    order_by_column = SEARCH_EXPERIMENT_SORT_BY_COLUMN[sort_by]
+    if sort_order is GetExperimentsByPageSortOrder.DESC:
+        stmt = stmt.order_by(order_by_column.desc())
+    else:
+        stmt = stmt.order_by(order_by_column.asc())
+    experiments = db.execute(stmt).scalars().all()
+    return experiments
+
+
 def list_experiment_assistants(db: Session, experiment_id: int) -> list[UserInfo]:
     stmt = (
         select(User.id, User.username, User.staff_id)
@@ -389,47 +422,6 @@ def list_experiment_assistants(db: Session, experiment_id: int) -> list[UserInfo
     )
     rows = db.execute(stmt).all()
     return [UserInfo(id=row[0], username=row[1], staff_id=row[2]) for row in rows]
-
-
-def search_experiments(
-    db: Session,
-    search: str,
-    sort_by: GetExperimentsByPageSortBy,
-    sort_order: GetExperimentsByPageSortOrder,
-    page_param: GetModelsByPageParam,
-) -> list[ExperimentResponse]:
-    if sort_by is GetExperimentsByPageSortBy.START_TIME:
-        column = Experiment.start_at
-    elif sort_by is GetExperimentsByPageSortBy.TYPE:
-        column = Experiment.type
-    else:
-        raise ValueError("invalid sort_by")
-    if sort_order is GetExperimentsByPageSortOrder.ASC:
-        sort_by_spec = column.asc()
-    elif sort_order is GetExperimentsByPageSortOrder.DESC:
-        sort_by_spec = column.desc()
-    else:
-        raise ValueError("invalid sort_order")
-    return (
-        SearchModel(db, Experiment)
-        .select(Experiment, User.username, User.staff_id)
-        .join(User, Experiment.main_operator == User.id, is_outer=True)
-        .where_contains(Experiment.name, search)
-        .page_param(page_param)
-        .order_by(sort_by_spec)
-        .map_model_with(
-            lambda row: ExperimentResponse(
-                main_operator=UserInfo(id=row[0].main_operator, username=row[1], staff_id=row[2]),
-                assistants=[],
-                **ExperimentInDB.from_orm(row[0]).dict(exclude={"main_operator"}),
-            )
-        )
-        .items(ExperimentResponse)
-    )
-
-
-def bulk_list_experiment_assistants(db: Session, experiment_ids: list[int]) -> list[list[UserInfo]]:
-    return [list_experiment_assistants(db, experiment_id) for experiment_id in experiment_ids]
 
 
 def search_experiment_assistants(

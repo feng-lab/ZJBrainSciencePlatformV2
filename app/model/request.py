@@ -1,5 +1,5 @@
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from fastapi import Query
 from pydantic import BaseModel, Field
@@ -40,12 +40,12 @@ class MarkNotificationsAsReadRequest(BaseModel):
     notification_ids: list[int] = Field(description="通知ID，可以有多个", default_factory=list)
 
 
-class GetExperimentsByPageSortBy(Enum):
+class GetExperimentsByPageSortBy(StrEnum):
     START_TIME = "start_time"
     TYPE = "type"
 
 
-class GetExperimentsByPageSortOrder(Enum):
+class GetExperimentsByPageSortOrder(StrEnum):
     ASC = "asc"
     DESC = "desc"
 
@@ -87,7 +87,7 @@ class UpdateParadigmFilesRequest(BaseModel):
 
 
 class DisplayEEGRequest(BaseModel):
-    class FileType(str, Enum):
+    class FileType(StrEnum):
         EDF = "edf"
         BDF = "bdf"
 

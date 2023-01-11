@@ -7,7 +7,7 @@ A = TypeVar("A")
 B = TypeVar("B")
 
 
-def list_convert(function: Callable[[A], B], items: list[A] | None) -> list[B]:
+def list_(function: Callable[[A], B], items: list[A] | None) -> list[B]:
     if items is None:
         return []
     return [function(item) for item in items]
@@ -16,7 +16,7 @@ def list_convert(function: Callable[[A], B], items: list[A] | None) -> list[B]:
 def experiment_orm_2_response(experiment: Experiment) -> ExperimentResponse:
     return ExperimentResponse(
         main_operator=user_orm_2_info(experiment.main_operator_obj),
-        assistants=list_convert(user_orm_2_info, experiment.assistants),
+        assistants=list_(user_orm_2_info, experiment.assistants),
         **ExperimentInDB.from_orm(experiment).dict(exclude={"main_operator"}),
     )
 

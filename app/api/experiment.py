@@ -93,14 +93,8 @@ def get_experiments_by_page(
     page_param: GetModelsByPageParam = Depends(get_models_by_page),
     ctx: Context = Depends(human_subject_context),
 ) -> list[ExperimentResponse]:
-    experiments = crud.search_experiments(ctx.db, search, sort_by, sort_order, page_param)
-    if len(experiments) < 1:
-        return []
-    assistants_lists = crud.bulk_list_experiment_assistants(
-        ctx.db, [experiment.id for experiment in experiments]
-    )
-    for experiment, assistants in zip(experiments, assistants_lists):
-        experiment.assistants = assistants
+    orm_experiments = crud.search_experiments(ctx.db, search, sort_by, sort_order, page_param)
+    experiments = convert.list_(convert.experiment_orm_2_response, orm_experiments)
     return experiments
 
 
