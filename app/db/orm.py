@@ -1,5 +1,6 @@
 import itertools
 from enum import StrEnum
+from reprlib import recursive_repr
 from typing import Any
 
 from sqlalchemy import (
@@ -54,6 +55,7 @@ class User(Base, ModelMixin):
     last_logout_time = Column(DateTime, nullable=True, comment="上次下线时间")
     access_level = Column(Integer, nullable=False, comment="权限级别")
 
+    @recursive_repr()
     def __repr__(self):
         return self.make_repr(
             username=self.username,
@@ -85,6 +87,7 @@ class Notification(Base, ModelMixin):
     status = Column(Enum(Status), nullable=False, comment="消息状态")
     content = Column(Text, nullable=False, comment="消息内容")
 
+    @recursive_repr()
     def __repr__(self):
         return self.make_repr(
             type=self.type,
@@ -120,8 +123,10 @@ class Experiment(Base, ModelMixin):
     trail_num = Column(Integer, nullable=True, comment="实验trail数量")
     is_shared = Column(Boolean, nullable=True, comment="实验是否公开")
 
+    main_operator_obj = relationship("User")
     assistants = relationship("ExperimentAssistant", back_populates="experiment")
 
+    @recursive_repr()
     def __repr__(self) -> str:
         return self.make_repr(
             name=self.name,
@@ -139,6 +144,8 @@ class Experiment(Base, ModelMixin):
             session_num=self.session_num,
             trail_num=self.trail_num,
             is_shared=self.is_shared,
+            main_operator_obj=self.main_operator_obj,
+            assistants=self.assistants,
         )
 
 
@@ -151,6 +158,7 @@ class ExperimentAssistant(Base, ModelMixin):
 
     experiment = relationship("Experiment", back_populates="assistants")
 
+    @recursive_repr()
     def __repr__(self):
         return self.make_repr(user_id=self.user_id, experiment_id=self.experiment_id)
 
@@ -168,6 +176,7 @@ class File(Base, ModelMixin):
     size = Column(Float, nullable=False, comment="同一实验下的文件序号")
     is_original = Column(Boolean, nullable=False, comment="是否是设备产生的原始文件")
 
+    @recursive_repr()
     def __repr__(self):
         return self.make_repr(
             experiment_id=self.experiment_id,
@@ -191,9 +200,13 @@ class Paradigm(Base, ModelMixin):
 
     files = relationship("ParadigmFile", back_populates="paradigm")
 
+    @recursive_repr()
     def __repr__(self):
         return self.make_repr(
-            experiment_id=self.experiment_id, creator=self.creator, description=self.description
+            experiment_id=self.experiment_id,
+            creator=self.creator,
+            description=self.description,
+            files=self.files,
         )
 
 
@@ -208,5 +221,8 @@ class ParadigmFile(Base, ModelMixin):
 
     paradigm = relationship("Paradigm", back_populates="files")
 
+    @recursive_repr()
     def __repr__(self):
-        return self.make_repr(paradigm_id=self.paradigm_id, file_id=self.file_id)
+        return self.make_repr(
+            paradigm_id=self.paradigm_id, file_id=self.file_id, paradigm=self.paradigm
+        )

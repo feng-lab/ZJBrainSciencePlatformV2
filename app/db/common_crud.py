@@ -1,7 +1,7 @@
 import logging
 from typing import Any, TypeVar
 
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
@@ -55,3 +55,14 @@ def bulk_insert_table(
             db.rollback()
         elif commit:
             db.commit()
+
+
+def get_deleted_rows(db: Session, table: type[OrmModel], ids: list[int]) -> list[int] | None:
+    if len(ids) < 1:
+        return []
+    try:
+        stmt = select(table.id).where(table.id.in_(list(set(ids))), table.is_deleted == True)
+        return db.execute(stmt).scalars().all()
+    except DBAPIError as e:
+        logger.error(f"select deleted rows in {table.__name__} error, {ids=}, msg={e}")
+        return None

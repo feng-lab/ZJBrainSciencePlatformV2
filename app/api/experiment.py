@@ -4,7 +4,7 @@ from starlette.status import HTTP_404_NOT_FOUND
 from app.common.context import Context, human_subject_context, researcher_context
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
-from app.db.orm import Experiment, ExperimentAssistant
+from app.db.orm import Experiment, ExperimentAssistant, User
 from app.model.request import (
     DeleteModelRequest,
     GetExperimentsByPageSortBy,
@@ -31,6 +31,13 @@ def create_experiment(
     request: CreateExperimentRequest, ctx: Context = Depends(researcher_context)
 ) -> int:
     database_error = ServiceError.database_fail("创建实验失败")
+
+    # 检查没有被删除的用户ID
+    deleted_assistants = common_crud.get_deleted_rows(ctx.db, User, [request.main_operator, *request.assistants])
+    if deleted_assistants is None:
+        raise database_error
+    elif len(deleted_assistants) > 0:
+        raise ServiceError.invalid_request("用户不存在")
 
     experiment_id = common_crud.insert_table(
         ctx.db, Experiment, request.dict(exclude={"assistants"}), commit=False

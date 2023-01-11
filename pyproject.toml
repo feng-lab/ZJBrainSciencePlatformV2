@@ -27,9 +27,6 @@ black = "^22.12.0"
 isort = "^5.11.2"
 ipython = "^8.7.0"
 
-[tool.poetry.group.alembic]
-optional = true
-
 [tool.poetry.group.alembic.dependencies]
 alembic = "^1.9.0"
 mysqlclient = "^2.1.1"
