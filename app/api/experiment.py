@@ -41,7 +41,7 @@ def create_experiment(
     elif len(deleted_assistants) > 0:
         raise ServiceError.invalid_request("用户不存在")
 
-    experiment_id = common_crud.insert_table(
+    experiment_id = common_crud.insert_row(
         ctx.db, Experiment, request.dict(exclude={"assistants"}), commit=False
     )
     if experiment_id is None:
@@ -52,7 +52,7 @@ def create_experiment(
             {"user_id": assistant_id, "experiment_id": experiment_id}
             for assistant_id in set(request.assistants)
         ]
-        all_inserted = common_crud.bulk_insert_table(
+        all_inserted = common_crud.bulk_insert_rows(
             ctx.db, ExperimentAssistant, assistants, commit=True
         )
         if not all_inserted:
@@ -118,7 +118,7 @@ def update_experiment(request: UpdateExperimentRequest, ctx: Context = Depends(r
         for field_name, field_value in request.dict(exclude={"id"}).items()
         if field_value is not None
     }
-    crud.update_model(ctx.db, Experiment, request.id, **update_dict)
+    common_crud.update_row(ctx.db, Experiment, request.id, update_dict, commit=True)
 
 
 @router.delete("/api/deleteExperiment", description="删除实验", response_model=NoneResponse)
@@ -126,7 +126,7 @@ def update_experiment(request: UpdateExperimentRequest, ctx: Context = Depends(r
 def delete_experiment(
     request: DeleteModelRequest, ctx: Context = Depends(researcher_context)
 ) -> None:
-    crud.update_model(ctx.db, Experiment, request.id, is_deleted=True)
+    common_crud.update_row_as_deleted(ctx.db, Experiment, request.id, commit=True)
 
 
 @router.post("/api/addExperimentAssistants", description="添加实验助手", response_model=NoneResponse)
