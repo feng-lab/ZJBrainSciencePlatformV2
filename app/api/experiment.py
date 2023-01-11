@@ -105,7 +105,9 @@ def get_experiments_by_page(
 def get_experiment_assistants(
     experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
 ) -> list[UserInfo]:
-    return crud.list_experiment_assistants(ctx.db, experiment_id)
+    orm_users = crud.list_experiment_assistants(ctx.db, experiment_id)
+    user_infos = convert.list_(convert.user_orm_2_info, orm_users)
+    return user_infos
 
 
 @router.post("/api/updateExperiment", description="更新实验", response_model=NoneResponse)

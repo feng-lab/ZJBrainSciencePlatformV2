@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import Any, Callable
 
-from sqlalchemy import func, insert, select, text, update
+from sqlalchemy import and_, func, insert, select, text, update
 from sqlalchemy.engine import CursorResult, Row
 from sqlalchemy.orm import Session, joinedload, subqueryload
 from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
@@ -409,19 +409,21 @@ def search_experiments(
     return experiments
 
 
-def list_experiment_assistants(db: Session, experiment_id: int) -> list[UserInfo]:
+def list_experiment_assistants(db: Session, experiment_id: int) -> list[User]:
     stmt = (
         select(User.id, User.username, User.staff_id)
         .select_from(ExperimentAssistant)
-        .outerjoin(User, ExperimentAssistant.user_id == User.id)
-        .where(
-            ExperimentAssistant.experiment_id == experiment_id,
-            ExperimentAssistant.is_deleted == False,
-            User.is_deleted == False,
+        .join(
+            Experiment,
+            and_(
+                ExperimentAssistant.experiment_id == Experiment.id, Experiment.is_deleted == False
+            ),
         )
+        .join(User, and_(ExperimentAssistant.user_id == User.id, User.is_deleted == False))
+        .where(ExperimentAssistant.experiment_id == experiment_id)
     )
-    rows = db.execute(stmt).all()
-    return [UserInfo(id=row[0], username=row[1], staff_id=row[2]) for row in rows]
+    users = db.execute(stmt).all()
+    return users
 
 
 def search_experiment_assistants(
