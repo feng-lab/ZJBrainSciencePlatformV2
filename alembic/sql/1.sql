@@ -4,7 +4,7 @@ CREATE TABLE alembic_version
     CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
 );
 
--- Running upgrade  -> 576fba37f0c3
+-- Running upgrade  -> 9159c5ccaeb6
 
 CREATE TABLE user
 (
@@ -72,18 +72,12 @@ CREATE INDEX ix_notification_receiver ON notification (receiver);
 
 CREATE TABLE experiment_assistant
 (
-    id            INTEGER  NOT NULL COMMENT '主键' AUTO_INCREMENT,
-    gmt_create    DATETIME NOT NULL COMMENT '创建时间'       DEFAULT now(),
-    gmt_modified  DATETIME NOT NULL COMMENT '修改时间'       DEFAULT now(),
-    is_deleted    BOOL     NOT NULL COMMENT '该行是否被删除' DEFAULT false,
-    user_id       INTEGER  NOT NULL,
-    experiment_id INTEGER  NOT NULL,
-    PRIMARY KEY (id),
+    user_id       INTEGER NOT NULL,
+    experiment_id INTEGER NOT NULL,
+    PRIMARY KEY (user_id, experiment_id),
     FOREIGN KEY (experiment_id) REFERENCES experiment (id),
     FOREIGN KEY (user_id) REFERENCES user (id)
-) COMMENT ='实验助手';
-
-CREATE INDEX ix_experiment_assistant_experiment_id ON experiment_assistant (experiment_id);
+) COMMENT ='实验助手关系';
 
 CREATE TABLE file
 (
@@ -137,5 +131,5 @@ CREATE TABLE paradigm_file
 CREATE INDEX ix_paradigm_file_paradigm_id ON paradigm_file (paradigm_id);
 
 INSERT INTO alembic_version (version_num)
-VALUES ('576fba37f0c3');
+VALUES ('9159c5ccaeb6');
 

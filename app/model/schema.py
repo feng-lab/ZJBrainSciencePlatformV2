@@ -89,8 +89,8 @@ class ExperimentBase(BaseModel):
     is_non_invasive: bool | None
     subject_type: str | None = Field(max_length=50)
     subject_num: int | None = Field(ge=0)
-    neuron_source: str | None = Field(50)
-    stimulation_type: str | None = Field(50)
+    neuron_source: str | None = Field(max_length=50)
+    stimulation_type: str | None = Field(max_length=50)
     session_num: int | None = Field(ge=0)
     trail_num: int | None = Field(ge=0)
     is_shared: bool | None
@@ -109,7 +109,7 @@ class ExperimentInDB(ExperimentBase, BaseModelInDB):
         orm_mode = True
 
 
-class UserIdNameStaffId(BaseModel):
+class UserInfo(BaseModel):
     id: int
     username: str
     staff_id: str
@@ -119,8 +119,8 @@ class UserIdNameStaffId(BaseModel):
 
 
 class ExperimentResponse(ExperimentBase, BaseModelInDB):
-    main_operator: UserIdNameStaffId
-    assistants: list[UserIdNameStaffId]
+    main_operator: UserInfo
+    assistants: list[UserInfo]
 
 
 class ExperimentAssistantBase(BaseModel):
@@ -177,7 +177,7 @@ class ParadigmInDB(ParadigmCreate, BaseModelInDB):
 
 
 class ParadigmResponse(CreateParadigmRequest, BaseModelInDB):
-    creator: UserIdNameStaffId
+    creator: UserInfo
 
 
 class ParadigmFileBase(BaseModel):

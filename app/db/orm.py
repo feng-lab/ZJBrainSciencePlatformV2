@@ -98,6 +98,18 @@ class Notification(Base, ModelMixin):
         )
 
 
+class ExperimentAssistant(Base):
+    __tablename__ = "experiment_assistant"
+    __table_args__ = {"comment": "实验助手关系"}
+
+    user_id = Column(Integer, ForeignKey("user.id"), primary_key=True)
+    experiment_id = Column(Integer, ForeignKey("experiment.id"), primary_key=True)
+
+    @recursive_repr()
+    def __repr__(self):
+        return self.make_repr(user_id=self.user_id, experiment_id=self.experiment_id)
+
+
 class Experiment(Base, ModelMixin):
     __tablename__ = "experiment"
     __table_args__ = {"comment": "实验"}
@@ -124,7 +136,7 @@ class Experiment(Base, ModelMixin):
     is_shared = Column(Boolean, nullable=True, comment="实验是否公开")
 
     main_operator_obj = relationship("User")
-    assistants = relationship("ExperimentAssistant", back_populates="experiment")
+    assistants = relationship("User", secondary=ExperimentAssistant.__table__)
 
     @recursive_repr()
     def __repr__(self) -> str:
@@ -147,20 +159,6 @@ class Experiment(Base, ModelMixin):
             main_operator_obj=self.main_operator_obj,
             assistants=self.assistants,
         )
-
-
-class ExperimentAssistant(Base, ModelMixin):
-    __tablename__ = "experiment_assistant"
-    __table_args__ = {"comment": "实验助手"}
-
-    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-    experiment_id = Column(Integer, ForeignKey("experiment.id"), nullable=False, index=True)
-
-    experiment = relationship("Experiment", back_populates="assistants")
-
-    @recursive_repr()
-    def __repr__(self):
-        return self.make_repr(user_id=self.user_id, experiment_id=self.experiment_id)
 
 
 class File(Base, ModelMixin):

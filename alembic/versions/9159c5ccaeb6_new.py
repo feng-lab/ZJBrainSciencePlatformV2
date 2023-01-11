@@ -1,8 +1,8 @@
 """new
 
-Revision ID: 576fba37f0c3
+Revision ID: 9159c5ccaeb6
 Revises: 
-Create Date: 2023-01-10 01:45:34.755039
+Create Date: 2023-01-11 03:18:27.207875
 
 """
 import sqlalchemy as sa
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "576fba37f0c3"
+revision = "9159c5ccaeb6"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -140,40 +140,12 @@ def upgrade() -> None:
     op.create_index(op.f("ix_notification_receiver"), "notification", ["receiver"], unique=False)
     op.create_table(
         "experiment_assistant",
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
-        sa.Column(
-            "gmt_create",
-            sa.DateTime(),
-            server_default=sa.text("now()"),
-            nullable=False,
-            comment="创建时间",
-        ),
-        sa.Column(
-            "gmt_modified",
-            sa.DateTime(),
-            server_default=sa.text("now()"),
-            nullable=False,
-            comment="修改时间",
-        ),
-        sa.Column(
-            "is_deleted",
-            sa.Boolean(),
-            server_default=sa.text("false"),
-            nullable=False,
-            comment="该行是否被删除",
-        ),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("experiment_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(["experiment_id"], ["experiment.id"]),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"]),
-        sa.PrimaryKeyConstraint("id"),
-        comment="实验助手",
-    )
-    op.create_index(
-        op.f("ix_experiment_assistant_experiment_id"),
-        "experiment_assistant",
-        ["experiment_id"],
-        unique=False,
+        sa.PrimaryKeyConstraint("user_id", "experiment_id"),
+        comment="实验助手关系",
     )
     op.create_table(
         "file",
@@ -290,7 +262,6 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_file_index"), table_name="file")
     op.drop_index(op.f("ix_file_experiment_id"), table_name="file")
     op.drop_table("file")
-    op.drop_index(op.f("ix_experiment_assistant_experiment_id"), table_name="experiment_assistant")
     op.drop_table("experiment_assistant")
     op.drop_index(op.f("ix_notification_receiver"), table_name="notification")
     op.drop_index(op.f("ix_notification_gmt_create"), table_name="notification")

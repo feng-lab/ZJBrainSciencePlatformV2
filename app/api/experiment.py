@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from starlette.status import HTTP_404_NOT_FOUND
+from fastapi import APIRouter, Depends, Query
 
 from app.common.context import Context, human_subject_context, researcher_context
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import Experiment, ExperimentAssistant, User
+from app.model import convert
 from app.model.request import (
     DeleteModelRequest,
     GetExperimentsByPageSortBy,
@@ -19,7 +19,7 @@ from app.model.schema import (
     CreateExperimentRequest,
     ExperimentAssistantCreate,
     ExperimentResponse,
-    UserIdNameStaffId,
+    UserInfo,
 )
 
 router = APIRouter(tags=["experiment"])
@@ -33,7 +33,9 @@ def create_experiment(
     database_error = ServiceError.database_fail("创建实验失败")
 
     # 检查没有被删除的用户ID
-    deleted_assistants = common_crud.get_deleted_rows(ctx.db, User, [request.main_operator, *request.assistants])
+    deleted_assistants = common_crud.get_deleted_rows(
+        ctx.db, User, [request.main_operator, *request.assistants]
+    )
     if deleted_assistants is None:
         raise database_error
     elif len(deleted_assistants) > 0:
@@ -66,10 +68,11 @@ def create_experiment(
 def get_experiment_info(
     experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
 ) -> ExperimentResponse:
-    experiment = crud.get_experiment_by_id(ctx.db, experiment_id)
-    if experiment is None:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="experiment not exists")
-    experiment.assistants = crud.list_experiment_assistants(ctx.db, experiment_id)
+    orm_experiment = crud.get_experiment_by_id(ctx.db, experiment_id)
+    if orm_experiment is None:
+        raise ServiceError.invalid_request("实验不存在")
+
+    experiment = convert.experiment_orm_2_response(orm_experiment)
     return experiment
 
 
@@ -102,14 +105,12 @@ def get_experiments_by_page(
 
 
 @router.get(
-    "/api/getExperimentAssistants",
-    description="获取实验助手列表",
-    response_model=Response[list[UserIdNameStaffId]],
+    "/api/getExperimentAssistants", description="获取实验助手列表", response_model=Response[list[UserInfo]]
 )
 @wrap_api_response
 def get_experiment_assistants(
     experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
-) -> list[UserIdNameStaffId]:
+) -> list[UserInfo]:
     return crud.list_experiment_assistants(ctx.db, experiment_id)
 
 

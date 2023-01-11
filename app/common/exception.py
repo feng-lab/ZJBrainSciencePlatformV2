@@ -1,4 +1,4 @@
-from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_400_BAD_REQUEST
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 
 from app.model.response import CODE_DATABASE_FAIL, CODE_FAIL
 
@@ -11,7 +11,9 @@ class ServiceError(Exception):
 
     @staticmethod
     def database_fail(message: str):
-        return ServiceError(status_code=HTTP_500_INTERNAL_SERVER_ERROR, code=CODE_DATABASE_FAIL, message=message)
+        return ServiceError(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR, code=CODE_DATABASE_FAIL, message=message
+        )
 
     @staticmethod
     def invalid_request(message: str):

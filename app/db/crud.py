@@ -4,7 +4,7 @@ from typing import Any, Callable
 
 from sqlalchemy import func, insert, select, text, update
 from sqlalchemy.engine import CursorResult, Row
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, subqueryload
 from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
 from app.common.config import config
@@ -36,8 +36,8 @@ from app.model.schema import (
     ParadigmResponse,
     UserAuth,
     UserCreate,
-    UserIdNameStaffId,
     UserInDB,
+    UserInfo,
     UserResponse,
 )
 
@@ -357,31 +357,26 @@ def search_files(
     )
 
 
-def get_experiment_by_id(db: Session, experiment_id: int) -> ExperimentResponse | None:
+def load_user_info_option(strategy, relation_column):
+    return strategy(relation_column.and_(User.is_deleted == False)).load_only(
+        User.id, User.username, User.staff_id
+    )
+
+
+def get_experiment_by_id(db: Session, experiment_id: int) -> Experiment | None:
     stmt = (
-        select(Experiment, User.username, User.staff_id)
-        .select_from(Experiment)
-        .outerjoin(User, Experiment.main_operator == User.id)
-        .where(
-            Experiment.id == experiment_id, Experiment.is_deleted == False, User.is_deleted == False
+        select(Experiment)
+        .where(Experiment.id == experiment_id, Experiment.is_deleted == False)
+        .options(
+            load_user_info_option(joinedload, Experiment.main_operator_obj),
+            load_user_info_option(subqueryload, Experiment.assistants),
         )
-        .limit(1)
     )
-    row = db.execute(stmt).first()
-    if row is None:
-        return None
-    experiment_in_db = ExperimentInDB.from_orm(row[0])
-    experiment = ExperimentResponse(
-        main_operator=UserIdNameStaffId(
-            id=experiment_in_db.main_operator, username=row[1], staff_id=row[2]
-        ),
-        assistants=[],
-        **experiment_in_db.dict(exclude={"main_operator"}),
-    )
+    experiment = db.execute(stmt).scalar()
     return experiment
 
 
-def list_experiment_assistants(db: Session, experiment_id: int) -> list[UserIdNameStaffId]:
+def list_experiment_assistants(db: Session, experiment_id: int) -> list[UserInfo]:
     stmt = (
         select(User.id, User.username, User.staff_id)
         .select_from(ExperimentAssistant)
@@ -393,7 +388,7 @@ def list_experiment_assistants(db: Session, experiment_id: int) -> list[UserIdNa
         )
     )
     rows = db.execute(stmt).all()
-    return [UserIdNameStaffId(id=row[0], username=row[1], staff_id=row[2]) for row in rows]
+    return [UserInfo(id=row[0], username=row[1], staff_id=row[2]) for row in rows]
 
 
 def search_experiments(
@@ -424,9 +419,7 @@ def search_experiments(
         .order_by(sort_by_spec)
         .map_model_with(
             lambda row: ExperimentResponse(
-                main_operator=UserIdNameStaffId(
-                    id=row[0].main_operator, username=row[1], staff_id=row[2]
-                ),
+                main_operator=UserInfo(id=row[0].main_operator, username=row[1], staff_id=row[2]),
                 assistants=[],
                 **ExperimentInDB.from_orm(row[0]).dict(exclude={"main_operator"}),
             )
@@ -435,9 +428,7 @@ def search_experiments(
     )
 
 
-def bulk_list_experiment_assistants(
-    db: Session, experiment_ids: list[int]
-) -> list[list[UserIdNameStaffId]]:
+def bulk_list_experiment_assistants(db: Session, experiment_ids: list[int]) -> list[list[UserInfo]]:
     return [list_experiment_assistants(db, experiment_id) for experiment_id in experiment_ids]
 
 
@@ -464,7 +455,7 @@ def get_paradigm_by_id(db: Session, paradigm_id: int) -> ParadigmResponse | None
     if row is None:
         return None
     return ParadigmResponse(
-        creator=UserIdNameStaffId(id=row[0].creator, username=row[1], staff_id=row[2]),
+        creator=UserInfo(id=row[0].creator, username=row[1], staff_id=row[2]),
         images=[],
         **ParadigmInDB.from_orm(row[0]).dict(exclude={"creator"}),
     )
@@ -488,7 +479,7 @@ def search_paradigms(
         .page_param(page_param)
         .map_model_with(
             lambda row: ParadigmResponse(
-                creator=UserIdNameStaffId(id=row[0].creator, username=row[1], staff_id=row[2]),
+                creator=UserInfo(id=row[0].creator, username=row[1], staff_id=row[2]),
                 images=[],
                 **ParadigmInDB.from_orm(row[0]).dict(exclude={"creator"}),
             )
