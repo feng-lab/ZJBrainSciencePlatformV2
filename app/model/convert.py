@@ -1,6 +1,6 @@
 from typing import Callable, TypeVar
 
-from app.db.orm import Experiment, User
+from app.db.orm import Experiment
 from app.model.schema import ExperimentInDB, ExperimentResponse, UserInfo
 
 A = TypeVar("A")
@@ -15,11 +15,7 @@ def list_(function: Callable[[A], B], items: list[A] | None) -> list[B]:
 
 def experiment_orm_2_response(experiment: Experiment) -> ExperimentResponse:
     return ExperimentResponse(
-        main_operator=user_orm_2_info(experiment.main_operator_obj),
-        assistants=list_(user_orm_2_info, experiment.assistants),
+        main_operator=UserInfo.from_orm(experiment.main_operator_obj),
+        assistants=list_(UserInfo.from_orm, experiment.assistants),
         **ExperimentInDB.from_orm(experiment).dict(exclude={"main_operator"}),
     )
-
-
-def user_orm_2_info(user: User) -> UserInfo:
-    return UserInfo.from_orm(user)

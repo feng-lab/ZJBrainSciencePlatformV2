@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
+from starlette.status import HTTP_401_UNAUTHORIZED
 
 from app.common.context import Context, administrator_context, all_user_context
-from app.common.user_auth import AccessLevel, hash_password, verify_password
-from app.db import cache, crud
-from app.db.__init__ import SessionLocal
+from app.common.exception import ServiceError
+from app.common.user_auth import hash_password, verify_password
+from app.db import cache, common_crud, crud
 from app.db.orm import User
 from app.model.request import (
     DeleteModelRequest,
@@ -14,7 +14,7 @@ from app.model.request import (
     get_models_by_page,
 )
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
-from app.model.schema import CreateUserRequest, UserCreate, UserInDB, UserResponse
+from app.model.schema import CreateUserRequest, UserResponse
 
 router = APIRouter(tags=["user"])
 
@@ -31,28 +31,13 @@ def create_user(request: CreateUserRequest, ctx: Context = Depends(administrator
         return user_auth.id
 
     # 数据库不能保存密码明文，只能保存密码哈希值
-    hashed_password = hash_password(request.password)
-    user_create = UserCreate(
-        username=request.username,
-        staff_id=request.staff_id,
-        access_level=request.access_level,
-        hashed_password=hashed_password,
-    )
-    return crud.insert_model(ctx.db, User, user_create)
-
-
-def create_root_user() -> None:
-    root_user_create = UserCreate(
-        username=ROOT_USERNAME,
-        hashed_password=hash_password(ROOT_PASSWORD),
-        staff_id=ROOT_USERNAME,
-        access_level=AccessLevel.ADMINISTRATOR.value,
-    )
-    db = SessionLocal()
-    try:
-        crud.insert_or_update_user(db, root_user_create)
-    finally:
-        db.close()
+    user_dict = request.dict(exclude={"password"}) | {
+        "hashed_password": hash_password(request.password)
+    }
+    user_id = common_crud.insert_row(ctx.db, User, user_dict, commit=True)
+    if user_id is None:
+        raise ServiceError.database_fail("创建用户失败")
+    return user_id
 
 
 @router.get(
@@ -60,8 +45,9 @@ def create_root_user() -> None:
 )
 @wrap_api_response
 def get_current_user_info(ctx: Context = Depends(all_user_context)) -> UserResponse:
-    user = crud.get_model(ctx.db, User, UserInDB, ctx.user_id)
-    return UserResponse(**user.dict())
+    orm_user = common_crud.select_row_by_id(ctx.db, User, ctx.user_id)
+    user = UserResponse.from_orm(orm_user)
+    return user
 
 
 @router.get("/api/getUserInfo", description="获取用户信息", response_model=Response[UserResponse])
@@ -70,10 +56,11 @@ def get_user_info(
     user_id: int = Query(alias="id", description="用户ID", ge=0),
     ctx: Context = Depends(administrator_context),
 ) -> UserResponse:
-    user = crud.get_model(ctx.db, User, UserInDB, user_id)
-    if user is None:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="用户不存在")
-    return UserResponse(**user.dict())
+    orm_user = common_crud.select_row_by_id(ctx.db, User, user_id)
+    if orm_user is None:
+        raise ServiceError.not_found("未找到用户")
+    user = UserResponse.from_orm(orm_user)
+    return user
 
 
 @router.get(
@@ -96,11 +83,17 @@ def get_users_by_page(
 def update_user_access_level(
     request: UpdateUserAccessLevelRequest, ctx: Context = Depends(administrator_context)
 ) -> None:
-    updated = crud.update_model(ctx.db, User, request.id, access_level=request.access_level)
-    if not updated:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="用户不存在")
-    else:
+    user_exists = common_crud.exists_row_by_id(ctx.db, User, request.id)
+    if not user_exists:
+        raise ServiceError.invalid_request("用户不存在")
+
+    success = common_crud.update_row(
+        ctx.db, User, request.id, {"access_level": request.access_level}, commit=True
+    )
+    if success:
         cache.invalidate_user_access_level(ctx.cache, request.id)
+    else:
+        raise ServiceError.database_fail("修改用户权限失败")
 
 
 @router.post("/api/updatePassword", description="用户修改密码", response_model=NoneResponse)
@@ -113,10 +106,16 @@ def update_password(
     if user_id is None or user_id != ctx.user_id:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="原密码错误")
     hashed_new_password = hash_password(request.new_password)
-    crud.update_model(ctx.db, User, user_id, hashed_password=hashed_new_password)
+    success = common_crud.update_row(
+        ctx.db, User, user_id, {"hashed_password": hashed_new_password}, commit=True
+    )
+    if not success:
+        raise ServiceError.database_fail("用户修改密码失败")
 
 
 @router.delete("/api/deleteUser", description="删除用户", response_model=NoneResponse)
 @wrap_api_response
 def delete_user(request: DeleteModelRequest, ctx: Context = Depends(administrator_context)) -> None:
-    crud.update_model(ctx.db, User, request.id, is_deleted=True)
+    success = common_crud.update_row_as_deleted(ctx.db, User, request.id, commit=True)
+    if not success:
+        raise ServiceError.database_fail("删除用户失败")

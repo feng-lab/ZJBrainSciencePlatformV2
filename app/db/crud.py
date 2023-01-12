@@ -35,7 +35,6 @@ from app.model.schema import (
     ParadigmResponse,
     UserAuth,
     UserCreate,
-    UserInDB,
     UserInfo,
     UserResponse,
 )
@@ -191,7 +190,7 @@ def get_user_auth_by_username(db: Session, username: str) -> UserAuth | None:
     stmt = select(
         User.id, User.username, User.staff_id, User.access_level, User.hashed_password
     ).where(User.username == username, User.is_deleted == False)
-    row = db.execute(stmt).one_or_none()
+    row = db.execute(stmt).first()
     return UserAuth.from_orm(row) if row is not None else None
 
 
@@ -208,7 +207,7 @@ def search_users(
         .where_contains(User.staff_id, staff_id)
         .where_eq(User.access_level, access_level)
         .page_param(page_param)
-        .map_model_with(lambda row: UserResponse(**UserInDB.from_orm(row[0]).dict()))
+        .map_model_with(lambda row: UserResponse.from_orm(row[0]))
         .paged_data(UserResponse)
     )
 

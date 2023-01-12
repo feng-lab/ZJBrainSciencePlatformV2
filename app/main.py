@@ -9,28 +9,28 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from jose import ExpiredSignatureError
+from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import RedirectResponse
-from starlette.status import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_401_UNAUTHORIZED,
-    HTTP_500_INTERNAL_SERVER_ERROR,
-)
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
-from app.api import experiment, user
 from app.api.algorithm import router as algorithm_router
 from app.api.auth import router as auth_router
 from app.api.experiment import router as experiment_router
 from app.api.file import router as file_router
 from app.api.notification import router as notification_router
 from app.api.paradigm import router as paradigm_router
+from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
 from app.api.user import router as user_router
 from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener
-from app.db import check_database_is_up_to_date
+from app.common.user_auth import AccessLevel, hash_password
+from app.db import SessionLocal, check_database_is_up_to_date, crud
+from app.db.orm import Experiment
 from app.model.response import CODE_FAIL, CODE_SESSION_TIMEOUT, NoneResponse
+from app.model.schema import UserCreate
 
 app_logger = logging.getLogger(__name__)
 access_logger = logging.getLogger(ACCESS_LOGGER_NAME)
@@ -73,8 +73,13 @@ def startup() -> None:
     if not check_database_is_up_to_date():
         app_logger.error("database is not up-to-date, run alembic to upgrade")
         sys.exit(1)
-    user.create_root_user()
-    experiment.create_default_experiment()
+
+    db = SessionLocal()
+    try:
+        create_root_user(db)
+        create_default_experiment(db)
+    finally:
+        db.close()
 
 
 @app.on_event("shutdown")
@@ -120,8 +125,7 @@ def handle_http_exception(_request: Request, e: HTTPException):
 @app.exception_handler(ServiceError)
 def handle_service_error(_request: Request, e: ServiceError):
     return JSONResponse(
-        status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-        content=NoneResponse(code=e.code, message=e.message).dict(),
+        status_code=e.status_code, content=NoneResponse(code=e.code, message=e.message).dict()
     )
 
 
@@ -147,3 +151,26 @@ def index():
         return RedirectResponse(url="/docs")
     else:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
+
+
+def create_default_experiment(db: Session) -> None:
+    default_experiment = {
+        "name": "DEFAULT",
+        "description": "Default experiment for files without experiment",
+        "type": Experiment.Type.SSVEP,
+        "location": "Nowhere",
+        "start_at": datetime(year=2023, month=1, day=1, hour=0, minute=0, second=0),
+        "end_at": datetime(year=2023, month=1, day=1, hour=0, minute=0, second=0),
+        "main_operator": 1,
+    }
+    crud.insert_or_update_experiment(db, 0, default_experiment)
+
+
+def create_root_user(db: Session) -> None:
+    root_user_create = UserCreate(
+        username=ROOT_USERNAME,
+        hashed_password=hash_password(ROOT_PASSWORD),
+        staff_id=ROOT_USERNAME,
+        access_level=AccessLevel.ADMINISTRATOR.value,
+    )
+    crud.insert_or_update_user(db, root_user_create)

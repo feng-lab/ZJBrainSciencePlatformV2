@@ -49,7 +49,8 @@ class UserInDB(UserCreate, UserSessionMixin, BaseModelInDB):
 
 
 class UserResponse(UserBase, UserSessionMixin, BaseModelInDB):
-    pass
+    class Config:
+        orm_mode = True
 
 
 class NotificationBase(BaseModel):

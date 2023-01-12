@@ -1,7 +1,7 @@
 import logging
 from typing import Any, TypeVar
 
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, insert, select, text, update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
@@ -13,6 +13,23 @@ from app.db import Base
 logger = logging.getLogger(__name__)
 
 OrmModel = TypeVar("OrmModel", bound=Base)
+
+
+def select_row_by_id(db: Session, table: type[OrmModel], id_: int) -> OrmModel | None:
+    stmt = select(table).where(table.id == id_, table.is_deleted == False)
+    row = db.execute(stmt).scalar()
+    return row
+
+
+def exists_row_by_id(db: Session, table: type[OrmModel], id_: int) -> bool:
+    stmt = (
+        select(text("1"))
+        .select_from(table)
+        .where(table.id == id_, table.is_deleted == False)
+        .limit(1)
+    )
+    row = db.execute(stmt).first()
+    return row is not None
 
 
 def insert_row(

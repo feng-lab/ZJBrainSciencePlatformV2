@@ -18,6 +18,8 @@ CODE_FAIL: int = 1
 CODE_SESSION_TIMEOUT: int = 2
 # 数据库操作失败
 CODE_DATABASE_FAIL: int = 3
+# 要获取的对象不存在
+CODE_NOT_FOUND: int = 4
 
 MESSAGE_SUCCESS: str = "success"
 
