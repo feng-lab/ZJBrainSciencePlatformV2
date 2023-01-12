@@ -42,13 +42,13 @@ def up_platform():
 @add_command
 def up_database():
     if not docker_compose_service_running("database"):
-        docker_compose("up", "--detach", "--build", "database")
+        docker_compose("up", "--detach", "--build", "database", check=True)
 
 
 @add_command
 def up_cache():
     if not docker_compose_service_running("cache"):
-        docker_compose("up", "--detach", "--build", "cache")
+        docker_compose("up", "--detach", "--build", "cache", check=True)
 
 
 @add_command

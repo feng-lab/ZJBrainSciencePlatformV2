@@ -15,12 +15,7 @@ from app.model.request import (
     get_models_by_page,
 )
 from app.model.response import NoneResponse, Response, wrap_api_response
-from app.model.schema import (
-    CreateExperimentRequest,
-    ExperimentAssistantCreate,
-    ExperimentResponse,
-    UserInfo,
-)
+from app.model.schema import CreateExperimentRequest, ExperimentResponse, UserInfo
 
 router = APIRouter(tags=["experiment"])
 
@@ -118,7 +113,9 @@ def update_experiment(request: UpdateExperimentRequest, ctx: Context = Depends(r
         for field_name, field_value in request.dict(exclude={"id"}).items()
         if field_value is not None
     }
-    common_crud.update_row(ctx.db, Experiment, request.id, update_dict, commit=True)
+    success = common_crud.update_row(ctx.db, Experiment, request.id, update_dict, commit=True)
+    if not success:
+        raise ServiceError.database_fail("更新实验失败")
 
 
 @router.delete("/api/deleteExperiment", description="删除实验", response_model=NoneResponse)
@@ -134,15 +131,18 @@ def delete_experiment(
 def add_experiment_assistants(
     request: UpdateExperimentAssistantsRequest, ctx: Context = Depends(researcher_context)
 ) -> None:
-    exist_assistants = set(
-        crud.search_experiment_assistants(ctx.db, request.experiment_id, request.assistant_ids)
+    exist_assistants = crud.search_experiment_assistants(
+        ctx.db, request.experiment_id, request.assistant_ids
     )
     assistants = [
-        ExperimentAssistantCreate(user_id=assistant_id, experiment_id=request.experiment_id)
+        {"user_id": assistant_id, "experiment_id": request.experiment_id}
         for assistant_id in request.assistant_ids
         if assistant_id not in exist_assistants
     ]
-    crud.bulk_insert_models(ctx.db, ExperimentAssistant, assistants)
+    if len(assistants) > 0:
+        success = common_crud.bulk_insert_rows(ctx.db, ExperimentAssistant, assistants, commit=True)
+        if not success:
+            raise ServiceError.database_fail("添加实验助手失败")
 
 
 @router.delete("/api/deleteExperimentAssistants", description="删除实验助手", response_model=NoneResponse)
@@ -150,9 +150,14 @@ def add_experiment_assistants(
 def delete_experiment_assistants(
     request: UpdateExperimentAssistantsRequest, ctx: Context = Depends(researcher_context)
 ) -> None:
-    crud.bulk_update_models_as_deleted(
+    success = common_crud.bulk_delete_rows(
         ctx.db,
         ExperimentAssistant,
-        ExperimentAssistant.experiment_id == request.experiment_id,
-        ExperimentAssistant.user_id.in_(request.assistant_ids),
+        [
+            ExperimentAssistant.experiment_id == request.experiment_id,
+            ExperimentAssistant.user_id.in_(request.assistant_ids),
+        ],
+        commit=True,
     )
+    if not success:
+        raise ServiceError.database_fail("删除实验助手失败")

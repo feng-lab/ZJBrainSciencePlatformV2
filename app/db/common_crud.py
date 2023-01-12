@@ -1,7 +1,7 @@
 import logging
 from typing import Any, TypeVar
 
-from sqlalchemy import insert, select, update
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
@@ -78,13 +78,13 @@ def update_row(
     commit: bool,
     touch: bool = True,
 ) -> bool:
-    return bulk_update_rows(db, table, [table.id == id_], update_dict, commit=commit)
+    return bulk_update_rows(db, table, [table.id == id_], update_dict, commit=commit, touch=touch)
 
 
 def update_row_as_deleted(
     db: Session, table: type[OrmModel], id_: int, *, commit: bool, touch: bool = True
 ) -> bool:
-    return update_row(db, table, id_, {"is_deleted": True}, commit=commit)
+    return update_row(db, table, id_, {"is_deleted": True}, commit=commit, touch=touch)
 
 
 def bulk_update_rows(
@@ -116,4 +116,24 @@ def bulk_update_rows(
 def bulk_update_rows_as_deleted(
     db: Session, table: type[OrmModel], ids: list[int], *, commit: bool, touch: bool = True
 ) -> bool:
-    return bulk_update_rows(db, table, [table.id.in_(ids)], {"is_deleted": True}, commit=commit)
+    return bulk_update_rows(
+        db, table, [table.id.in_(ids)], {"is_deleted": True}, commit=commit, touch=touch
+    )
+
+
+def bulk_delete_rows(
+    db: Session, table: type[OrmModel], where: list[WhereHavingRole], *, commit: bool
+) -> bool:
+    success = False
+    try:
+        stmt = delete(table).where(*where)
+        db.execute(stmt)
+        success = True
+    except DBAPIError as e:
+        logger.error(f"delete rows from table {table.__name__} error, msg={e}")
+    finally:
+        if not success:
+            db.rollback()
+        elif commit:
+            db.commit()
+    return success

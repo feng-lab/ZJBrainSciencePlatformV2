@@ -432,7 +432,6 @@ def search_experiment_assistants(
     stmt = select(ExperimentAssistant.user_id).where(
         ExperimentAssistant.experiment_id == experiment_id,
         ExperimentAssistant.user_id.in_(assistant_ids),
-        ExperimentAssistant.is_deleted == False,
     )
     return db.execute(stmt).scalars().all()
 
