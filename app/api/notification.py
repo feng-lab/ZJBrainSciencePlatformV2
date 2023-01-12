@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, Query
 
 from app.common.config import config
 from app.common.context import Context, human_subject_context
-from app.db import crud
+from app.common.exception import ServiceError
+from app.db import common_crud, crud
 from app.db.orm import Notification
 from app.model.request import (
     GetModelsByPageParam,
@@ -25,7 +26,11 @@ def send_notification(
     notification_create = NotificationCreate(
         **request.dict(), creator=ctx.user_id, status=Notification.Status.unread
     )
-    notification_id = crud.insert_model(ctx.db, Notification, notification_create)
+    notification_id = common_crud.insert_row(
+        ctx.db, Notification, notification_create.dict(), commit=True
+    )
+    if notification_id is None:
+        raise ServiceError.database_fail("发送通知失败")
     return notification_id
 
 
@@ -85,5 +90,16 @@ def mark_notifications_as_read(
     request: MarkNotificationsAsReadRequest, ctx: Context = Depends(human_subject_context)
 ) -> list[int]:
     notification_ids = list(set(request.notification_ids))
-    crud.update_notifications_as_read(ctx.db, ctx.user_id, request.is_all, notification_ids)
+    where = [
+        Notification.receiver == ctx.user_id,
+        Notification.is_deleted == False,
+        Notification.status == Notification.Status.unread,
+    ]
+    if not request.is_all:
+        where.append(Notification.id.in_(notification_ids))
+    success = common_crud.bulk_update_rows(
+        ctx.db, Notification, where, {"status": Notification.Status.read}, commit=True
+    )
+    if not success:
+        raise ServiceError.database_fail("批量已读失败")
     return crud.list_unread_notifications(ctx.db, ctx.user_id, request.is_all, notification_ids)

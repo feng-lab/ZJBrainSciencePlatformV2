@@ -283,24 +283,6 @@ def list_notifications(
     )
 
 
-def update_notifications_as_read(
-    db: Session, user_id: int, is_all: bool, msg_ids: list[int]
-) -> None:
-    stmt = (
-        update(Notification)
-        .where(
-            Notification.receiver == user_id,
-            Notification.is_deleted == False,
-            Notification.status == Notification.Status.unread,
-        )
-        .values(status=Notification.Status.read)
-    )
-    if not is_all:
-        stmt = stmt.where(Notification.id.in_(msg_ids))
-    db.execute(stmt)
-    db.commit()
-
-
 def list_unread_notifications(
     db: Session, user_id: int, is_all: bool, msg_ids: list[int]
 ) -> list[int]:
