@@ -4,18 +4,18 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends
 from fastapi import File as FastApiFile
-from fastapi import Form, HTTPException, Query, UploadFile
+from fastapi import Form, Query, UploadFile
 from fastapi.responses import FileResponse as FastApiFileResponse
 from sqlalchemy.orm import Session
-from starlette.status import HTTP_404_NOT_FOUND
 
 from app.common.config import config
 from app.common.context import Context, human_subject_context, not_logon_context, researcher_context
-from app.db import crud
+from app.common.exception import ServiceError
+from app.db import common_crud, crud
 from app.db.orm import File
 from app.model.request import DeleteModelRequest, GetModelsByPageParam, get_models_by_page
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
-from app.model.schema import FileCreate, FileInDB, FileResponse
+from app.model.schema import FileResponse
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +36,18 @@ def upload_file(
     store_path = get_os_path(experiment_id, file_index, extension)
     write_file(file, store_path)
     file_size = os.path.getsize(store_path) / 1024 / 1024
-    file_create = FileCreate(
-        experiment_id=experiment_id,
-        name=name,
-        extension=extension,
-        index=file_index,
-        size=file_size,
-        is_original=is_original,
-    )
-    return crud.insert_model(ctx.db, File, file_create)
+    file_dict = {
+        "experiment_id": experiment_id,
+        "name": name,
+        "extension": extension,
+        "index": file_index,
+        "size": file_size,
+        "is_original": is_original,
+    }
+    file_id = common_crud.insert_row(ctx.db, File, file_dict, commit=True)
+    if not file_id:
+        raise ServiceError.database_fail("上传文件失败")
+    return file_id
 
 
 @router.get("/api/getFileTypes", description="获取当前实验已有的文件类型", response_model=Response[list[str]])
@@ -75,9 +78,10 @@ def get_files_by_page(
 def download_file(
     file_id: int = Path(description="文件ID"), ctx: Context = Depends(not_logon_context)
 ) -> FastApiFileResponse:
-    file: FileInDB = crud.get_model(ctx.db, File, FileInDB, file_id)
+    file = common_crud.select_row_by_id(ctx.db, File, file_id)
     if file is None:
-        raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="file not found")
+        raise ServiceError.not_found("未找到文件")
+
     os_path = get_os_path(file.experiment_id, file.index, file.extension)
     return FastApiFileResponse(path=os_path, filename=file.name)
 
@@ -85,9 +89,10 @@ def download_file(
 @router.delete("/api/deleteFile", description="删除文件", response_model=NoneResponse)
 @wrap_api_response
 def delete_file(request: DeleteModelRequest, ctx: Context = Depends(researcher_context)) -> None:
-    file: FileInDB = crud.get_model(ctx.db, File, FileInDB, request.id)
+    file = common_crud.select_row_by_id(ctx.db, File, request.id)
     if file is None:
         return None
+
     os_path = get_os_path(file.experiment_id, file.index, file.extension)
     try:
         os_path.unlink(missing_ok=False)
@@ -95,7 +100,10 @@ def delete_file(request: DeleteModelRequest, ctx: Context = Depends(researcher_c
         logger.error(f"failed to delete file {os_path}, not found")
     else:
         logger.info(f"deleted file {os_path}")
-    crud.update_model_as_deleted(ctx.db, File, request.id)
+
+    success = common_crud.update_row_as_deleted(ctx.db, File, request.id, commit=True)
+    if not success:
+        raise ServiceError.database_fail("删除文件失败")
 
 
 def get_next_index(db: Session, experiment_id: int) -> int:
