@@ -4,7 +4,6 @@ CREATE TABLE alembic_version
     CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
 );
 
--- Running upgrade  -> 9159c5ccaeb6
 
 CREATE TABLE user
 (
@@ -113,23 +112,15 @@ CREATE TABLE paradigm
     FOREIGN KEY (experiment_id) REFERENCES experiment (id)
 ) COMMENT ='实验范式';
 
-CREATE INDEX ix_paradigm_experiment_id ON paradigm (experiment_id);
-
 CREATE TABLE paradigm_file
 (
-    id           INTEGER  NOT NULL COMMENT '主键' AUTO_INCREMENT,
-    gmt_create   DATETIME NOT NULL COMMENT '创建时间'       DEFAULT now(),
-    gmt_modified DATETIME NOT NULL COMMENT '修改时间'       DEFAULT now(),
-    is_deleted   BOOL     NOT NULL COMMENT '该行是否被删除' DEFAULT false,
-    paradigm_id  INTEGER  NOT NULL COMMENT '实验范式ID',
-    file_id      INTEGER  NOT NULL COMMENT '文件ID',
-    PRIMARY KEY (id),
+    paradigm_id INTEGER NOT NULL,
+    file_id     INTEGER NOT NULL,
+    PRIMARY KEY (paradigm_id, file_id),
     FOREIGN KEY (file_id) REFERENCES file (id),
     FOREIGN KEY (paradigm_id) REFERENCES paradigm (id)
-) COMMENT ='实验范式文件';
-
-CREATE INDEX ix_paradigm_file_paradigm_id ON paradigm_file (paradigm_id);
+) COMMENT ='实验范式文件关系';
 
 INSERT INTO alembic_version (version_num)
-VALUES ('9159c5ccaeb6');
+VALUES ('a71523d0b924');
 

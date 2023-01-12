@@ -5,7 +5,7 @@ from typing import Any, Callable
 from sqlalchemy import and_, func, insert, or_, select, text, update
 from sqlalchemy.engine import CursorResult, Row
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy.orm import Session, joinedload, subqueryload
+from sqlalchemy.orm import Session, joinedload, load_only, noload, subqueryload
 from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
 from app.common.config import config
@@ -458,29 +458,65 @@ def search_experiment_assistants(
     return db.execute(stmt).scalars().all()
 
 
-def get_paradigm_by_id(db: Session, paradigm_id: int) -> ParadigmResponse | None:
+def load_paradigm_creator_option():
+    return load_user_info_option(joinedload, Paradigm.creator_obj)
+
+
+def load_paradigm_files_option():
+    return subqueryload(Paradigm.files.and_(File.is_deleted == False)).load_only(File.id)
+
+
+def get_paradigm_by_id(db: Session, paradigm_id: int) -> Paradigm | None:
     stmt = (
-        select(Paradigm, User.username, User.staff_id)
-        .select_from(Paradigm)
-        .outerjoin(User, Paradigm.creator == User.id)
-        .where(Paradigm.id == paradigm_id, Paradigm.is_deleted == False, User.is_deleted == False)
-        .limit(1)
+        select(Paradigm)
+        .where(Paradigm.id == paradigm_id, Paradigm.is_deleted == False)
+        .options(load_paradigm_creator_option(), load_paradigm_files_option())
     )
-    row = db.execute(stmt).first()
-    if row is None:
-        return None
-    return ParadigmResponse(
-        creator=UserInfo(id=row[0].creator, username=row[1], staff_id=row[2]),
-        images=[],
-        **ParadigmInDB.from_orm(row[0]).dict(exclude={"creator"}),
-    )
+    paradigm = db.execute(stmt).scalar()
+    return paradigm
 
 
 def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
-    stmt = select(ParadigmFile.file_id).where(
-        ParadigmFile.paradigm_id == paradigm_id, ParadigmFile.is_deleted == False
-    )
+    stmt = select(ParadigmFile.file_id).where(ParadigmFile.paradigm_id == paradigm_id)
     return db.execute(stmt).scalars().all()
+
+
+def list_paradigm_file_infos(db: Session, paradigm_id: int) -> list[File]:
+    stmt = (
+        select(Paradigm)
+        .join(
+            Experiment,
+            and_(Experiment.id == Paradigm.experiment_id, Experiment.is_deleted == False),
+        )
+        .where(Paradigm.id == paradigm_id, Paradigm.is_deleted == False)
+        .options(
+            load_only(Paradigm.id),
+            noload(Paradigm.creator_obj),
+            subqueryload(Paradigm.files.and_(File.is_deleted == False)).load_only(
+                File.id, File.experiment_id, File.index, File.extension
+            ),
+        )
+    )
+    paradigm = db.execute(stmt).scalar()
+    return paradigm.files if paradigm is not None else []
+
+
+def search_paradigms_v2(
+    db: Session, experiment_id: int, page_param: GetModelsByPageParam
+) -> list[Paradigm]:
+    stmt = (
+        select(Paradigm)
+        .where(Paradigm.experiment_id == experiment_id)
+        .join(
+            Experiment,
+            and_(Paradigm.experiment_id == Experiment.id, Experiment.is_deleted == False),
+        )
+        .offset(page_param.offset)
+        .limit(page_param.limit)
+        .options(load_paradigm_creator_option(), load_paradigm_files_option())
+    )
+    paradigms = db.execute(stmt).scalars().all()
+    return paradigms
 
 
 def search_paradigms(

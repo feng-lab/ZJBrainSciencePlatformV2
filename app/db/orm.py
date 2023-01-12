@@ -15,7 +15,7 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.sql import expression
 
 from app.db import Base
@@ -186,17 +186,28 @@ class File(Base, ModelMixin):
         )
 
 
+class ParadigmFile(Base):
+    __tablename__ = "paradigm_file"
+    __table_args__ = {"comment": "实验范式文件关系"}
+
+    paradigm_id: Mapped[int] = Column(Integer, ForeignKey("paradigm.id"), primary_key=True)
+    file_id = Column(Integer, ForeignKey("file.id"), primary_key=True)
+
+    @recursive_repr()
+    def __repr__(self):
+        return self.make_repr(paradigm_id=self.paradigm_id, file_id=self.file_id)
+
+
 class Paradigm(Base, ModelMixin):
     __tablename__ = "paradigm"
     __table_args__ = {"comment": "实验范式"}
 
-    experiment_id = Column(
-        Integer, ForeignKey("experiment.id"), nullable=False, index=True, comment="实验ID"
-    )
+    experiment_id = Column(Integer, ForeignKey("experiment.id"), nullable=False, comment="实验ID")
     creator = Column(Integer, ForeignKey("user.id"), nullable=False, comment="创建者ID")
     description = Column(Text(), nullable=False, comment="描述文字")
 
-    files = relationship("ParadigmFile", back_populates="paradigm")
+    files = relationship("File", secondary=ParadigmFile.__table__)
+    creator_obj = relationship("User")
 
     @recursive_repr()
     def __repr__(self):
@@ -205,22 +216,4 @@ class Paradigm(Base, ModelMixin):
             creator=self.creator,
             description=self.description,
             files=self.files,
-        )
-
-
-class ParadigmFile(Base, ModelMixin):
-    __tablename__ = "paradigm_file"
-    __table_args__ = {"comment": "实验范式文件"}
-
-    paradigm_id = Column(
-        Integer, ForeignKey("paradigm.id"), nullable=False, index=True, comment="实验范式ID"
-    )
-    file_id = Column(Integer, ForeignKey("file.id"), nullable=False, comment="文件ID")
-
-    paradigm = relationship("Paradigm", back_populates="files")
-
-    @recursive_repr()
-    def __repr__(self):
-        return self.make_repr(
-            paradigm_id=self.paradigm_id, file_id=self.file_id, paradigm=self.paradigm
         )

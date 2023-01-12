@@ -94,12 +94,7 @@ def delete_file(request: DeleteModelRequest, ctx: Context = Depends(researcher_c
         return None
 
     os_path = get_os_path(file.experiment_id, file.index, file.extension)
-    try:
-        os_path.unlink(missing_ok=False)
-    except FileNotFoundError:
-        logger.error(f"failed to delete file {os_path}, not found")
-    else:
-        logger.info(f"deleted file {os_path}")
+    delete_os_file(os_path)
 
     success = common_crud.update_row_as_deleted(ctx.db, File, request.id, commit=True)
     if not success:
@@ -129,3 +124,12 @@ def write_file(file: UploadFile, store_path: Path) -> None:
         logger.info(f"write file success, {store_path=}")
     finally:
         file.file.close()
+
+
+def delete_os_file(path: Path) -> None:
+    try:
+        path.unlink(missing_ok=False)
+    except FileNotFoundError:
+        logger.error(f"failed to delete file {path}, not found")
+    else:
+        logger.info(f"deleted file {path}")
