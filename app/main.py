@@ -18,7 +18,7 @@ from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
-from app.api import user
+from app.api import experiment, user
 from app.api.algorithm import router as algorithm_router
 from app.api.auth import router as auth_router
 from app.api.experiment import router as experiment_router
@@ -74,6 +74,7 @@ def startup() -> None:
         app_logger.error("database is not up-to-date, run alembic to upgrade")
         sys.exit(1)
     user.create_root_user()
+    experiment.create_default_experiment()
 
 
 @app.on_event("shutdown")

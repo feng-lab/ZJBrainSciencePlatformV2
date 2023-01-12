@@ -2,8 +2,9 @@ import logging
 from datetime import datetime
 from typing import Any, Callable
 
-from sqlalchemy import and_, func, insert, select, text, update
+from sqlalchemy import and_, func, insert, or_, select, text, update
 from sqlalchemy.engine import CursorResult, Row
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session, joinedload, subqueryload
 from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
@@ -353,6 +354,46 @@ def search_files(
         .map_model_with(map_model)
         .paged_data(FileResponse)
     )
+
+
+def insert_or_update_experiment(db: Session, id_: int, row: dict[str, Any]) -> None:
+    success = False
+    try:
+        exists_stmt = (
+            select(Experiment.id)
+            .where(
+                or_(
+                    Experiment.id == id_,
+                    and_(
+                        Experiment.name == row["name"], Experiment.description == row["description"]
+                    ),
+                )
+            )
+            .order_by(Experiment.id.asc())
+            .limit(1)
+        )
+        exists_result = db.execute(exists_stmt).first()
+        if exists_result is None:
+            insert_result = db.execute(insert(Experiment).values(**row))
+            assert insert_result.rowcount == 1
+            exists_experiment_id = insert_result.inserted_primary_key.id
+        else:
+            exists_experiment_id = exists_result.id
+        if exists_experiment_id != id_:
+            update_result = db.execute(
+                update(Experiment)
+                .where(Experiment.id == exists_experiment_id)
+                .values(id=id_, **row)
+            )
+            assert update_result.rowcount == 1
+        success = True
+    except DBAPIError as e:
+        logger.error(f"insert or update default experiment error, msg={e}")
+    finally:
+        if success:
+            db.commit()
+        else:
+            db.rollback()
 
 
 def load_user_info_option(strategy, relation_column):

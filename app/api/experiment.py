@@ -1,8 +1,10 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, Query
 
 from app.common.context import Context, human_subject_context, researcher_context
 from app.common.exception import ServiceError
-from app.db import common_crud, crud
+from app.db import SessionLocal, common_crud, crud
 from app.db.orm import Experiment, ExperimentAssistant, User
 from app.model import convert
 from app.model.request import (
@@ -54,6 +56,20 @@ def create_experiment(
             raise database_error
 
     return experiment_id
+
+
+def create_default_experiment() -> None:
+    default_experiment = {
+        "name": "DEFAULT",
+        "description": "Default experiment for files without experiment",
+        "type": Experiment.Type.SSVEP,
+        "location": "Nowhere",
+        "start_at": datetime(year=2023, month=1, day=1, hour=0, minute=0, second=0),
+        "end_at": datetime(year=2023, month=1, day=1, hour=0, minute=0, second=0),
+        "main_operator": 1,
+    }
+    db = SessionLocal()
+    crud.insert_or_update_experiment(db, 0, default_experiment)
 
 
 @router.get(
