@@ -40,7 +40,7 @@ services:
       - ./mysql/initdb.d:/docker-entrypoint-initdb.d
       - ~/mysql/ZJBrainSciencePlatform/data:/var/lib/mysql
       - ~/log/ZJBrainSciencePlatform/mysql:/var/log/mysql
-    restart: on-failure
+    restart: always
     networks:
       - platform-net
 
@@ -48,7 +48,7 @@ services:
     image: redis:7.0
     ports:
       - "8200:6379"
-    restart: on-failure
+    restart: always
     networks:
       - platform-net
 
