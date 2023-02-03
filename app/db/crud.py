@@ -378,9 +378,7 @@ def insert_or_update_experiment(db: Session, id_: int, row: dict[str, Any]) -> N
 
 
 def load_user_info_option(strategy, relation_column):
-    return strategy(relation_column.and_(User.is_deleted == False)).load_only(
-        User.id, User.username, User.staff_id
-    )
+    return strategy(relation_column).load_only(User.id, User.username, User.staff_id)
 
 
 def get_experiment_by_id(db: Session, experiment_id: int) -> Experiment | None:
