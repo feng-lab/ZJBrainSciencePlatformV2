@@ -37,7 +37,10 @@ def create_experiment(
         raise ServiceError.invalid_request("用户不存在")
 
     experiment_id = common_crud.insert_row(
-        ctx.db, Experiment, request.dict(exclude={"assistants"}), commit=(len(request.assistants) < 1)
+        ctx.db,
+        Experiment,
+        request.dict(exclude={"assistants"}),
+        commit=(len(request.assistants) < 1),
     )
     if experiment_id is None:
         raise database_error

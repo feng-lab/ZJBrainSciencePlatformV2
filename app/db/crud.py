@@ -411,6 +411,7 @@ def search_experiments(
 ) -> list[Experiment]:
     stmt = (
         select(Experiment)
+        .where(Experiment.id != 0)
         .offset(page_param.offset)
         .limit(page_param.limit)
         .options(
