@@ -505,7 +505,7 @@ def search_paradigms_v2(
 ) -> list[Paradigm]:
     stmt = (
         select(Paradigm)
-        .where(Paradigm.experiment_id == experiment_id)
+        .where(Paradigm.experiment_id == experiment_id, Paradigm.is_deleted == False)
         .join(
             Experiment,
             and_(Paradigm.experiment_id == Experiment.id, Experiment.is_deleted == False),
