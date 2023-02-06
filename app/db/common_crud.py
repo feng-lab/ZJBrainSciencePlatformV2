@@ -1,5 +1,5 @@
 import logging
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from sqlalchemy import delete, insert, select, text, update
 from sqlalchemy.engine import CursorResult
@@ -38,7 +38,7 @@ def insert_row(
     success = False
     try:
         stmt = insert(table).values(row)
-        result: CursorResult = db.execute(stmt)
+        result = cast(CursorResult, db.execute(stmt))
         if result.rowcount != 1:
             return None
         success = True
@@ -62,7 +62,7 @@ def bulk_insert_rows(
     success = False
     try:
         stmt = insert(table).values(rows)
-        result: CursorResult = db.execute(stmt)
+        result = cast(CursorResult, db.execute(stmt))
         if result.rowcount == len(rows):
             success = True
     except DBAPIError as e:
@@ -80,7 +80,7 @@ def get_deleted_rows(db: Session, table: type[OrmModel], ids: list[int]) -> list
         return []
     try:
         stmt = select(table.id).where(table.id.in_(list(set(ids))), table.is_deleted == True)
-        return db.execute(stmt).scalars().all()
+        return list(db.execute(stmt).scalars().all())
     except DBAPIError as e:
         logger.error(f"select deleted rows in {table.__name__} error, {ids=}, msg={e}")
         return None

@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from sqlalchemy import and_, func, insert, or_, select, text, update
 from sqlalchemy.engine import CursorResult, Row
@@ -117,7 +117,6 @@ class SearchModel:
         rows = self.db.execute(stmt).all()
         map_model = self.map_model
         if map_model is None:
-
             def default_map_model(row: Row) -> Model:
                 return target_model.from_orm(row[0])
 
@@ -147,7 +146,7 @@ def exists_model(db: Session, table: type[OrmModel], id_: int) -> bool:
 
 
 def insert_model(db: Session, table: type[OrmModel], model: Model) -> int:
-    result: CursorResult = db.execute(insert(table).values(**model.dict()))
+    result = cast(CursorResult, db.execute(insert(table).values(**model.dict())))
     db.commit()
     return result.inserted_primary_key.id
 
@@ -166,7 +165,7 @@ def bulk_update_models(
     db: Session, table: type[OrmModel], *where: WhereHavingRole, **values: Any
 ) -> int:
     values = values | {"gmt_modified": now()}
-    result: CursorResult = db.execute(update(table).where(*where).values(**values))
+    result = cast(CursorResult, db.execute(update(table).where(*where).values(**values)))
     db.commit()
     # noinspection PyTypeChecker
     return result.rowcount
@@ -294,7 +293,7 @@ def list_unread_notifications(
     if not is_all:
         stmt = stmt.where(Notification.id.in_(msg_ids))
     unread_notification_ids = db.execute(stmt).scalars().all()
-    return unread_notification_ids
+    return list(unread_notification_ids)
 
 
 def get_file_last_index(db: Session, experiment_id: int) -> int | None:
@@ -313,7 +312,7 @@ def get_file_extensions(db: Session, experiment_id: int) -> list[str]:
         .where(File.experiment_id == experiment_id, File.is_deleted == False)
         .group_by(File.extension)
     )
-    return db.execute(stmt).scalars().all()
+    return list(db.execute(stmt).scalars().all())
 
 
 def search_files(
@@ -355,17 +354,17 @@ def insert_or_update_experiment(db: Session, id_: int, row: dict[str, Any]) -> N
         )
         exists_result = db.execute(exists_stmt).first()
         if exists_result is None:
-            insert_result = db.execute(insert(Experiment).values(**row))
+            insert_result = cast(CursorResult, db.execute(insert(Experiment).values(**row)))
             assert insert_result.rowcount == 1
             exists_experiment_id = insert_result.inserted_primary_key.id
         else:
             exists_experiment_id = exists_result.id
         if exists_experiment_id != id_:
-            update_result = db.execute(
+            update_result = cast(CursorResult, db.execute(
                 update(Experiment)
                 .where(Experiment.id == exists_experiment_id)
                 .values(id=id_, **row)
-            )
+            ))
             assert update_result.rowcount == 1
         success = True
     except DBAPIError as e:
@@ -427,7 +426,7 @@ def search_experiments(
     else:
         stmt = stmt.order_by(order_by_column.asc())
     experiments = db.execute(stmt).scalars().all()
-    return experiments
+    return list(experiments)
 
 
 def list_experiment_assistants(db: Session, experiment_id: int) -> list[User]:
@@ -444,7 +443,7 @@ def list_experiment_assistants(db: Session, experiment_id: int) -> list[User]:
         .where(ExperimentAssistant.experiment_id == experiment_id)
     )
     users = db.execute(stmt).all()
-    return users
+    return list(users)
 
 
 def search_experiment_assistants(
@@ -454,7 +453,7 @@ def search_experiment_assistants(
         ExperimentAssistant.experiment_id == experiment_id,
         ExperimentAssistant.user_id.in_(assistant_ids),
     )
-    return db.execute(stmt).scalars().all()
+    return list(db.execute(stmt).scalars().all())
 
 
 def load_paradigm_creator_option():
@@ -477,7 +476,7 @@ def get_paradigm_by_id(db: Session, paradigm_id: int) -> Paradigm | None:
 
 def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
     stmt = select(ParadigmFile.file_id).where(ParadigmFile.paradigm_id == paradigm_id)
-    return db.execute(stmt).scalars().all()
+    return list(db.execute(stmt).scalars().all())
 
 
 def list_paradigm_file_infos(db: Session, paradigm_id: int) -> list[File]:
@@ -515,7 +514,7 @@ def search_paradigms_v2(
         .options(load_paradigm_creator_option(), load_paradigm_files_option())
     )
     paradigms = db.execute(stmt).scalars().all()
-    return paradigms
+    return list(paradigms)
 
 
 def search_paradigms(

@@ -1,14 +1,23 @@
-import sqlalchemy.ext.declarative
+from reprlib import recursive_repr
+from typing import TypeVar
+
 import sqlalchemy.orm
+from sqlalchemy.orm import DeclarativeBase
 
 import alembic.config
 import alembic.migration
 import alembic.script
 from app.common.config import config
 
+
+class Base(DeclarativeBase):
+    pass
+
+
 engine = sqlalchemy.create_engine(config.DATABASE_URL, **config.DATABASE_CONFIG)
 SessionLocal = sqlalchemy.orm.sessionmaker(bind=engine)
-Base = sqlalchemy.ext.declarative.declarative_base()
+
+OrmTable = TypeVar("OrmTable", bound=Base)
 
 
 def get_db_session():
@@ -26,3 +35,16 @@ def check_database_is_up_to_date() -> bool:
     with engine.begin() as connection:
         context = alembic.migration.MigrationContext.configure(connection)
         return set(context.get_current_heads()) == set(directory.get_heads())
+
+
+def table_repr(cls: type[OrmTable]) -> type[OrmTable]:
+    def field_repr(obj: OrmTable) -> str:
+        field_strs = [
+            f"{field_name}={getattr(obj, field_name)}"
+            for field_name in obj.__table__.columns.keys()
+        ]
+        class_name = obj.__class__.__name__
+        return f"<{class_name}: {','.join(field_strs)}"
+
+    cls.__repr__ = recursive_repr()(field_repr)
+    return cls
