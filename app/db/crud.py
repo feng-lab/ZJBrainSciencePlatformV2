@@ -5,21 +5,13 @@ from typing import Any, Callable, cast
 from sqlalchemy import and_, func, insert, or_, select, text, update
 from sqlalchemy.engine import CursorResult, Row
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy.orm import Session, joinedload, load_only, noload, subqueryload
+from sqlalchemy.orm import Session, joinedload, load_only, subqueryload
 from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
 from app.common.config import config
 from app.common.util import Model, T, now
 from app.db.common_crud import OrmModel
-from app.db.orm import (
-    Experiment,
-    ExperimentAssistant,
-    File,
-    Notification,
-    Paradigm,
-    ParadigmFile,
-    User,
-)
+from app.db.orm import Experiment, ExperimentAssistant, File, Notification, Paradigm, User
 from app.model.request import (
     GetExperimentsByPageSortBy,
     GetExperimentsByPageSortOrder,
@@ -104,7 +96,7 @@ class SearchModel:
         return self.db.execute(stmt).scalar()
 
     def items(self, target_model: type[Model]) -> list[Model]:
-        columns = self.columns if self.columns else [self.table]
+        columns = self.columns if self.columns else self.table
         stmt = select(columns).where(*self.where)
         if self.join_spec is not None:
             stmt = stmt.join(self.join_spec[0], self.join_spec[1], isouter=self.join_spec[2])
@@ -360,11 +352,14 @@ def insert_or_update_experiment(db: Session, id_: int, row: dict[str, Any]) -> N
         else:
             exists_experiment_id = exists_result.id
         if exists_experiment_id != id_:
-            update_result = cast(CursorResult, db.execute(
-                update(Experiment)
-                .where(Experiment.id == exists_experiment_id)
-                .values(id=id_, **row)
-            ))
+            update_result = cast(
+                CursorResult,
+                db.execute(
+                    update(Experiment)
+                    .where(Experiment.id == exists_experiment_id)
+                    .values(id=id_, **row)
+                ),
+            )
             assert update_result.rowcount == 1
         success = True
     except DBAPIError as e:
@@ -475,28 +470,37 @@ def get_paradigm_by_id(db: Session, paradigm_id: int) -> Paradigm | None:
 
 
 def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
-    stmt = select(ParadigmFile.file_id).where(ParadigmFile.paradigm_id == paradigm_id)
-    return list(db.execute(stmt).scalars().all())
+    stmt = (
+        select(File.id)
+        .join(Paradigm.files)
+        .where(
+            File.paradigm_id == paradigm_id, File.is_deleted == False, Paradigm.is_deleted == False
+            , File.paradigm_id is not None
+        )
+    )
+    result = db.execute(stmt).scalars().all()
+    return list(result)
 
 
 def list_paradigm_file_infos(db: Session, paradigm_id: int) -> list[File]:
     stmt = (
-        select(Paradigm)
+        select(File)
+        .options(load_only(File.id, File.experiment_id, File.index, File.extension))
+        .join(Paradigm.files)
         .join(
             Experiment,
             and_(Experiment.id == Paradigm.experiment_id, Experiment.is_deleted == False),
         )
-        .where(Paradigm.id == paradigm_id, Paradigm.is_deleted == False)
-        .options(
-            load_only(Paradigm.id),
-            noload(Paradigm.creator_obj),
-            subqueryload(Paradigm.files.and_(File.is_deleted == False)).load_only(
-                File.id, File.experiment_id, File.index, File.extension
-            ),
+        .where(
+            File.is_deleted == False,
+            Paradigm.is_deleted == False,
+            Experiment.is_deleted == False,
+            File.paradigm_id is not None,
+            Paradigm.id == paradigm_id,
         )
     )
-    paradigm = db.execute(stmt).scalar()
-    return paradigm.files if paradigm is not None else []
+    files = db.execute(stmt).scalars().all()
+    return list(files)
 
 
 def search_paradigms_v2(

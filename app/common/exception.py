@@ -1,8 +1,4 @@
-from starlette.status import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
-    HTTP_500_INTERNAL_SERVER_ERROR,
-)
+from starlette.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 
 from app.model.response import CODE_DATABASE_FAIL, CODE_FAIL, CODE_NOT_FOUND
 
@@ -25,4 +21,4 @@ class ServiceError(Exception):
 
     @staticmethod
     def not_found(message: str):
-        return ServiceError(status_code=HTTP_404_NOT_FOUND, code=CODE_NOT_FOUND, message=message)
+        return ServiceError(status_code=HTTP_200_OK, code=CODE_NOT_FOUND, message=message)

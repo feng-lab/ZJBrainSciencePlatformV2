@@ -123,20 +123,18 @@ class File(Base, ModelMixin):
     experiment_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("experiment.id"), nullable=False, index=True, comment="实验ID"
     )
+    paradigm_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("paradigm.id"),
+        nullable=True,
+        index=True,
+        comment="范式ID，null表示不属于范式而属于实验",
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="逻辑路径")
     extension: Mapped[str] = mapped_column(String(50), nullable=False, comment="文件扩展名")
     index: Mapped[int] = mapped_column(Integer, nullable=False, index=True, comment="同一实验下的文件序号")
     size: Mapped[float] = mapped_column(Float, nullable=False, comment="同一实验下的文件序号")
     is_original: Mapped[bool] = mapped_column(Boolean, nullable=False, comment="是否是设备产生的原始文件")
-
-
-@table_repr
-class ParadigmFile(Base):
-    __tablename__ = "paradigm_file"
-    __table_args__ = {"comment": "实验范式文件关系"}
-
-    paradigm_id: Mapped[int] = mapped_column(Integer, ForeignKey("paradigm.id"), primary_key=True)
-    file_id: Mapped[int] = mapped_column(Integer, ForeignKey("file.id"), primary_key=True)
 
 
 @table_repr
@@ -152,5 +150,5 @@ class Paradigm(Base, ModelMixin):
     )
     description: Mapped[str | None] = mapped_column(Text(), nullable=False, comment="描述文字")
 
-    files: Mapped[list[File]] = relationship("File", secondary=ParadigmFile.__table__)
+    files: Mapped[list[File]] = relationship("File")
     creator_obj: Mapped[User] = relationship("User")

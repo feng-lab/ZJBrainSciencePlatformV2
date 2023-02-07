@@ -4,7 +4,7 @@ from app.api.file import delete_os_file, get_os_path
 from app.common.context import Context, human_subject_context, researcher_context
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
-from app.db.orm import Experiment, File, Paradigm, ParadigmFile
+from app.db.orm import Experiment, File, Paradigm
 from app.model import convert
 from app.model.request import (
     DeleteModelRequest,
@@ -41,15 +41,18 @@ def create_paradigm(
         "creator": ctx.user_id,
         "description": request.description,
     }
-    paradigm_id = common_crud.insert_row(ctx.db, Paradigm, paradigm_dict, commit=False)
+    paradigm_id = common_crud.insert_row(ctx.db, Paradigm, paradigm_dict, commit=True)
     if paradigm_id is None:
         raise database_error
 
     if len(request.images) > 0:
-        files = [
-            {"paradigm_id": paradigm_id, "file_id": file_id} for file_id in set(request.images)
-        ]
-        success = common_crud.bulk_insert_rows(ctx.db, ParadigmFile, files, commit=True)
+        success = common_crud.bulk_update_rows(
+            ctx.db,
+            File,
+            [File.is_deleted == False, File.id.in_(request.images)],
+            {"paradigm_id": paradigm_id},
+            commit=True,
+        )
         if not success:
             raise database_error
 
@@ -92,43 +95,31 @@ def update_paradigm(
 ) -> None:
     database_error = ServiceError.database_fail("更新范式失败")
 
-    update_dict = {
-        field_name: field_value
-        for field_name, field_value in request.dict(exclude={"id", "images"}).items()
-        if field_value is not None
-    }
+    update_dict = request.dict(exclude={"id", "images"})
     if len(update_dict) > 0:
-        success = common_crud.update_row(
-            ctx.db, Paradigm, request.id, update_dict, commit=(request.images is None)
-        )
+        success = common_crud.update_row(ctx.db, Paradigm, request.id, update_dict, commit=False)
         if not success:
             raise database_error
 
-    if request.images is not None:
-        exist_paradigm_files = crud.list_paradigm_files(ctx.db, request.id)
-        add_files = [
-            {"paradigm_id": request.id, "file_id": file_id}
-            for file_id in request.images
-            if file_id not in exist_paradigm_files
-        ]
-        delete_files = [
-            file_id for file_id in exist_paradigm_files if file_id not in request.images
-        ]
-        if len(add_files) > 0:
-            success = common_crud.bulk_insert_rows(
-                ctx.db, ParadigmFile, add_files, commit=(len(delete_files) < 1)
-            )
-            if not success:
-                raise database_error
-        if len(delete_files) > 0:
-            success = common_crud.bulk_delete_rows(
-                ctx.db,
-                ParadigmFile,
-                [ParadigmFile.paradigm_id == request.id, ParadigmFile.file_id.in_(delete_files)],
-                commit=True,
-            )
-            if not success:
-                raise database_error
+    exist_paradigm_files = set(crud.list_paradigm_files(ctx.db, request.id))
+    add_files = [file_id for file_id in request.images if file_id not in exist_paradigm_files]
+    delete_files = [file_id for file_id in exist_paradigm_files if file_id not in request.images]
+    if len(add_files) > 0:
+        success = common_crud.bulk_update_rows(
+            ctx.db,
+            File,
+            [File.is_deleted == False, File.id.in_(add_files)],
+            {"paradigm_id": request.id},
+            commit=(len(delete_files) < 1),
+        )
+        if not success:
+            raise database_error
+    if len(delete_files) > 0:
+        success = common_crud.bulk_update_rows_as_deleted(ctx.db, File, delete_files, commit=True)
+        if not success:
+            raise database_error
+    if len(add_files) < 1 and len(delete_files) < 1:
+        ctx.db.commit()
 
 
 @router.delete("/api/deleteParadigm", description="删除范式", response_model=NoneResponse)
@@ -149,11 +140,6 @@ def delete_paradigm(
             path = get_os_path(file.experiment_id, file.index, file.extension)
             delete_os_file(path)
 
-    success = common_crud.update_row_as_deleted(ctx.db, Paradigm, request.id, commit=False)
-    if not success:
-        raise database_error
-    success = common_crud.bulk_delete_rows(
-        ctx.db, ParadigmFile, [ParadigmFile.paradigm_id == request.id], commit=True
-    )
+    success = common_crud.update_row_as_deleted(ctx.db, Paradigm, request.id, commit=True)
     if not success:
         raise database_error

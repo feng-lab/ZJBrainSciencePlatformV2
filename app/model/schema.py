@@ -139,6 +139,7 @@ class ExperimentAssistantInDB(ExperimentAssistantBase, BaseModelInDB):
 
 class FileBase(BaseModel):
     experiment_id: int = Field(ge=0)
+    paradigm_id: int | None = Field(ge=0)
     index: int = Field(ge=0)
     name: str = Field(max_length=255)
     extension: str = Field(max_length=50)
