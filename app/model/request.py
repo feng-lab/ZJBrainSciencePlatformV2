@@ -95,3 +95,10 @@ class DisplayEEGRequest(BaseModel):
     window: int = Field(ge=0)
     page_index: int = Field(ge=0)
     channels: list[str]
+
+
+class CreateDeviceRequest(BaseModel):
+    experiment_id: int = Field(ge=0)
+    brand: str = Field(max_length=255)
+    name: str = Field(max_length=255)
+    purpose: str = Field(max_length=255)

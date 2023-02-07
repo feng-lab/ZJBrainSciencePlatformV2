@@ -17,6 +17,7 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
 
 from app.api.algorithm import router as algorithm_router
 from app.api.auth import router as auth_router
+from app.api.device import router as device_router
 from app.api.experiment import router as experiment_router
 from app.api.file import router as file_router
 from app.api.notification import router as notification_router
@@ -56,6 +57,7 @@ app.include_router(experiment_router)
 app.include_router(file_router)
 app.include_router(paradigm_router)
 app.include_router(algorithm_router)
+app.include_router(device_router)
 
 app.add_middleware(
     CORSMiddleware,

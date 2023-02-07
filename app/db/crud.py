@@ -11,7 +11,7 @@ from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 from app.common.config import config
 from app.common.util import Model, T, now
 from app.db.common_crud import OrmModel
-from app.db.orm import Experiment, ExperimentAssistant, File, Notification, Paradigm, User
+from app.db.orm import Device, Experiment, ExperimentAssistant, File, Notification, Paradigm, User
 from app.model.request import (
     GetExperimentsByPageSortBy,
     GetExperimentsByPageSortOrder,
@@ -113,6 +113,7 @@ class SearchModel:
         rows = self.db.execute(stmt).all()
         map_model = self.map_model
         if map_model is None:
+
             def default_map_model(row: Row) -> Model:
                 return target_model.from_orm(row[0])
 
@@ -479,8 +480,10 @@ def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
         select(File.id)
         .join(Paradigm.files)
         .where(
-            File.paradigm_id == paradigm_id, File.is_deleted == False, Paradigm.is_deleted == False
-            , File.paradigm_id.is_not(None)
+            File.paradigm_id == paradigm_id,
+            File.is_deleted == False,
+            Paradigm.is_deleted == False,
+            File.paradigm_id.is_not(None),
         )
     )
     result = db.execute(stmt).scalars().all()
@@ -548,3 +551,19 @@ def search_paradigms(
 
 def bulk_list_paradigm_files(db: Session, paradigm_ids: list[int]) -> list[list[int]]:
     return [list_paradigm_files(db, paradigm_id) for paradigm_id in paradigm_ids]
+
+
+def get_next_device_index(db: Session, experiment_id: int) -> int:
+    stmt = (
+        select(Device.index)
+        .join(Experiment, Experiment.id == Device.experiment_id)
+        .where(
+            Device.is_deleted == False,
+            Experiment.is_deleted == False,
+            Device.experiment_id == experiment_id,
+        )
+        .order_by(Device.index.desc())
+        .limit(1)
+    )
+    last_index: int = db.execute(stmt).scalar()
+    return last_index + 1 if last_index is not None else 1

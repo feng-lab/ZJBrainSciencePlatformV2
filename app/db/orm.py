@@ -152,3 +152,16 @@ class Paradigm(Base, ModelMixin):
 
     files: Mapped[list[File]] = relationship("File")
     creator_obj: Mapped[User] = relationship("User")
+
+
+class Device(Base, ModelMixin):
+    __tablename__ = "device"
+    __table_args__ = {"comment": "实验设备"}
+
+    experiment_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("experiment.id"), nullable=False, index=True, comment="实验ID"
+    )
+    brand: Mapped[str] = mapped_column(String(255), nullable=False, comment="设备品牌")
+    name: Mapped[str] = mapped_column(String(255), nullable=False, comment="设备名称")
+    purpose: Mapped[str] = mapped_column(String(255), nullable=False, comment="设备用途")
+    index: Mapped[int] = mapped_column(Integer, nullable=False, comment="实验内序号")
