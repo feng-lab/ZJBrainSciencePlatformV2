@@ -65,6 +65,10 @@ class SearchModel:
         self.order = order_by
         return self
 
+    def where_null(self, field) -> "SearchModel":
+        self.where.append(field.is_(None))
+        return self
+
     def where_eq(self, field, value: T | None) -> "SearchModel":
         if value is not None:
             self.where.append(field == value)
@@ -319,6 +323,7 @@ def search_files(
     return (
         SearchModel(db, File)
         .where_eq(File.experiment_id, experiment_id)
+        .where_null(File.paradigm_id)
         .where_contains(File.name, name)
         .where_contains(File.extension, extension)
         .page_param(page_param)
@@ -475,7 +480,7 @@ def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
         .join(Paradigm.files)
         .where(
             File.paradigm_id == paradigm_id, File.is_deleted == False, Paradigm.is_deleted == False
-            , File.paradigm_id is not None
+            , File.paradigm_id.is_not(None)
         )
     )
     result = db.execute(stmt).scalars().all()
@@ -495,7 +500,7 @@ def list_paradigm_file_infos(db: Session, paradigm_id: int) -> list[File]:
             File.is_deleted == False,
             Paradigm.is_deleted == False,
             Experiment.is_deleted == False,
-            File.paradigm_id is not None,
+            File.paradigm_id.is_not(None),
             Paradigm.id == paradigm_id,
         )
     )
