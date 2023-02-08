@@ -189,3 +189,21 @@ class ParadigmFileBase(BaseModel):
 
 class ParadigmFileCreate(ParadigmFileBase):
     pass
+
+
+class DeviceBase(BaseModel):
+    experiment_id: int = Field(ge=0)
+    brand: str = Field(max_length=255)
+    name: str = Field(max_length=255)
+    purpose: str = Field(max_length=255)
+
+
+class CreateDeviceRequest(DeviceBase):
+    pass
+
+
+class DeviceResponse(DeviceBase, BaseModelInDB):
+    index: int = Field(ge=1)
+
+    class Config:
+        orm_mode = True

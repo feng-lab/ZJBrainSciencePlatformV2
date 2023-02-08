@@ -1,7 +1,8 @@
 from typing import Callable, TypeVar
 
-from app.db.orm import Experiment, Paradigm
+from app.db.orm import Device, Experiment, Paradigm
 from app.model.schema import (
+    DeviceResponse,
     ExperimentInDB,
     ExperimentResponse,
     ParadigmInDB,
@@ -33,3 +34,7 @@ def paradigm_orm_2_response(paradigm: Paradigm) -> ParadigmResponse:
         images=list_(lambda orm_file: orm_file.id, paradigm.files),
         **ParadigmInDB.from_orm(paradigm).dict(exclude={"creator"}),
     )
+
+
+def device_orm_2_response(device: Device) -> DeviceResponse:
+    return DeviceResponse.from_orm(device)

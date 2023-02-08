@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
-from app.common.context import Context, researcher_context
+from app.common.context import Context, human_subject_context, researcher_context
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import Device, Experiment
-from app.model.request import CreateDeviceRequest
+from app.model import convert
 from app.model.response import Response, wrap_api_response
+from app.model.schema import CreateDeviceRequest, DeviceResponse
 
 router = APIRouter(tags=["device"])
 
@@ -28,3 +29,15 @@ def create_device(request: CreateDeviceRequest, ctx: Context = Depends(researche
     if device_id is None:
         raise database_error
     return device_id
+
+
+@router.get("/api/getDeviceInfo", description="获取设备详情", response_model=Response[DeviceResponse])
+@wrap_api_response
+def get_device_info(
+    device_id: int = Query(description="设备ID", ge=0), ctx: Context = Depends(human_subject_context)
+) -> DeviceResponse:
+    orm_device = common_crud.select_row_by_id(ctx.db, Device, device_id)
+    if orm_device is None:
+        raise ServiceError.not_found("未找到设备")
+    device_response = convert.device_orm_2_response(orm_device)
+    return device_response
