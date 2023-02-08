@@ -6,8 +6,8 @@ from app.db import common_crud, crud
 from app.db.orm import Device, Experiment
 from app.model import convert
 from app.model.request import GetModelsByPageParam, get_models_by_page
-from app.model.response import PagedData, Response, wrap_api_response
-from app.model.schema import CreateDeviceRequest, DeviceResponse
+from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
+from app.model.schema import CreateDeviceRequest, DeviceResponse, UpdateDeviceRequest
 
 router = APIRouter(tags=["device"])
 
@@ -58,3 +58,20 @@ def get_devices_by_page(
     total, orm_devices = crud.search_devices(ctx.db, experiment_id, page_param)
     device_responses = convert.map_list(convert.device_orm_2_response, orm_devices)
     return PagedData(total=total, items=device_responses)
+
+
+@router.post("/api/updateDevice", description="更新设备", response_model=NoneResponse)
+@wrap_api_response
+def update_device(request: UpdateDeviceRequest, ctx: Context = Depends(researcher_context)) -> None:
+    database_fail = ServiceError.database_fail("更新设备失败")
+
+    is_device_valid = common_crud.check_row_valid(ctx.db, Device, request.id)
+    if is_device_valid is None:
+        raise database_fail
+    elif not is_device_valid:
+        raise ServiceError.not_found("设备不存在")
+
+    update_dict = request.dict(exclude={"id"})
+    success = common_crud.update_row(ctx.db, Device, request.id, update_dict, commit=True)
+    if not success:
+        raise database_fail

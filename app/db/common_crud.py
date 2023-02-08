@@ -75,6 +75,16 @@ def bulk_insert_rows(
     return success
 
 
+def check_row_valid(db: Session, table: type[OrmModel], id_: int) -> bool | None:
+    try:
+        stmt = select(text("1")).where(table.id == id_, table.is_deleted == False)
+        result = db.execute(stmt).scalar()
+        return result is not None
+    except DBAPIError as e:
+        logger.error(f"get_row_valid error: table={table.__name__}, id={id}, msg={e}")
+        return None
+
+
 def get_deleted_rows(db: Session, table: type[OrmModel], ids: list[int]) -> list[int] | None:
     if len(ids) < 1:
         return []

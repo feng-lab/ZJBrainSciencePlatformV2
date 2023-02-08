@@ -202,8 +202,14 @@ class CreateDeviceRequest(DeviceBase):
     pass
 
 
-class DeviceResponse(DeviceBase, BaseModelInDB):
+class DeviceWithIndex(DeviceBase):
     index: int = Field(ge=1)
 
+
+class DeviceResponse(DeviceWithIndex, BaseModelInDB):
     class Config:
         orm_mode = True
+
+
+class UpdateDeviceRequest(DeviceWithIndex, ModelId):
+    pass
