@@ -19,7 +19,7 @@ def create_device(request: CreateDeviceRequest, ctx: Context = Depends(researche
     deleted_experiments = common_crud.get_deleted_rows(ctx.db, Experiment, [request.experiment_id])
     if deleted_experiments is None:
         raise database_error
-    elif len(deleted_experiments) > 0:
+    elif len(deleted_experiments) < 1:
         raise ServiceError.not_found("未找到实验")
 
     next_index = crud.get_next_device_index(ctx.db, request.experiment_id)
