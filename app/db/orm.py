@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
@@ -165,3 +165,56 @@ class Device(Base, ModelMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="设备名称")
     purpose: Mapped[str] = mapped_column(String(255), nullable=False, comment="设备用途")
     index: Mapped[int] = mapped_column(Integer, nullable=False, comment="实验内序号")
+
+
+class Gender(StrEnum):
+    male = "male"
+    female = "female"
+
+
+class MaritalStatus(StrEnum):
+    unmarried = "unmarried"
+    married = "married"
+
+
+class ABOBloodType(StrEnum):
+    A = "A"
+    B = "B"
+    AB = "AB"
+    O = "O"
+
+
+class HumanSubject(Base, ModelMixin):
+    __tablename__ = "human_subject"
+    __table_args__ = {"comment": "被试者"}
+
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("user.id"), nullable=False, unique=True, index=True, comment="用户ID"
+    )
+    gender: Mapped[Gender | None] = mapped_column(Enum(Gender), nullable=True, comment="性别")
+    birthdate: Mapped[date | None] = mapped_column(Date, nullable=True, comment="出生日期")
+    death_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="死亡日期")
+    education: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="教育程度")
+    occupation: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="职业")
+    marital_status: Mapped[MaritalStatus | None] = mapped_column(
+        Enum(MaritalStatus), nullable=True, comment="婚姻状况"
+    )
+    abo_blood_type: Mapped[ABOBloodType | None] = mapped_column(
+        Enum(ABOBloodType), nullable=True, comment="ABO血型"
+    )
+    is_left_handed: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否是左撇子")
+    phone_number: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="电话号码")
+    email: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="电子邮箱地址")
+    address: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="住址")
+
+
+class ExperimentHumanSubject(Base):
+    __tablename__ = "experiment_human_subject"
+    __table_args__ = {"comment": "实验包含的被试者"}
+
+    experiment_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("experiment.id"), primary_key=True
+    )
+    human_subject_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("human_subject.id"), primary_key=True
+    )
