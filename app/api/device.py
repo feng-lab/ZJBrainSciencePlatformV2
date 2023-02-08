@@ -5,7 +5,8 @@ from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import Device, Experiment
 from app.model import convert
-from app.model.response import Response, wrap_api_response
+from app.model.request import GetModelsByPageParam, get_models_by_page
+from app.model.response import PagedData, Response, wrap_api_response
 from app.model.schema import CreateDeviceRequest, DeviceResponse
 
 router = APIRouter(tags=["device"])
@@ -41,3 +42,19 @@ def get_device_info(
         raise ServiceError.not_found("未找到设备")
     device_response = convert.device_orm_2_response(orm_device)
     return device_response
+
+
+@router.get(
+    "/api/getDevicesByPage",
+    description="分页获取设备详情",
+    response_model=Response[PagedData[DeviceResponse]],
+)
+@wrap_api_response
+def get_devices_by_page(
+    experiment_id: int = Query(description="实验ID", default=0),
+    page_param: GetModelsByPageParam = Depends(get_models_by_page),
+    ctx: Context = Depends(human_subject_context),
+) -> PagedData[DeviceResponse]:
+    total, orm_devices = crud.search_devices(ctx.db, experiment_id, page_param)
+    device_responses = convert.map_list(convert.device_orm_2_response, orm_devices)
+    return PagedData(total=total, items=device_responses)

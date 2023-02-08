@@ -550,3 +550,21 @@ def get_next_device_index(db: Session, experiment_id: int) -> int:
     )
     last_index: int = db.execute(stmt).scalar()
     return last_index + 1 if last_index is not None else 1
+
+
+def search_devices(
+    db: Session, experiment_id: int, page_param: GetModelsByPageParam
+) -> (int, Sequence[Device]):
+    base_stmt = (
+        select(Device)
+        .join(Experiment, Experiment.id == Device.experiment_id)
+        .where(Experiment.is_deleted == False, Device.experiment_id == experiment_id)
+    )
+    if not page_param.include_deleted:
+        base_stmt = base_stmt.where(Device.is_deleted == False)
+
+    items_stmt = base_stmt.offset(page_param.offset).limit(page_param.limit)
+    devices = db.execute(items_stmt).scalars().all()
+    total_stmt = base_stmt.with_only_columns(func.count())
+    total = db.execute(total_stmt).scalar()
+    return total, devices
