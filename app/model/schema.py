@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
-from app.db.orm import Experiment, Notification
+from app.db.orm import ABOBloodType, Experiment, Gender, MaritalStatus, Notification
 
 
 class ModelId(BaseModel):
@@ -212,4 +212,23 @@ class DeviceResponse(DeviceWithIndex, BaseModelInDB):
 
 
 class UpdateDeviceRequest(DeviceWithIndex, ModelId):
+    pass
+
+
+class HumanSubjectBase(BaseModel):
+    user_id: int = Field(ge=0)
+    gender: Gender | None
+    birthdate: date | None
+    death_date: date | None
+    education: str | None
+    occupation: str | None
+    marital_status: MaritalStatus | None
+    abo_blood_type: ABOBloodType | None
+    is_left_handed: bool | None
+    phone_number: str | None
+    email: str | None
+    address: str | None
+
+
+class CreateHumanSubjectRequest(HumanSubjectBase):
     pass
