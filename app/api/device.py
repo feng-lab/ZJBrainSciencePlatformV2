@@ -5,7 +5,7 @@ from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import Device, Experiment
 from app.model import convert
-from app.model.request import GetModelsByPageParam, get_models_by_page
+from app.model.request import GetModelsByPageParam, get_models_by_page, DeleteModelRequest
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
 from app.model.schema import CreateDeviceRequest, DeviceResponse, UpdateDeviceRequest
 
@@ -75,3 +75,11 @@ def update_device(request: UpdateDeviceRequest, ctx: Context = Depends(researche
     success = common_crud.update_row(ctx.db, Device, request.id, update_dict, commit=True)
     if not success:
         raise database_fail
+
+
+@router.delete("/api/deleteDevice", description="删除设备", response_model=NoneResponse)
+@wrap_api_response
+def delete_device(request: DeleteModelRequest, ctx: Context = Depends(researcher_context)) -> None:
+    success = common_crud.update_row_as_deleted(ctx.db, Device, request.id, commit=True)
+    if not success:
+        raise ServiceError.database_fail("删除设备失败")
