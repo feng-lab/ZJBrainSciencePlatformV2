@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, Callable, cast
+from typing import Any, Callable, Sequence, cast
 
 from sqlalchemy import and_, func, insert, or_, select, text, update
 from sqlalchemy.engine import CursorResult, Row
@@ -23,11 +23,8 @@ from app.model.schema import (
     FileResponse,
     NotificationInDB,
     NotificationResponse,
-    ParadigmInDB,
-    ParadigmResponse,
     UserAuth,
     UserCreate,
-    UserInfo,
     UserResponse,
 )
 
@@ -223,6 +220,7 @@ def get_user_username(db: Session, user_id: int) -> str | None:
 
 
 def get_notification_unread_count(db: Session, user_id: int) -> int:
+    # noinspection PyTypeChecker
     stmt = select(func.count(Notification.id)).where(
         Notification.receiver == user_id,
         Notification.status == Notification.Status.unread,
@@ -282,6 +280,7 @@ def list_notifications(
 def list_unread_notifications(
     db: Session, user_id: int, is_all: bool, msg_ids: list[int]
 ) -> list[int]:
+    # noinspection PyTypeChecker
     stmt = select(Notification.id).where(
         Notification.receiver == user_id,
         Notification.is_deleted == False,
@@ -358,6 +357,7 @@ def insert_or_update_experiment(db: Session, id_: int, row: dict[str, Any]) -> N
         else:
             exists_experiment_id = exists_result.id
         if exists_experiment_id != id_:
+            # noinspection PyTypeChecker
             update_result = cast(
                 CursorResult,
                 db.execute(
@@ -444,6 +444,7 @@ def list_experiment_assistants(db: Session, experiment_id: int) -> list[User]:
         .where(ExperimentAssistant.experiment_id == experiment_id)
     )
     users = db.execute(stmt).all()
+    # noinspection PyTypeChecker
     return list(users)
 
 
@@ -511,12 +512,12 @@ def list_paradigm_file_infos(db: Session, paradigm_id: int) -> list[File]:
     return list(files)
 
 
-def search_paradigms_v2(
+def search_paradigms(
     db: Session, experiment_id: int, page_param: GetModelsByPageParam
 ) -> list[Paradigm]:
     stmt = (
         select(Paradigm)
-        .where(Paradigm.experiment_id == experiment_id, Paradigm.is_deleted == False)
+        .where(Paradigm.experiment_id == experiment_id)
         .join(
             Experiment,
             and_(Paradigm.experiment_id == Experiment.id, Experiment.is_deleted == False),
@@ -525,28 +526,10 @@ def search_paradigms_v2(
         .limit(page_param.limit)
         .options(load_paradigm_creator_option(), load_paradigm_files_option())
     )
+    if not page_param.include_deleted:
+        stmt = stmt.where(Paradigm.is_deleted == False)
     paradigms = db.execute(stmt).scalars().all()
     return list(paradigms)
-
-
-def search_paradigms(
-    db: Session, experiment_id: int, page_param: GetModelsByPageParam
-) -> list[ParadigmResponse]:
-    return (
-        SearchModel(db, Paradigm)
-        .select(Paradigm, User.username, User.staff_id)
-        .join(User, Paradigm.creator == User.id, is_outer=True)
-        .where_eq(Paradigm.experiment_id, experiment_id)
-        .page_param(page_param)
-        .map_model_with(
-            lambda row: ParadigmResponse(
-                creator=UserInfo(id=row[0].creator, username=row[1], staff_id=row[2]),
-                images=[],
-                **ParadigmInDB.from_orm(row[0]).dict(exclude={"creator"}),
-            )
-        )
-        .items(ParadigmResponse)
-    )
 
 
 def bulk_list_paradigm_files(db: Session, paradigm_ids: list[int]) -> list[list[int]]:

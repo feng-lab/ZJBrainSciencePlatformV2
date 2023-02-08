@@ -79,12 +79,12 @@ def get_paradigm_info(
 )
 @wrap_api_response
 def get_paradigms_by_page(
-    experiment_id: int | None = Query(description="实验ID", default=None),
+    experiment_id: int = Query(description="实验ID", default=0),
     page_param: GetModelsByPageParam = Depends(get_models_by_page),
     ctx: Context = Depends(human_subject_context),
 ) -> list[ParadigmResponse]:
-    orm_paradigms = crud.search_paradigms_v2(ctx.db, experiment_id, page_param)
-    paradigm_responses = convert.list_(convert.paradigm_orm_2_response, orm_paradigms)
+    orm_paradigms = crud.search_paradigms(ctx.db, experiment_id, page_param)
+    paradigm_responses = convert.map_list(convert.paradigm_orm_2_response, orm_paradigms)
     return paradigm_responses
 
 

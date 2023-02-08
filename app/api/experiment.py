@@ -92,7 +92,7 @@ def get_experiments_by_page(
     ctx: Context = Depends(human_subject_context),
 ) -> list[ExperimentResponse]:
     orm_experiments = crud.search_experiments(ctx.db, search, sort_by, sort_order, page_param)
-    experiments = convert.list_(convert.experiment_orm_2_response, orm_experiments)
+    experiments = convert.map_list(convert.experiment_orm_2_response, orm_experiments)
     return experiments
 
 
@@ -104,7 +104,7 @@ def get_experiment_assistants(
     experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
 ) -> list[UserInfo]:
     orm_users = crud.list_experiment_assistants(ctx.db, experiment_id)
-    user_infos = convert.list_(UserInfo.from_orm, orm_users)
+    user_infos = convert.map_list(UserInfo.from_orm, orm_users)
     return user_infos
 
 
