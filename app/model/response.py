@@ -34,8 +34,7 @@ class Response(GenericModel, Generic[Data]):
     request_id: str = Field(title="请求ID", default_factory=request_id_ctxvar.get)
 
 
-class NoneResponse(Response[type(None)]):
-    data: type(None) = None
+NoneResponse = Response[type(None)]
 
 
 class JsonEncoder(JSONEncoder):
