@@ -129,14 +129,16 @@ async def filter_blank_query_params(request: Request, call_next: Callable):
 @app.exception_handler(HTTPException)
 def handle_http_exception(_request: Request, e: HTTPException):
     return JSONResponse(
-        status_code=e.status_code, content=NoneResponse(code=CODE_FAIL, message=e.detail, data=None).dict()
+        status_code=e.status_code,
+        content=NoneResponse(code=CODE_FAIL, message=e.detail, data=None).dict(),
     )
 
 
 @app.exception_handler(ServiceError)
 def handle_service_error(_request: Request, e: ServiceError):
     return JSONResponse(
-        status_code=e.status_code, content=NoneResponse(code=e.code, message=e.message, data=None).dict()
+        status_code=e.status_code,
+        content=NoneResponse(code=e.code, message=e.message, data=None).dict(),
     )
 
 
@@ -152,7 +154,9 @@ def handle_http_exception(_request: Request, e: RequestValidationError):
 def handle_expired_token_exception(_request: Request, _e: ExpiredSignatureError):
     return JSONResponse(
         status_code=HTTP_401_UNAUTHORIZED,
-        content=NoneResponse(code=CODE_SESSION_TIMEOUT, message="session timeout", data=None).dict(),
+        content=NoneResponse(
+            code=CODE_SESSION_TIMEOUT, message="session timeout", data=None
+        ).dict(),
     )
 
 

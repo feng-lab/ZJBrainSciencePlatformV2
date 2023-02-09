@@ -11,7 +11,6 @@ from app.model.request import (
     GetModelsByPageParam,
     UpdatePasswordRequest,
     UpdateUserAccessLevelRequest,
-    get_models_by_page,
 )
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
 from app.model.schema import CreateUserRequest, UserResponse
@@ -71,7 +70,7 @@ def get_users_by_page(
     username: str | None = Query(description="用户名，模糊查询", max_length=255, default=None),
     staff_id: str | None = Query(description="员工号，模糊查询", max_length=255, default=None),
     access_level: int | None = Query(description="权限级别", ge=0, default=None),
-    page_param: GetModelsByPageParam = Depends(get_models_by_page),
+    page_param: GetModelsByPageParam = Depends(),
     ctx: Context = Depends(administrator_context),
 ) -> PagedData[UserResponse]:
     paged_data = crud.search_users(ctx.db, username, staff_id, access_level, page_param)

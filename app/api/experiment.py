@@ -12,7 +12,6 @@ from app.model.request import (
     GetModelsByPageParam,
     UpdateExperimentAssistantsRequest,
     UpdateExperimentRequest,
-    get_models_by_page,
 )
 from app.model.response import NoneResponse, Response, wrap_api_response
 from app.model.schema import CreateExperimentRequest, ExperimentResponse, UserInfo
@@ -88,7 +87,7 @@ def get_experiments_by_page(
     sort_order: GetExperimentsByPageSortOrder = Query(
         description="排序顺序", default=GetExperimentsByPageSortOrder.DESC
     ),
-    page_param: GetModelsByPageParam = Depends(get_models_by_page),
+    page_param: GetModelsByPageParam = Depends(),
     ctx: Context = Depends(human_subject_context),
 ) -> list[ExperimentResponse]:
     orm_experiments = crud.search_experiments(ctx.db, search, sort_by, sort_order, page_param)

@@ -89,7 +89,7 @@ def convert_ip_2_machine_id(ip: str) -> int:
 
 
 class WrapCounter:
-    MAX: int = 2 ** 31 - 1
+    MAX: int = 2**31 - 1
 
     def __init__(self):
         self._value: int = 0

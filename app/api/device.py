@@ -5,7 +5,7 @@ from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import Device, Experiment
 from app.model import convert
-from app.model.request import DeleteModelRequest, GetModelsByPageParam, get_models_by_page
+from app.model.request import DeleteModelRequest, GetModelsByPageParam
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
 from app.model.schema import CreateDeviceRequest, DeviceResponse, UpdateDeviceRequest
 
@@ -52,7 +52,7 @@ def get_device_info(
 @wrap_api_response
 def get_devices_by_page(
     experiment_id: int = Query(description="实验ID", default=0),
-    page_param: GetModelsByPageParam = Depends(get_models_by_page),
+    page_param: GetModelsByPageParam = Depends(),
     ctx: Context = Depends(human_subject_context),
 ) -> PagedData[DeviceResponse]:
     total, orm_devices = crud.search_devices(ctx.db, experiment_id, page_param)

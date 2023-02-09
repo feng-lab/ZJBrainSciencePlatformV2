@@ -7,11 +7,7 @@ from app.common.context import Context, human_subject_context
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import Notification
-from app.model.request import (
-    GetModelsByPageParam,
-    MarkNotificationsAsReadRequest,
-    get_models_by_page,
-)
+from app.model.request import GetModelsByPageParam, MarkNotificationsAsReadRequest
 from app.model.response import PagedData, Response, wrap_api_response
 from app.model.schema import NotificationBase, NotificationCreate, NotificationResponse
 
@@ -67,7 +63,7 @@ def get_notifications_by_page(
     status: Notification.Status | None = Query(description="通知状态", default=None),
     create_time_start: datetime | None = Query(description="筛选通知发送时间的开始时间", default=None),
     create_time_end: datetime | None = Query(description="筛选通知发送时间的结束时间", default=None),
-    page_param: GetModelsByPageParam = Depends(get_models_by_page),
+    page_param: GetModelsByPageParam = Depends(),
     ctx: Context = Depends(human_subject_context),
 ) -> PagedData[NotificationResponse]:
     paged_data = crud.search_notifications(

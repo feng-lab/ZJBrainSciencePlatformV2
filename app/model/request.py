@@ -1,24 +1,15 @@
 from datetime import datetime
 from enum import StrEnum
 
-from fastapi import Query
 from pydantic import BaseModel, Field
 
 from app.db.orm import Experiment
 
 
 class GetModelsByPageParam(BaseModel):
-    offset: int
-    limit: int
-    include_deleted: bool
-
-
-def get_models_by_page(
-    offset: int = Query(description="分页起始位置", default=0, ge=0),
-    limit: int = Query(description="分页大小", default=10, ge=0),
-    include_deleted: bool = Query(description="是否包括已删除项", default=False),
-) -> GetModelsByPageParam:
-    return GetModelsByPageParam(offset=offset, limit=limit, include_deleted=include_deleted)
+    offset: int = Field(0, title="分页起始位置", ge=0)
+    limit: int = Field(10, title="分页大小", ge=0)
+    include_deleted: bool = Field(False, title="是否包括已删除项")
 
 
 class DeleteModelRequest(BaseModel):

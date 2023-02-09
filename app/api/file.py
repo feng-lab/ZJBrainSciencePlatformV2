@@ -13,7 +13,7 @@ from app.common.context import Context, human_subject_context, not_logon_context
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import File
-from app.model.request import DeleteModelRequest, GetModelsByPageParam, get_models_by_page
+from app.model.request import DeleteModelRequest, GetModelsByPageParam
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
 from app.model.schema import FileResponse
 
@@ -67,7 +67,7 @@ def get_files_by_page(
     experiment_id: int = Query(description="实验ID", default=0),
     name: str = Query(description="文件名，模糊查找", default=""),
     file_type: str = Query(description="文件类型，模糊查找", default=""),
-    page_param: GetModelsByPageParam = Depends(get_models_by_page),
+    page_param: GetModelsByPageParam = Depends(),
     ctx: Context = Depends(human_subject_context),
 ) -> PagedData[FileResponse]:
     files = crud.search_files(ctx.db, experiment_id, name, file_type, page_param)

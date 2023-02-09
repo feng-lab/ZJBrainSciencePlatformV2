@@ -6,12 +6,7 @@ from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import Experiment, File, Paradigm
 from app.model import convert
-from app.model.request import (
-    DeleteModelRequest,
-    GetModelsByPageParam,
-    UpdateParadigmRequest,
-    get_models_by_page,
-)
+from app.model.request import DeleteModelRequest, GetModelsByPageParam, UpdateParadigmRequest
 from app.model.response import NoneResponse, Response, wrap_api_response
 from app.model.schema import CreateParadigmRequest, ParadigmResponse
 
@@ -80,7 +75,7 @@ def get_paradigm_info(
 @wrap_api_response
 def get_paradigms_by_page(
     experiment_id: int = Query(description="实验ID", default=0),
-    page_param: GetModelsByPageParam = Depends(get_models_by_page),
+    page_param: GetModelsByPageParam = Depends(),
     ctx: Context = Depends(human_subject_context),
 ) -> list[ParadigmResponse]:
     orm_paradigms = crud.search_paradigms(ctx.db, experiment_id, page_param)
