@@ -1,4 +1,5 @@
 import sys
+from contextvars import ContextVar
 from datetime import datetime
 from logging import ERROR, INFO, Formatter, Handler, Logger, LogRecord, StreamHandler, getLogger
 from logging.handlers import QueueHandler, QueueListener, TimedRotatingFileHandler
@@ -14,10 +15,17 @@ UVICORN_LOGGER_NAME = "uvicorn.access"
 SQLALCHEMY_LOGGER_NAME = "sqlalchemy.engine.Engine"
 LOGGER_NAMES = {ACCESS_LOGGER_NAME, UVICORN_LOGGER_NAME, SQLALCHEMY_LOGGER_NAME}
 
-DEFAULT_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(module_name)s:%(lineno)d|%(message)s"
+DEFAULT_LOG_FORMAT = (
+    "%(asctime)s|%(levelname)s|%(request_id)s|%(module_name)s:%(lineno)d|%(message)s"
+)
 if config.DEBUG_MODE:
-    DEFAULT_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(name)s|%(module_name)s:%(lineno)d|%(message)s"
-ACCESS_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(message)s"
+    DEFAULT_LOG_FORMAT = (
+        "%(asctime)s|%(levelname)s|%(request_id)s|%(name)s|%(module_name)s:%(lineno)d|%(message)s"
+    )
+ACCESS_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(request_id)s|%(message)s"
+
+REQUEST_ID_KEY = "request-id"
+request_id_ctxvar = ContextVar(REQUEST_ID_KEY, default="")
 
 
 def current_time_tuple(_second, _what):
@@ -58,6 +66,7 @@ def name_logger_filter(name: str) -> Callable[[LogRecord], bool]:
 
 class CustomFormatQueueHandler(QueueHandler):
     def prepare(self, record: LogRecord) -> LogRecord:
+        record.request_id = request_id_ctxvar.get()
         record.module_name = get_module_name(record.pathname)
         record.msg = record.msg.replace("\n", " ")
         return super().prepare(record)

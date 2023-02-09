@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 from starlette.responses import JSONResponse
 
+from app.common.log import request_id_ctxvar
 from app.common.util import AnotherModel, Model
 
 # 请求成功的code
@@ -30,6 +31,7 @@ class Response(GenericModel, Generic[Data]):
     code: int = Field(title="状态码", description="1表示成功，0和其他数字表示失败", default=CODE_SUCCESS)
     message: str | None = Field(title="响应消息", default=MESSAGE_SUCCESS)
     data: Data = Field(title="响应数据")
+    request_id: str = Field(title="请求ID", default_factory=request_id_ctxvar.get)
 
 
 class NoneResponse(Response[type(None)]):

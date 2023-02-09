@@ -27,8 +27,9 @@ from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
 from app.api.user import router as user_router
 from app.common.config import config
 from app.common.exception import ServiceError
-from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener
+from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener, request_id_ctxvar
 from app.common.user_auth import AccessLevel, hash_password
+from app.common.util import generate_request_id
 from app.db import SessionLocal, check_database_is_up_to_date, crud
 from app.db.orm import Experiment
 from app.model.response import CODE_FAIL, CODE_SESSION_TIMEOUT, NoneResponse
@@ -94,7 +95,13 @@ def shutdown() -> None:
 @app.middleware("http")
 async def log_access_api(request: Request, call_next: Callable):
     start_time = datetime.now()
-    request.state.access_info = {"method": request.method, "api": request.url.path}
+    request_id = generate_request_id()
+    request_id_ctxvar.set(request_id)
+    request.state.access_info = {
+        "requestId": request_id,
+        "method": request.method,
+        "api": request.url.path,
+    }
 
     response = await call_next(request)
 
