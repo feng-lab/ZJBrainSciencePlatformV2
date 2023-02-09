@@ -45,7 +45,7 @@ def create_user(request: CreateUserRequest, ctx: Context = Depends(administrator
 )
 @wrap_api_response
 def get_current_user_info(ctx: Context = Depends(all_user_context)) -> UserResponse:
-    orm_user = common_crud.select_row_by_id(ctx.db, User, ctx.user_id)
+    orm_user = common_crud.get_row_by_id(ctx.db, User, ctx.user_id)
     user = UserResponse.from_orm(orm_user)
     return user
 
@@ -56,7 +56,7 @@ def get_user_info(
     user_id: int = Query(alias="id", description="用户ID", ge=0),
     ctx: Context = Depends(administrator_context),
 ) -> UserResponse:
-    orm_user = common_crud.select_row_by_id(ctx.db, User, user_id)
+    orm_user = common_crud.get_row_by_id(ctx.db, User, user_id)
     if orm_user is None:
         raise ServiceError.not_found("未找到用户")
     user = UserResponse.from_orm(orm_user)

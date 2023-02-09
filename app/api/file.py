@@ -78,7 +78,7 @@ def get_files_by_page(
 def download_file(
     file_id: int = Path(description="文件ID"), ctx: Context = Depends(not_logon_context)
 ) -> FastApiFileResponse:
-    file = common_crud.select_row_by_id(ctx.db, File, file_id)
+    file = common_crud.get_row_by_id(ctx.db, File, file_id)
     if file is None:
         raise ServiceError.not_found("未找到文件")
 
@@ -89,7 +89,7 @@ def download_file(
 @router.delete("/api/deleteFile", description="删除文件", response_model=NoneResponse)
 @wrap_api_response
 def delete_file(request: DeleteModelRequest, ctx: Context = Depends(researcher_context)) -> None:
-    file = common_crud.select_row_by_id(ctx.db, File, request.id)
+    file = common_crud.get_row_by_id(ctx.db, File, request.id)
     if file is None:
         return None
 

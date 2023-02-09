@@ -15,8 +15,12 @@ logger = logging.getLogger(__name__)
 OrmModel = TypeVar("OrmModel", bound=Base)
 
 
-def select_row_by_id(db: Session, table: type[OrmModel], id_: int) -> OrmModel | None:
-    stmt = select(table).where(table.id == id_, table.is_deleted == False)
+def get_row_by_id(db: Session, table: type[OrmModel], id_: int) -> OrmModel | None:
+    return get_row(db, table, table.id == id_)
+
+
+def get_row(db: Session, table: type[OrmModel], *where: WhereHavingRole) -> OrmModel | None:
+    stmt = select(table).where(table.is_deleted == False, *where)
     row = db.execute(stmt).scalar()
     return row
 
