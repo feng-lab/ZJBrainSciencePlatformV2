@@ -9,13 +9,13 @@ from fastapi.responses import FileResponse as FastApiFileResponse
 from sqlalchemy.orm import Session
 
 from app.common.config import config
-from app.common.context import Context, human_subject_context, not_logon_context, researcher_context
+from app.common.context import HumanSubjectContext, NotLogonContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import File
-from app.model.request import DeleteModelRequest, GetModelsByPageParam
+from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
-from app.model.schema import FileResponse
+from app.model.schema import FileResponse, PageParm
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def upload_file(
     experiment_id: int = Form(description="实验ID", default=0),
     is_original: bool = Form(description="是否是设备产生的原始文件"),
     file: UploadFile = FastApiFile(),
-    ctx: Context = Depends(researcher_context),
+    ctx: ResearcherContext = Depends(),
 ) -> int:
     file_index = get_next_index(ctx.db, experiment_id)
     name = file.filename
@@ -53,7 +53,7 @@ def upload_file(
 @router.get("/api/getFileTypes", description="获取当前实验已有的文件类型", response_model=Response[list[str]])
 @wrap_api_response
 def get_file_types(
-    experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
+    experiment_id: int = Query(description="实验ID"), ctx: HumanSubjectContext = Depends()
 ) -> list[str]:
     extensions = crud.get_file_extensions(ctx.db, experiment_id)
     return extensions
@@ -67,8 +67,8 @@ def get_files_by_page(
     experiment_id: int = Query(description="实验ID", default=0),
     name: str = Query(description="文件名，模糊查找", default=""),
     file_type: str = Query(description="文件类型，模糊查找", default=""),
-    page_param: GetModelsByPageParam = Depends(),
-    ctx: Context = Depends(human_subject_context),
+    page_param: PageParm = Depends(),
+    ctx: HumanSubjectContext = Depends(),
 ) -> PagedData[FileResponse]:
     files = crud.search_files(ctx.db, experiment_id, name, file_type, page_param)
     return files
@@ -76,7 +76,7 @@ def get_files_by_page(
 
 @router.get("/api/downloadFile/{file_id}", description="下载文件")
 def download_file(
-    file_id: int = Path(description="文件ID"), ctx: Context = Depends(not_logon_context)
+    file_id: int = Path(description="文件ID"), ctx: NotLogonContext = Depends()
 ) -> FastApiFileResponse:
     file = common_crud.get_row_by_id(ctx.db, File, file_id)
     if file is None:
@@ -88,7 +88,7 @@ def download_file(
 
 @router.delete("/api/deleteFile", description="删除文件", response_model=NoneResponse)
 @wrap_api_response
-def delete_file(request: DeleteModelRequest, ctx: Context = Depends(researcher_context)) -> None:
+def delete_file(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
     file = common_crud.get_row_by_id(ctx.db, File, request.id)
     if file is None:
         return None

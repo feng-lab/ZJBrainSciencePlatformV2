@@ -1,19 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from app.common.context import Context, administrator_context, all_user_context
+from app.common.context import AdministratorContext, AllUserContext
 from app.common.exception import ServiceError
 from app.common.user_auth import hash_password, verify_password
 from app.db import cache, common_crud, crud
 from app.db.orm import User
 from app.model.request import (
     DeleteModelRequest,
-    GetModelsByPageParam,
     UpdatePasswordRequest,
     UpdateUserAccessLevelRequest,
 )
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
-from app.model.schema import CreateUserRequest, UserResponse
+from app.model.schema import CreateUserRequest, PageParm, UserResponse
 
 router = APIRouter(tags=["user"])
 
@@ -23,7 +22,7 @@ ROOT_PASSWORD = "?L09G$7g5*j@.q*4go4d"
 
 @router.post("/api/createUser", description="创建用户", response_model=Response[int])
 @wrap_api_response
-def create_user(request: CreateUserRequest, ctx: Context = Depends(administrator_context)) -> int:
+def create_user(request: CreateUserRequest, ctx: AdministratorContext = Depends()) -> int:
     # 用户名唯一，幂等处理
     user_auth = crud.get_user_auth_by_username(ctx.db, request.username)
     if user_auth is not None:
@@ -43,7 +42,7 @@ def create_user(request: CreateUserRequest, ctx: Context = Depends(administrator
     "/api/getCurrentUserInfo", description="获取当前用户信息", response_model=Response[UserResponse]
 )
 @wrap_api_response
-def get_current_user_info(ctx: Context = Depends(all_user_context)) -> UserResponse:
+def get_current_user_info(ctx: AllUserContext = Depends()) -> UserResponse:
     orm_user = common_crud.get_row_by_id(ctx.db, User, ctx.user_id)
     user = UserResponse.from_orm(orm_user)
     return user
@@ -53,7 +52,7 @@ def get_current_user_info(ctx: Context = Depends(all_user_context)) -> UserRespo
 @wrap_api_response
 def get_user_info(
     user_id: int = Query(alias="id", description="用户ID", ge=0),
-    ctx: Context = Depends(administrator_context),
+    ctx: AdministratorContext = Depends(),
 ) -> UserResponse:
     orm_user = common_crud.get_row_by_id(ctx.db, User, user_id)
     if orm_user is None:
@@ -70,8 +69,8 @@ def get_users_by_page(
     username: str | None = Query(description="用户名，模糊查询", max_length=255, default=None),
     staff_id: str | None = Query(description="员工号，模糊查询", max_length=255, default=None),
     access_level: int | None = Query(description="权限级别", ge=0, default=None),
-    page_param: GetModelsByPageParam = Depends(),
-    ctx: Context = Depends(administrator_context),
+    page_param: PageParm = Depends(),
+    ctx: AdministratorContext = Depends(),
 ) -> PagedData[UserResponse]:
     paged_data = crud.search_users(ctx.db, username, staff_id, access_level, page_param)
     return paged_data
@@ -80,7 +79,7 @@ def get_users_by_page(
 @router.post("/api/updateUserAccessLevel", description="修改用户权限", response_model=NoneResponse)
 @wrap_api_response
 def update_user_access_level(
-    request: UpdateUserAccessLevelRequest, ctx: Context = Depends(administrator_context)
+    request: UpdateUserAccessLevelRequest, ctx: AdministratorContext = Depends()
 ) -> None:
     user_exists = common_crud.exists_row_by_id(ctx.db, User, request.id)
     if not user_exists:
@@ -97,9 +96,7 @@ def update_user_access_level(
 
 @router.post("/api/updatePassword", description="用户修改密码", response_model=NoneResponse)
 @wrap_api_response
-def update_password(
-    request: UpdatePasswordRequest, ctx: Context = Depends(all_user_context)
-) -> None:
+def update_password(request: UpdatePasswordRequest, ctx: AllUserContext = Depends()) -> None:
     username = crud.get_user_username(ctx.db, ctx.user_id)
     user_id = verify_password(ctx.db, username, request.old_password)
     if user_id is None or user_id != ctx.user_id:
@@ -114,7 +111,7 @@ def update_password(
 
 @router.delete("/api/deleteUser", description="删除用户", response_model=NoneResponse)
 @wrap_api_response
-def delete_user(request: DeleteModelRequest, ctx: Context = Depends(administrator_context)) -> None:
+def delete_user(request: DeleteModelRequest, ctx: AdministratorContext = Depends()) -> None:
     success = common_crud.update_row_as_deleted(ctx.db, User, request.id, commit=True)
     if not success:
         raise ServiceError.database_fail("删除用户失败")

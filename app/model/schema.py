@@ -15,6 +15,12 @@ class BaseModelInDB(ModelId):
     is_deleted: bool
 
 
+class PageParm(BaseModel):
+    offset: int = Field(0, ge=0)
+    limit: int = Field(10, ge=0)
+    include_deleted: bool = Field(False)
+
+
 class UserBase(BaseModel):
     username: str = Field(max_length=255)
     staff_id: str = Field(max_length=50)
@@ -215,20 +221,34 @@ class UpdateDeviceRequest(DeviceWithIndex, ModelId):
     pass
 
 
-class HumanSubjectBase(BaseModel):
-    user_id: int = Field(ge=0)
+class HumanSubjectSearchable(BaseModel):
     gender: Gender | None
+    abo_blood_type: ABOBloodType | None
+    marital_status: MaritalStatus | None
+    is_left_handed: bool | None
+
+
+class HumanSubjectCreate(HumanSubjectSearchable):
+    user_id: int = Field(ge=0)
     birthdate: date | None
     death_date: date | None
     education: str | None
     occupation: str | None
-    marital_status: MaritalStatus | None
-    abo_blood_type: ABOBloodType | None
-    is_left_handed: bool | None
     phone_number: str | None
     email: str | None
     address: str | None
 
 
-class CreateHumanSubjectRequest(HumanSubjectBase):
+class HumanSubjectResponse(HumanSubjectCreate):
+    pass
+
+    class Config:
+        orm_mode = True
+
+
+class ExperimentIdSearch(BaseModel):
+    experiment_id: int | None = Field(None, ge=0)
+
+
+class HumanSubjectSearch(PageParm, HumanSubjectSearchable, ExperimentIdSearch):
     pass

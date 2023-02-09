@@ -1,23 +1,21 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.api.file import delete_os_file, get_os_path
-from app.common.context import Context, human_subject_context, researcher_context
+from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import Experiment, File, Paradigm
 from app.model import convert
-from app.model.request import DeleteModelRequest, GetModelsByPageParam, UpdateParadigmRequest
+from app.model.request import DeleteModelRequest, UpdateParadigmRequest
 from app.model.response import NoneResponse, Response, wrap_api_response
-from app.model.schema import CreateParadigmRequest, ParadigmResponse
+from app.model.schema import CreateParadigmRequest, PageParm, ParadigmResponse
 
 router = APIRouter(tags=["paradigm"])
 
 
 @router.post("/api/createParadigm", description="创建实验范式", response_model=Response[int])
 @wrap_api_response
-def create_paradigm(
-    request: CreateParadigmRequest, ctx: Context = Depends(researcher_context)
-) -> int:
+def create_paradigm(request: CreateParadigmRequest, ctx: ResearcherContext = Depends()) -> int:
     database_error = ServiceError.database_fail("创建范式失败")
 
     deleted_experiments = common_crud.get_deleted_rows(ctx.db, Experiment, [request.experiment_id])
@@ -57,8 +55,7 @@ def create_paradigm(
 @router.get("/api/getParadigmInfo", description="获取范式详情", response_model=Response[ParadigmResponse])
 @wrap_api_response
 def get_paradigm_info(
-    paradigm_id: int = Query(description="范式ID", ge=0),
-    ctx: Context = Depends(human_subject_context),
+    paradigm_id: int = Query(description="范式ID", ge=0), ctx: HumanSubjectContext = Depends()
 ) -> ParadigmResponse:
     orm_paradigm = crud.get_paradigm_by_id(ctx.db, paradigm_id)
     if orm_paradigm is None:
@@ -75,8 +72,8 @@ def get_paradigm_info(
 @wrap_api_response
 def get_paradigms_by_page(
     experiment_id: int = Query(description="实验ID", default=0),
-    page_param: GetModelsByPageParam = Depends(),
-    ctx: Context = Depends(human_subject_context),
+    page_param: PageParm = Depends(),
+    ctx: HumanSubjectContext = Depends(),
 ) -> list[ParadigmResponse]:
     orm_paradigms = crud.search_paradigms(ctx.db, experiment_id, page_param)
     paradigm_responses = convert.map_list(convert.paradigm_orm_2_response, orm_paradigms)
@@ -85,9 +82,7 @@ def get_paradigms_by_page(
 
 @router.post("/api/updateParadigm", description="更新范式", response_model=NoneResponse)
 @wrap_api_response
-def update_paradigm(
-    request: UpdateParadigmRequest, ctx: Context = Depends(researcher_context)
-) -> None:
+def update_paradigm(request: UpdateParadigmRequest, ctx: ResearcherContext = Depends()) -> None:
     database_error = ServiceError.database_fail("更新范式失败")
 
     update_dict = request.dict(exclude={"id", "images"})
@@ -119,9 +114,7 @@ def update_paradigm(
 
 @router.delete("/api/deleteParadigm", description="删除范式", response_model=NoneResponse)
 @wrap_api_response
-def delete_paradigm(
-    request: DeleteModelRequest, ctx: Context = Depends(researcher_context)
-) -> None:
+def delete_paradigm(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
     database_error = ServiceError.database_fail("删除范式失败")
 
     orm_files = crud.list_paradigm_file_infos(ctx.db, request.id)

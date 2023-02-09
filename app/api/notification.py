@@ -3,22 +3,20 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 
 from app.common.config import config
-from app.common.context import Context, human_subject_context
+from app.common.context import HumanSubjectContext
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import Notification
-from app.model.request import GetModelsByPageParam, MarkNotificationsAsReadRequest
+from app.model.request import MarkNotificationsAsReadRequest
 from app.model.response import PagedData, Response, wrap_api_response
-from app.model.schema import NotificationBase, NotificationCreate, NotificationResponse
+from app.model.schema import NotificationBase, NotificationCreate, NotificationResponse, PageParm
 
 router = APIRouter(tags=["notification"])
 
 
 @router.post("/api/sendNotification", description="发送通知", response_model=Response[int])
 @wrap_api_response
-def send_notification(
-    request: NotificationBase, ctx: Context = Depends(human_subject_context)
-) -> int:
+def send_notification(request: NotificationBase, ctx: HumanSubjectContext = Depends()) -> int:
     notification_create = NotificationCreate(
         **request.dict(), creator=ctx.user_id, status=Notification.Status.unread
     )
@@ -32,7 +30,7 @@ def send_notification(
 
 @router.get("/api/getUnreadNotificationCount", description="获取未读通知总数", response_model=Response[int])
 @wrap_api_response
-def get_unread_notification_count(ctx: Context = Depends(human_subject_context)) -> int:
+def get_unread_notification_count(ctx: HumanSubjectContext = Depends()) -> int:
     unread_count = crud.get_notification_unread_count(ctx.db, ctx.user_id)
     return unread_count
 
@@ -45,9 +43,9 @@ def get_unread_notification_count(ctx: Context = Depends(human_subject_context))
 @wrap_api_response
 def get_recent_unread_notifications(
     count: int = Query(description="数量", default=config.GET_RECENT_NOTIFICATIONS_COUNT, ge=0),
-    ctx: Context = Depends(human_subject_context),
+    ctx: HumanSubjectContext = Depends(),
 ) -> list[NotificationResponse]:
-    page_param = GetModelsByPageParam(offset=0, limit=count, include_deleted=False)
+    page_param = PageParm(offset=0, limit=count, include_deleted=False)
     return crud.list_notifications(ctx.db, ctx.user_id, Notification.Status.unread, page_param)
 
 
@@ -63,8 +61,8 @@ def get_notifications_by_page(
     status: Notification.Status | None = Query(description="通知状态", default=None),
     create_time_start: datetime | None = Query(description="筛选通知发送时间的开始时间", default=None),
     create_time_end: datetime | None = Query(description="筛选通知发送时间的结束时间", default=None),
-    page_param: GetModelsByPageParam = Depends(),
-    ctx: Context = Depends(human_subject_context),
+    page_param: PageParm = Depends(),
+    ctx: HumanSubjectContext = Depends(),
 ) -> PagedData[NotificationResponse]:
     paged_data = crud.search_notifications(
         ctx.db,
@@ -83,7 +81,7 @@ def get_notifications_by_page(
 )
 @wrap_api_response
 def mark_notifications_as_read(
-    request: MarkNotificationsAsReadRequest, ctx: Context = Depends(human_subject_context)
+    request: MarkNotificationsAsReadRequest, ctx: HumanSubjectContext = Depends()
 ) -> list[int]:
     notification_ids = list(set(request.notification_ids))
     where = [

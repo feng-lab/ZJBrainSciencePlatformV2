@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import Any, Callable, Sequence, cast
 
-from sqlalchemy import and_, func, insert, or_, select, text, update
+from sqlalchemy import Select, and_, func, insert, or_, select, text, update
 from sqlalchemy.engine import CursorResult, Row
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session, joinedload, load_only, subqueryload
@@ -11,18 +11,26 @@ from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 from app.common.config import config
 from app.common.util import Model, T, now
 from app.db.common_crud import OrmModel
-from app.db.orm import Device, Experiment, ExperimentAssistant, File, Notification, Paradigm, User
-from app.model.request import (
-    GetExperimentsByPageSortBy,
-    GetExperimentsByPageSortOrder,
-    GetModelsByPageParam,
+from app.db.orm import (
+    Device,
+    Experiment,
+    ExperimentAssistant,
+    ExperimentHumanSubject,
+    File,
+    HumanSubject,
+    Notification,
+    Paradigm,
+    User,
 )
+from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 from app.model.response import PagedData
 from app.model.schema import (
     FileInDB,
     FileResponse,
+    HumanSubjectSearch,
     NotificationInDB,
     NotificationResponse,
+    PageParm,
     UserAuth,
     UserCreate,
     UserResponse,
@@ -51,7 +59,7 @@ class SearchModel:
         self.join_spec = (another_table, on_clause, is_outer)
         return self
 
-    def page_param(self, page_param: GetModelsByPageParam) -> "SearchModel":
+    def page_param(self, page_param: PageParm) -> "SearchModel":
         self.offset = page_param.offset
         self.limit = page_param.limit
         if not page_param.include_deleted:
@@ -192,7 +200,7 @@ def search_users(
     username: str | None,
     staff_id: str | None,
     access_level: int | None,
-    page_param: GetModelsByPageParam,
+    page_param: PageParm,
 ) -> PagedData[UserResponse]:
     return (
         SearchModel(db, User)
@@ -249,7 +257,7 @@ def search_notifications(
     status: Notification.Status | None,
     create_time_start: datetime | None,
     create_time_end: datetime | None,
-    page_param: GetModelsByPageParam,
+    page_param: PageParm,
 ) -> PagedData[NotificationResponse]:
     return (
         build_search_notification(db)
@@ -265,7 +273,7 @@ def search_notifications(
 
 
 def list_notifications(
-    db: Session, user_id: int, status: Notification.Status | None, page_param: GetModelsByPageParam
+    db: Session, user_id: int, status: Notification.Status | None, page_param: PageParm
 ) -> list[NotificationResponse]:
     return (
         build_search_notification(db)
@@ -312,7 +320,7 @@ def get_file_extensions(db: Session, experiment_id: int) -> list[str]:
 
 
 def search_files(
-    db: Session, experiment_id: int, name: str, extension: str, page_param: GetModelsByPageParam
+    db: Session, experiment_id: int, name: str, extension: str, page_param: PageParm
 ) -> PagedData[FileResponse]:
     def map_model(row: Row) -> FileResponse:
         file = FileResponse(**FileInDB.from_orm(row[0]).dict())
@@ -405,7 +413,7 @@ def search_experiments(
     search: str,
     sort_by: GetExperimentsByPageSortBy,
     sort_order: GetExperimentsByPageSortOrder,
-    page_param: GetModelsByPageParam,
+    page_param: PageParm,
 ) -> list[Experiment]:
     stmt = (
         select(Experiment)
@@ -512,9 +520,7 @@ def list_paradigm_file_infos(db: Session, paradigm_id: int) -> list[File]:
     return list(files)
 
 
-def search_paradigms(
-    db: Session, experiment_id: int, page_param: GetModelsByPageParam
-) -> list[Paradigm]:
+def search_paradigms(db: Session, experiment_id: int, page_param: PageParm) -> list[Paradigm]:
     stmt = (
         select(Paradigm)
         .where(Paradigm.experiment_id == experiment_id)
@@ -553,7 +559,7 @@ def get_next_device_index(db: Session, experiment_id: int) -> int:
 
 
 def search_devices(
-    db: Session, experiment_id: int, page_param: GetModelsByPageParam
+    db: Session, experiment_id: int, page_param: PageParm
 ) -> (int, Sequence[Device]):
     base_stmt = (
         select(Device)
@@ -563,8 +569,42 @@ def search_devices(
     if not page_param.include_deleted:
         base_stmt = base_stmt.where(Device.is_deleted == False)
 
-    items_stmt = base_stmt.offset(page_param.offset).limit(page_param.limit)
-    devices = db.execute(items_stmt).scalars().all()
+    return query_paged_data(db, base_stmt, page_param.offset, page_param.limit)
+
+
+def search_human_subjects(db: Session, search: HumanSubjectSearch) -> (int, Sequence[HumanSubject]):
+    base_stmt = (
+        select(HumanSubject)
+        .join(User, User.id == HumanSubject.user_id)
+        .where(User.is_deleted == False)
+    )
+    if search.experiment_id is not None:
+        base_stmt = (
+            base_stmt.join(
+                ExperimentHumanSubject, HumanSubject.id == ExperimentHumanSubject.human_subject_id
+            )
+            .join(Experiment, Experiment.id == ExperimentHumanSubject.experiment_id)
+            .where(Experiment.is_deleted == False, Experiment.id == search.experiment_id)
+        )
+    if search.gender is not None:
+        base_stmt = base_stmt.where(HumanSubject.gender == search.gender)
+    if search.abo_blood_type is not None:
+        base_stmt = base_stmt.where(HumanSubject.abo_blood_type == search.abo_blood_type)
+    if search.marital_status is not None:
+        base_stmt = base_stmt.where(HumanSubject.marital_status == search.marital_status)
+    if search.is_left_handed is not None:
+        base_stmt = base_stmt.where(HumanSubject.is_left_handed == search.is_left_handed)
+    if not search.include_deleted:
+        base_stmt = base_stmt.where(HumanSubject.is_deleted == False)
+
+    return query_paged_data(db, base_stmt, search.offset, search.limit)
+
+
+def query_paged_data(
+    db: Session, base_stmt: Select, offset: int, limit: int
+) -> tuple[int, Sequence[OrmModel]]:
+    items_stmt = base_stmt.offset(offset).limit(limit)
+    human_subjects = db.execute(items_stmt).scalars().all()
     total_stmt = base_stmt.with_only_columns(func.count())
     total = db.execute(total_stmt).scalar()
-    return total, devices
+    return total, human_subjects

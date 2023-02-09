@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
-from app.common.context import Context, human_subject_context, researcher_context
+from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import Experiment, ExperimentAssistant, User
@@ -9,21 +9,18 @@ from app.model.request import (
     DeleteModelRequest,
     GetExperimentsByPageSortBy,
     GetExperimentsByPageSortOrder,
-    GetModelsByPageParam,
     UpdateExperimentAssistantsRequest,
     UpdateExperimentRequest,
 )
 from app.model.response import NoneResponse, Response, wrap_api_response
-from app.model.schema import CreateExperimentRequest, ExperimentResponse, UserInfo
+from app.model.schema import CreateExperimentRequest, ExperimentResponse, PageParm, UserInfo
 
 router = APIRouter(tags=["experiment"])
 
 
 @router.post("/api/createExperiment", description="创建实验", response_model=Response[int])
 @wrap_api_response
-def create_experiment(
-    request: CreateExperimentRequest, ctx: Context = Depends(researcher_context)
-) -> int:
+def create_experiment(request: CreateExperimentRequest, ctx: ResearcherContext = Depends()) -> int:
     database_error = ServiceError.database_fail("创建实验失败")
 
     # 检查没有被删除的用户ID
@@ -63,7 +60,7 @@ def create_experiment(
 )
 @wrap_api_response
 def get_experiment_info(
-    experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
+    experiment_id: int = Query(description="实验ID"), ctx: HumanSubjectContext = Depends()
 ) -> ExperimentResponse:
     orm_experiment = crud.get_experiment_by_id(ctx.db, experiment_id)
     if orm_experiment is None:
@@ -87,8 +84,8 @@ def get_experiments_by_page(
     sort_order: GetExperimentsByPageSortOrder = Query(
         description="排序顺序", default=GetExperimentsByPageSortOrder.DESC
     ),
-    page_param: GetModelsByPageParam = Depends(),
-    ctx: Context = Depends(human_subject_context),
+    page_param: PageParm = Depends(),
+    ctx: HumanSubjectContext = Depends(),
 ) -> list[ExperimentResponse]:
     orm_experiments = crud.search_experiments(ctx.db, search, sort_by, sort_order, page_param)
     experiments = convert.map_list(convert.experiment_orm_2_response, orm_experiments)
@@ -100,7 +97,7 @@ def get_experiments_by_page(
 )
 @wrap_api_response
 def get_experiment_assistants(
-    experiment_id: int = Query(description="实验ID"), ctx: Context = Depends(human_subject_context)
+    experiment_id: int = Query(description="实验ID"), ctx: HumanSubjectContext = Depends()
 ) -> list[UserInfo]:
     orm_users = crud.list_experiment_assistants(ctx.db, experiment_id)
     user_infos = convert.map_list(UserInfo.from_orm, orm_users)
@@ -109,7 +106,7 @@ def get_experiment_assistants(
 
 @router.post("/api/updateExperiment", description="更新实验", response_model=NoneResponse)
 @wrap_api_response
-def update_experiment(request: UpdateExperimentRequest, ctx: Context = Depends(researcher_context)):
+def update_experiment(request: UpdateExperimentRequest, ctx: ResearcherContext = Depends()):
     update_dict = {
         field_name: field_value
         for field_name, field_value in request.dict(exclude={"id"}).items()
@@ -122,16 +119,14 @@ def update_experiment(request: UpdateExperimentRequest, ctx: Context = Depends(r
 
 @router.delete("/api/deleteExperiment", description="删除实验", response_model=NoneResponse)
 @wrap_api_response
-def delete_experiment(
-    request: DeleteModelRequest, ctx: Context = Depends(researcher_context)
-) -> None:
+def delete_experiment(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
     common_crud.update_row_as_deleted(ctx.db, Experiment, request.id, commit=True)
 
 
 @router.post("/api/addExperimentAssistants", description="添加实验助手", response_model=NoneResponse)
 @wrap_api_response
 def add_experiment_assistants(
-    request: UpdateExperimentAssistantsRequest, ctx: Context = Depends(researcher_context)
+    request: UpdateExperimentAssistantsRequest, ctx: ResearcherContext = Depends()
 ) -> None:
     exist_assistants = crud.search_experiment_assistants(
         ctx.db, request.experiment_id, request.assistant_ids
@@ -150,7 +145,7 @@ def add_experiment_assistants(
 @router.delete("/api/deleteExperimentAssistants", description="删除实验助手", response_model=NoneResponse)
 @wrap_api_response
 def delete_experiment_assistants(
-    request: UpdateExperimentAssistantsRequest, ctx: Context = Depends(researcher_context)
+    request: UpdateExperimentAssistantsRequest, ctx: ResearcherContext = Depends()
 ) -> None:
     success = common_crud.bulk_delete_rows(
         ctx.db,

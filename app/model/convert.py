@@ -1,10 +1,11 @@
 from typing import Callable, Iterable, TypeVar
 
-from app.db.orm import Device, Experiment, Paradigm
+from app.db.orm import Device, Experiment, HumanSubject, Paradigm
 from app.model.schema import (
     DeviceResponse,
     ExperimentInDB,
     ExperimentResponse,
+    HumanSubjectResponse,
     ParadigmInDB,
     ParadigmResponse,
     UserInfo,
@@ -38,3 +39,7 @@ def paradigm_orm_2_response(paradigm: Paradigm) -> ParadigmResponse:
 
 def device_orm_2_response(device: Device) -> DeviceResponse:
     return DeviceResponse.from_orm(device)
+
+
+def human_subject_orm_2_response(human_subject: HumanSubject) -> HumanSubjectResponse:
+    return HumanSubjectResponse.from_orm(human_subject)

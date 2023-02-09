@@ -17,29 +17,26 @@ class Context:
             self.user_id: int | None = verify_current_user(db, self.cache, token, api_access_level)
 
 
-def not_logon_context(db: Session = Depends(get_db_session)) -> Context:
-    return Context(db, None, None)
+class NotLogonContext(Context):
+    def __init__(self, db: Session = Depends(get_db_session)):
+        super().__init__(db, None, None)
 
 
-def all_user_context(
-    db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)
-) -> Context:
-    return Context(db, token, AccessLevel.MINIMUM.value)
+class AllUserContext(Context):
+    def __init__(self, db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)):
+        super().__init__(db, token, AccessLevel.MINIMUM.value)
 
 
-def human_subject_context(
-    db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)
-) -> Context:
-    return Context(db, token, AccessLevel.HUMAN_SUBJECT.value)
+class HumanSubjectContext(Context):
+    def __init__(self, db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)):
+        super().__init__(db, token, AccessLevel.HUMAN_SUBJECT.value)
 
 
-def researcher_context(
-    db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)
-) -> Context:
-    return Context(db, token, AccessLevel.RESEARCHER.value)
+class ResearcherContext(Context):
+    def __init__(self, db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)):
+        super().__init__(db, token, AccessLevel.RESEARCHER.value)
 
 
-def administrator_context(
-    db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)
-) -> Context:
-    return Context(db, token, AccessLevel.ADMINISTRATOR.value)
+class AdministratorContext(Context):
+    def __init__(self, db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)):
+        super().__init__(db, token, AccessLevel.ADMINISTRATOR.value)

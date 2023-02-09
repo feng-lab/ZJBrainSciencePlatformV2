@@ -6,12 +6,6 @@ from pydantic import BaseModel, Field
 from app.db.orm import Experiment
 
 
-class GetModelsByPageParam(BaseModel):
-    offset: int = Field(0, title="分页起始位置", ge=0)
-    limit: int = Field(10, title="分页大小", ge=0)
-    include_deleted: bool = Field(False, title="是否包括已删除项")
-
-
 class DeleteModelRequest(BaseModel):
     id: int
 

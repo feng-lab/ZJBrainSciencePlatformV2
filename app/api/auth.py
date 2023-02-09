@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.common.config import config
-from app.common.context import Context, all_user_context
+from app.common.context import AllUserContext
 from app.common.exception import ServiceError
 from app.common.user_auth import (
     TOKEN_TYPE,
@@ -39,7 +39,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 
 @router.post("/api/logout", description="用户登出", response_model=NoneResponse)
 @wrap_api_response
-def logout(ctx: Context = Depends(all_user_context)) -> None:
+def logout(ctx: AllUserContext = Depends()) -> None:
     success = common_crud.update_row(
         ctx.db, User, ctx.user_id, {"last_logout_time": now()}, commit=True
     )

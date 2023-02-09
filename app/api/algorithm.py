@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import APIRouter, Depends
 
 from app.api.file import get_os_path
-from app.common.context import Context, researcher_context
+from app.common.context import ResearcherContext
 from app.common.depend import grpc_stub
 from app.common.util import serialize_protobuf
 from app.db import common_crud
@@ -20,7 +20,7 @@ router = APIRouter(tags=["algorithm"])
 @wrap_api_response
 def display_eeg(
     request: DisplayEEGRequest,
-    ctx: Context = Depends(researcher_context),
+    ctx: ResearcherContext = Depends(),
     stub: EEGServiceStub = Depends(grpc_stub(EEGServiceStub)),
 ) -> dict[str, Any]:
     grpc_request = GrpcDisplayEEGRequest(**request.dict())
