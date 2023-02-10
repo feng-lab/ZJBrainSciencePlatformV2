@@ -608,3 +608,20 @@ def query_paged_data(
     total_stmt = base_stmt.with_only_columns(func.count())
     total = db.execute(total_stmt).scalar()
     return total, human_subjects
+
+
+def list_experiment_human_subjects(db: Session, experiment_id: int) -> Sequence[int]:
+    stmt = (
+        select(HumanSubject.user_id)
+        .join(ExperimentHumanSubject, HumanSubject.user_id == ExperimentHumanSubject.user_id)
+        .join(Experiment, ExperimentHumanSubject.experiment_id == Experiment.id)
+        .join(User, HumanSubject.user_id == User.id)
+        .where(
+            ExperimentHumanSubject.experiment_id == experiment_id,
+            HumanSubject.is_deleted == False,
+            Experiment.is_deleted == False,
+            User.is_deleted == False,
+        )
+    )
+    human_subject_user_ids = db.execute(stmt).scalars().all()
+    return human_subject_user_ids

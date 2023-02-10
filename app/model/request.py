@@ -58,6 +58,11 @@ class UpdateExperimentAssistantsRequest(BaseModel):
     assistant_ids: list[int] = Field(min_items=1)
 
 
+class UpdateExperimentHumanSubjectRequest(BaseModel):
+    experiment_id: int = Field(ge=0)
+    user_ids: list[int] = Field(min_items=1)
+
+
 class UpdateParadigmRequest(BaseModel):
     id: int = Field(ge=0)
     experiment_id: int | None = Field(ge=0)

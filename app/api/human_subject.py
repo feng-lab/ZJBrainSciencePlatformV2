@@ -3,9 +3,10 @@ from fastapi import APIRouter, Depends, Query
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
-from app.db.orm import HumanSubject, User
+from app.db.orm import HumanSubject, User, Experiment, ExperimentHumanSubject
 from app.model import convert
-from app.model.response import PagedData, Response, wrap_api_response
+from app.model.request import UpdateExperimentHumanSubjectRequest
+from app.model.response import PagedData, Response, wrap_api_response, NoneResponse
 from app.model.schema import HumanSubjectCreate, HumanSubjectResponse, HumanSubjectSearch
 
 router = APIRouter(tags=["human subject"])
@@ -58,3 +59,32 @@ def get_human_subjects_by_page(
         convert.human_subject_orm_2_response, human_subjects
     )
     return PagedData(total=total, items=human_subjects_responses)
+
+
+@router.post(
+    "/api/addHumanSubjectsInExperiment", description="添加实验人类被试者", response_model=NoneResponse
+)
+@wrap_api_response
+def add_human_subjects_in_experiment(
+    request: UpdateExperimentHumanSubjectRequest, ctx: ResearcherContext = Depends()
+) -> None:
+    database_error = ServiceError.database_fail("添加实验人类被试者失败")
+
+    experiment_exists = common_crud.check_row_valid(ctx.db, Experiment, request.experiment_id)
+    if experiment_exists is None:
+        raise database_error
+    elif not experiment_exists:
+        raise ServiceError.not_found("实验不存在")
+
+    exist_human_subject_user_ids = set(
+        crud.list_experiment_human_subjects(ctx.db, request.experiment_id)
+    )
+    add_experiment_human_subjects = [
+        {"experiment_id": request.experiment_id, "user_id": user_id}
+        for user_id in request.user_ids
+        if user_id not in exist_human_subject_user_ids
+    ]
+    if not common_crud.bulk_insert_rows(
+        ctx.db, ExperimentHumanSubject, add_experiment_human_subjects, commit=True
+    ):
+        raise database_error
