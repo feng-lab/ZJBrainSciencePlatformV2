@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.api import check_experiment_exists, check_user_exists
-from app.common.context import HumanSubjectContext, ResearcherContext
+from app.common.context import AdministratorContext, HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import ExperimentHumanSubject, HumanSubject
 from app.model import convert
-from app.model.request import UpdateExperimentHumanSubjectRequest
+from app.model.request import DeleteHumanSubjectRequest, UpdateExperimentHumanSubjectRequest
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
 from app.model.schema import HumanSubjectCreate, HumanSubjectResponse, HumanSubjectSearch
 
@@ -15,13 +15,31 @@ router = APIRouter(tags=["human subject"])
 
 @router.post("/api/createHumanSubject", description="创建人类被试者", response_model=Response[int])
 @wrap_api_response
-def create_human_subject(request: HumanSubjectCreate, ctx: ResearcherContext = Depends()) -> None:
+def create_human_subject(
+    request: HumanSubjectCreate, ctx: AdministratorContext = Depends()
+) -> None:
     check_user_exists(ctx.db, request.user_id)
 
     human_subject_dict = request.dict()
     human_subject_id = common_crud.insert_row(ctx.db, HumanSubject, human_subject_dict, commit=True)
     if human_subject_id is None:
         raise ServiceError.database_fail("创建人类被试者失败")
+
+
+@router.delete("/api/deleteHumanSubject", description="删除人类被试者", response_model=NoneResponse)
+@wrap_api_response
+def delete_human_subject(
+    request: DeleteHumanSubjectRequest, ctx: AdministratorContext = Depends()
+) -> None:
+    success = common_crud.bulk_update_rows(
+        ctx.db,
+        HumanSubject,
+        [HumanSubject.user_id == request.user_id],
+        {"is_deleted": True},
+        commit=True,
+    )
+    if not success:
+        raise ServiceError.database_fail("删除人类被试者失败")
 
 
 @router.get(
@@ -78,7 +96,7 @@ def add_human_subjects_in_experiment(
         raise ServiceError.database_fail("向实验中添加人类被试者失败")
 
 
-@router.post(
+@router.delete(
     "/api/deleteHumanSubjectsFromExperiment", description="从实验中删除人类被试者", response_model=NoneResponse
 )
 @wrap_api_response

@@ -85,3 +85,7 @@ class DisplayEEGRequest(BaseModel):
     window: int = Field(ge=0)
     page_index: int = Field(ge=0)
     channels: list[str]
+
+
+class DeleteHumanSubjectRequest(BaseModel):
+    user_id: int = Field(ge=0)
