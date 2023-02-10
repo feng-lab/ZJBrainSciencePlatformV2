@@ -207,6 +207,8 @@ class HumanSubject(Base, ModelMixin):
     email: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="电子邮箱地址")
     address: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="住址")
 
+    user: Mapped[User] = relationship("User")
+
 
 class ExperimentHumanSubject(Base):
     __tablename__ = "experiment_human_subject"
@@ -215,4 +217,6 @@ class ExperimentHumanSubject(Base):
     experiment_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("experiment.id"), primary_key=True
     )
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("human_subject.user_id"), primary_key=True
+    )

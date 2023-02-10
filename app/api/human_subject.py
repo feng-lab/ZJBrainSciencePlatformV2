@@ -51,7 +51,7 @@ def delete_human_subject(
 def get_human_subject_info(
     user_id: int = Query(description="用户ID", ge=0), ctx: HumanSubjectContext = Depends()
 ) -> HumanSubjectResponse:
-    orm_human_subject = common_crud.get_row(ctx.db, HumanSubject, HumanSubject.user_id == user_id)
+    orm_human_subject = crud.get_human_subject(ctx.db, user_id)
     if orm_human_subject is None:
         raise ServiceError.not_found("未找到人类被试者")
     return convert.human_subject_orm_2_response(orm_human_subject)

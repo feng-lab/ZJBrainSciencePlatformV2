@@ -21,9 +21,12 @@ class PageParm(BaseModel):
     include_deleted: bool = Field(False)
 
 
-class UserBase(BaseModel):
+class UserNameStaffId(BaseModel):
     username: str = Field(max_length=255)
     staff_id: str = Field(max_length=50)
+
+
+class UserBase(UserNameStaffId):
     access_level: int = Field(ge=0)
 
 
@@ -239,11 +242,8 @@ class HumanSubjectCreate(HumanSubjectSearchable):
     address: str | None
 
 
-class HumanSubjectResponse(HumanSubjectCreate):
+class HumanSubjectResponse(HumanSubjectCreate, UserNameStaffId):
     pass
-
-    class Config:
-        orm_mode = True
 
 
 class ExperimentIdSearch(BaseModel):

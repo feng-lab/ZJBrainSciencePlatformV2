@@ -1,5 +1,6 @@
-from typing import Callable, Iterable, TypeVar
+from typing import Any, Callable, Iterable, TypeVar
 
+from app.db.common_crud import OrmModel
 from app.db.orm import Device, Experiment, HumanSubject, Paradigm
 from app.model.schema import (
     DeviceResponse,
@@ -19,6 +20,11 @@ def map_list(function: Callable[[A], B], items: Iterable[A] | None) -> list[B]:
     if items is None:
         return []
     return [function(item) for item in items]
+
+
+# noinspection PyTypeChecker
+def orm_2_dict(orm: OrmModel) -> dict[str, Any]:
+    return {column.name: getattr(orm, column.name) for column in orm.__table__.columns}
 
 
 def experiment_orm_2_response(experiment: Experiment) -> ExperimentResponse:
@@ -42,4 +48,8 @@ def device_orm_2_response(device: Device) -> DeviceResponse:
 
 
 def human_subject_orm_2_response(human_subject: HumanSubject) -> HumanSubjectResponse:
-    return HumanSubjectResponse.from_orm(human_subject)
+    return HumanSubjectResponse(
+        username=human_subject.user.username,
+        staff_id=human_subject.user.staff_id,
+        **orm_2_dict(human_subject),
+    )
