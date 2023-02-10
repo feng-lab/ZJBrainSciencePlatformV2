@@ -215,6 +215,4 @@ class ExperimentHumanSubject(Base):
     experiment_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("experiment.id"), primary_key=True
     )
-    human_subject_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("human_subject.id"), primary_key=True
-    )
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), primary_key=True)
