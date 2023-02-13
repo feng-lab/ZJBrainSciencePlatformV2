@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.api import check_experiment_exists
-from app.common.context import AdministratorContext, HumanSubjectContext, ResearcherContext
+from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.user_auth import AccessLevel, hash_password
 from app.db import common_crud, crud
@@ -27,7 +27,7 @@ router = APIRouter(tags=["human subject"])
 )
 @wrap_api_response
 def create_human_subject(
-    request: HumanSubjectCreate, ctx: AdministratorContext = Depends()
+    request: HumanSubjectCreate, ctx: ResearcherContext = Depends()
 ) -> CreateHumanSubjectResponse:
     next_index = crud.get_next_human_subject_index(ctx.db)
     username = f"HS{next_index:06}"
@@ -53,7 +53,7 @@ def create_human_subject(
 @router.delete("/api/deleteHumanSubject", description="删除人类被试者", response_model=NoneResponse)
 @wrap_api_response
 def delete_human_subject(
-    request: DeleteHumanSubjectRequest, ctx: AdministratorContext = Depends()
+    request: DeleteHumanSubjectRequest, ctx: ResearcherContext = Depends()
 ) -> None:
     success = common_crud.update_row_as_deleted(
         ctx.db, HumanSubject, where=[HumanSubject.user_id == request.user_id], commit=True
