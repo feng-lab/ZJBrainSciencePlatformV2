@@ -1,29 +1,53 @@
 from fastapi import APIRouter, Depends, Query
 
-from app.api import check_experiment_exists, check_user_exists
+from app.api import check_experiment_exists
 from app.common.context import AdministratorContext, HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.user_auth import AccessLevel, hash_password
 from app.db import common_crud, crud
-from app.db.orm import ExperimentHumanSubject, HumanSubject
+from app.db.orm import ExperimentHumanSubject, HumanSubject, User
 from app.model import convert
 from app.model.request import DeleteHumanSubjectRequest, UpdateExperimentHumanSubjectRequest
-from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
+from app.model.response import (
+    CreateHumanSubjectResponse,
+    NoneResponse,
+    PagedData,
+    Response,
+    wrap_api_response,
+)
 from app.model.schema import HumanSubjectCreate, HumanSubjectResponse, HumanSubjectSearch
 
 router = APIRouter(tags=["human subject"])
 
 
-@router.post("/api/createHumanSubject", description="创建人类被试者", response_model=Response[int])
+@router.post(
+    "/api/createHumanSubject",
+    description="创建人类被试者",
+    response_model=Response[CreateHumanSubjectResponse],
+)
 @wrap_api_response
 def create_human_subject(
     request: HumanSubjectCreate, ctx: AdministratorContext = Depends()
-) -> None:
-    check_user_exists(ctx.db, request.user_id)
+) -> CreateHumanSubjectResponse:
+    next_index = crud.get_next_human_subject_index(ctx.db)
+    username = f"HS{next_index:06}"
+    password = f"{username}#brain#{username}"
+    user_dict = {
+        "username": username,
+        "staff_id": username,
+        "access_level": AccessLevel.HUMAN_SUBJECT.value,
+        "hashed_password": hash_password(password),
+    }
+    user_id = common_crud.insert_row(ctx.db, User, user_dict, commit=True)
+    if user_id is None:
+        raise ServiceError.database_fail("创建被试者用户失败")
 
-    human_subject_dict = request.dict()
+    human_subject_dict = request.dict() | {"user_id": user_id}
     human_subject_id = common_crud.insert_row(ctx.db, HumanSubject, human_subject_dict, commit=True)
     if human_subject_id is None:
         raise ServiceError.database_fail("创建人类被试者失败")
+
+    return CreateHumanSubjectResponse(username=username, staff_id=username, password=password)
 
 
 @router.delete("/api/deleteHumanSubject", description="删除人类被试者", response_model=NoneResponse)

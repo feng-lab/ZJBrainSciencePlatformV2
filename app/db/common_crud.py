@@ -37,7 +37,7 @@ def exists_row_by_id(db: Session, table: type[OrmModel], id_: int) -> bool:
 
 
 def insert_row(
-    db: Session, table: type[OrmModel], row: dict[str, Any], *, commit: bool
+    db: Session, table: type[OrmModel], row: dict[str, Any], *, commit: bool, return_id: bool = True
 ) -> int | None:
     success = False
     try:
@@ -46,7 +46,8 @@ def insert_row(
         if result.rowcount != 1:
             return None
         success = True
-        return result.inserted_primary_key.id
+        if return_id:
+            return result.inserted_primary_key.id
     except DBAPIError as e:
         logger.error(f"insert table {table.__name__} error, msg={e}")
         return None

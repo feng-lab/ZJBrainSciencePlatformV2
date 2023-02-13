@@ -114,3 +114,9 @@ class DisplayEEGData(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class CreateHumanSubjectResponse(BaseModel):
+    username: str
+    staff_id: str
+    password: str

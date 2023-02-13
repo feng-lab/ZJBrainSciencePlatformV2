@@ -226,3 +226,11 @@ class HumanSubject(Base, ModelMixin):
     address: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="住址")
 
     user: Mapped[User] = relationship("User")
+
+
+@table_repr
+class HumanSubjectIndex(Base):
+    __tablename__ = "human_subject_index"
+    __table_args__ = {"comment": "被试者用户序号"}
+
+    index: Mapped[int] = mapped_column(Integer, primary_key=True, comment="下一个被试者的序号")

@@ -1,4 +1,5 @@
 import logging
+import sys
 from datetime import datetime
 from typing import Any, Callable, Sequence, cast
 
@@ -10,6 +11,7 @@ from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
 from app.common.config import config
 from app.common.util import Model, T, now
+from app.db import common_crud
 from app.db.common_crud import OrmModel
 from app.db.orm import (
     Device,
@@ -18,6 +20,7 @@ from app.db.orm import (
     ExperimentHumanSubject,
     File,
     HumanSubject,
+    HumanSubjectIndex,
     Notification,
     Paradigm,
     User,
@@ -218,7 +221,7 @@ def insert_or_update_user(db: Session, user: UserCreate) -> None:
     if user_id is None:
         insert_model(db, User, user)
     else:
-        update_model(db, User, user_id, **user.dict())
+        update_model(db, User, user_id, **user.dict(), is_deleted=False)
 
 
 def get_user_username(db: Session, user_id: int) -> str | None:
@@ -633,3 +636,33 @@ def list_experiment_human_subjects(db: Session, experiment_id: int) -> Sequence[
     )
     human_subject_user_ids = db.execute(stmt).scalars().all()
     return human_subject_user_ids
+
+
+def get_next_human_subject_index(
+    db: Session, update_index: bool = True, exit_if_update_error: bool = False
+) -> int | None:
+    next_index: int | None = db.execute(select(HumanSubjectIndex.index)).scalar_one_or_none()
+    if next_index is None:
+        return None
+
+    if update_index:
+        success = common_crud.update_row(
+            db,
+            HumanSubjectIndex,
+            {"index": next_index + 1},
+            where=[HumanSubjectIndex.index == next_index],
+            commit=True,
+            touch=False,
+        )
+        if not success:
+            logger.error(f"update human_subject_index.index error, {next_index=}")
+            if exit_if_update_error:
+                sys.exit(1)
+            else:
+                return None
+
+    return next_index
+
+
+def insert_human_subject_index(db: Session, index: int) -> None:
+    common_crud.insert_row(db, HumanSubjectIndex, {"index": index}, commit=True, return_id=False)

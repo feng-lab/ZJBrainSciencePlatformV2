@@ -232,7 +232,6 @@ class HumanSubjectSearchable(BaseModel):
 
 
 class HumanSubjectCreate(HumanSubjectSearchable):
-    user_id: int = Field(ge=0)
     birthdate: date | None
     death_date: date | None
     education: str | None

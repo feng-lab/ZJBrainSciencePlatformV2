@@ -83,6 +83,7 @@ def startup() -> None:
     try:
         create_root_user(db)
         create_default_experiment(db)
+        init_default_human_subject_index(db)
     finally:
         db.close()
 
@@ -189,3 +190,8 @@ def create_root_user(db: Session) -> None:
         access_level=AccessLevel.ADMINISTRATOR.value,
     )
     crud.insert_or_update_user(db, root_user_create)
+
+
+def init_default_human_subject_index(db: Session) -> None:
+    if crud.get_next_human_subject_index(db, update_index=False, exit_if_update_error=True) is None:
+        crud.insert_human_subject_index(db, 1)
