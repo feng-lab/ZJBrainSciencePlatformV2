@@ -96,7 +96,7 @@ def delete_file(request: DeleteModelRequest, ctx: ResearcherContext = Depends())
     os_path = get_os_path(file.experiment_id, file.index, file.extension)
     delete_os_file(os_path)
 
-    success = common_crud.update_row_as_deleted(ctx.db, File, request.id, commit=True)
+    success = common_crud.update_row_as_deleted(ctx.db, File, id=request.id, commit=True)
     if not success:
         raise ServiceError.database_fail("删除文件失败")
 

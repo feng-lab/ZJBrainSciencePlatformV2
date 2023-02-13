@@ -72,7 +72,7 @@ def update_device(request: UpdateDeviceRequest, ctx: ResearcherContext = Depends
         raise ServiceError.not_found("设备不存在")
 
     update_dict = request.dict(exclude={"id"})
-    success = common_crud.update_row(ctx.db, Device, request.id, update_dict, commit=True)
+    success = common_crud.update_row(ctx.db, Device, update_dict, id=request.id, commit=True)
     if not success:
         raise database_fail
 
@@ -80,6 +80,6 @@ def update_device(request: UpdateDeviceRequest, ctx: ResearcherContext = Depends
 @router.delete("/api/deleteDevice", description="删除设备", response_model=NoneResponse)
 @wrap_api_response
 def delete_device(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
-    success = common_crud.update_row_as_deleted(ctx.db, Device, request.id, commit=True)
+    success = common_crud.update_row_as_deleted(ctx.db, Device, id=request.id, commit=True)
     if not success:
         raise ServiceError.database_fail("删除设备失败")

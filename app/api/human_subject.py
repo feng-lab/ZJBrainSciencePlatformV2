@@ -31,12 +31,8 @@ def create_human_subject(
 def delete_human_subject(
     request: DeleteHumanSubjectRequest, ctx: AdministratorContext = Depends()
 ) -> None:
-    success = common_crud.bulk_update_rows(
-        ctx.db,
-        HumanSubject,
-        [HumanSubject.user_id == request.user_id],
-        {"is_deleted": True},
-        commit=True,
+    success = common_crud.update_row_as_deleted(
+        ctx.db, HumanSubject, where=[HumanSubject.user_id == request.user_id], commit=True
     )
     if not success:
         raise ServiceError.database_fail("删除人类被试者失败")

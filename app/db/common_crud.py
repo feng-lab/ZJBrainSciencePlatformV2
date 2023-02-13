@@ -103,19 +103,32 @@ def get_deleted_rows(db: Session, table: type[OrmModel], ids: list[int]) -> list
 def update_row(
     db: Session,
     table: type[OrmModel],
-    id_: int,
     update_dict: dict[str, Any],
     *,
+    id: int | None = None,
+    where: list[WhereHavingRole] | None = None,
     commit: bool,
     touch: bool = True,
 ) -> bool:
-    return bulk_update_rows(db, table, [table.id == id_], update_dict, commit=commit, touch=touch)
+    if id is not None:
+        where = [table.id == id]
+    if where is None:
+        raise ValueError("no id nor where provided")
+    return bulk_update_rows(db, table, where, update_dict, commit=commit, touch=touch)
 
 
 def update_row_as_deleted(
-    db: Session, table: type[OrmModel], id_: int, *, commit: bool, touch: bool = True
+    db: Session,
+    table: type[OrmModel],
+    *,
+    id: int | None = None,
+    where: list[WhereHavingRole] | None = None,
+    commit: bool,
+    touch: bool = True,
 ) -> bool:
-    return update_row(db, table, id_, {"is_deleted": True}, commit=commit, touch=touch)
+    return update_row(
+        db, table, {"is_deleted": True}, id=id, where=where, commit=commit, touch=touch
+    )
 
 
 def bulk_update_rows(

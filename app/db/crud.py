@@ -573,17 +573,15 @@ def search_devices(
 
 
 def load_human_subject_user_option():
-    return joinedload(HumanSubject.user).load_only(User.username, User.staff_id)
+    return joinedload(HumanSubject.user.and_(User.is_deleted == False), innerjoin=True).load_only(
+        User.username, User.staff_id
+    )
 
 
 def get_human_subject(db: Session, user_id: int) -> HumanSubject | None:
     stmt = (
         select(HumanSubject)
-        .where(
-            HumanSubject.is_deleted == False,
-            User.is_deleted == False,
-            HumanSubject.user_id == user_id,
-        )
+        .where(HumanSubject.is_deleted == False, HumanSubject.user_id == user_id)
         .options(load_human_subject_user_option())
     )
     row = db.execute(stmt).scalar()
@@ -591,19 +589,11 @@ def get_human_subject(db: Session, user_id: int) -> HumanSubject | None:
 
 
 def search_human_subjects(db: Session, search: HumanSubjectSearch) -> (int, Sequence[HumanSubject]):
-    base_stmt = (
-        select(HumanSubject)
-        .where(User.is_deleted == False)
-        .options(load_human_subject_user_option())
-    )
+    base_stmt = select(HumanSubject).options(load_human_subject_user_option())
     if search.experiment_id is not None:
-        base_stmt = (
-            base_stmt.join(
-                ExperimentHumanSubject, HumanSubject.user_id == ExperimentHumanSubject.user_id
-            )
-            .join(Experiment, Experiment.id == ExperimentHumanSubject.experiment_id)
-            .where(Experiment.is_deleted == False, Experiment.id == search.experiment_id)
-        )
+        base_stmt = base_stmt.join(
+            Experiment.human_subjects.and_(Experiment.is_deleted == False)
+        ).where(Experiment.id == search.experiment_id)
     if search.gender is not None:
         base_stmt = base_stmt.where(HumanSubject.gender == search.gender)
     if search.abo_blood_type is not None:

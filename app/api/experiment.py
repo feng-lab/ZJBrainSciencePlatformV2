@@ -112,7 +112,7 @@ def update_experiment(request: UpdateExperimentRequest, ctx: ResearcherContext =
         for field_name, field_value in request.dict(exclude={"id"}).items()
         if field_value is not None
     }
-    success = common_crud.update_row(ctx.db, Experiment, request.id, update_dict, commit=True)
+    success = common_crud.update_row(ctx.db, Experiment, update_dict, id=request.id, commit=True)
     if not success:
         raise ServiceError.database_fail("更新实验失败")
 
@@ -120,7 +120,7 @@ def update_experiment(request: UpdateExperimentRequest, ctx: ResearcherContext =
 @router.delete("/api/deleteExperiment", description="删除实验", response_model=NoneResponse)
 @wrap_api_response
 def delete_experiment(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
-    common_crud.update_row_as_deleted(ctx.db, Experiment, request.id, commit=True)
+    common_crud.update_row_as_deleted(ctx.db, Experiment, id=request.id, commit=True)
 
 
 @router.post("/api/addExperimentAssistants", description="添加实验助手", response_model=NoneResponse)

@@ -80,6 +80,19 @@ class ExperimentAssistant(Base):
 
 
 @table_repr
+class ExperimentHumanSubject(Base):
+    __tablename__ = "experiment_human_subject"
+    __table_args__ = {"comment": "实验包含的被试者"}
+
+    experiment_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("experiment.id"), primary_key=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("human_subject.user_id"), primary_key=True
+    )
+
+
+@table_repr
 class Experiment(Base, ModelMixin):
     __tablename__ = "experiment"
     __table_args__ = {"comment": "实验"}
@@ -113,6 +126,9 @@ class Experiment(Base, ModelMixin):
 
     main_operator_obj: Mapped[User] = relationship("User")
     assistants: Mapped[list[User]] = relationship("User", secondary=ExperimentAssistant.__table__)
+    human_subjects: Mapped[list["HumanSubject"]] = relationship(
+        "HumanSubject", secondary=ExperimentHumanSubject.__table__
+    )
 
 
 @table_repr
@@ -154,6 +170,7 @@ class Paradigm(Base, ModelMixin):
     creator_obj: Mapped[User] = relationship("User")
 
 
+@table_repr
 class Device(Base, ModelMixin):
     __tablename__ = "device"
     __table_args__ = {"comment": "实验设备"}
@@ -184,6 +201,7 @@ class ABOBloodType(StrEnum):
     O = "O"
 
 
+@table_repr
 class HumanSubject(Base, ModelMixin):
     __tablename__ = "human_subject"
     __table_args__ = {"comment": "被试者"}
@@ -208,15 +226,3 @@ class HumanSubject(Base, ModelMixin):
     address: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="住址")
 
     user: Mapped[User] = relationship("User")
-
-
-class ExperimentHumanSubject(Base):
-    __tablename__ = "experiment_human_subject"
-    __table_args__ = {"comment": "实验包含的被试者"}
-
-    experiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("experiment.id"), primary_key=True
-    )
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("human_subject.user_id"), primary_key=True
-    )

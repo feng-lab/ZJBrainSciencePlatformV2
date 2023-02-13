@@ -87,7 +87,7 @@ def update_paradigm(request: UpdateParadigmRequest, ctx: ResearcherContext = Dep
 
     update_dict = request.dict(exclude={"id", "images"})
     if len(update_dict) > 0:
-        success = common_crud.update_row(ctx.db, Paradigm, request.id, update_dict, commit=False)
+        success = common_crud.update_row(ctx.db, Paradigm, update_dict, id=request.id, commit=False)
         if not success:
             raise database_error
 
@@ -128,6 +128,6 @@ def delete_paradigm(request: DeleteModelRequest, ctx: ResearcherContext = Depend
             path = get_os_path(file.experiment_id, file.index, file.extension)
             delete_os_file(path)
 
-    success = common_crud.update_row_as_deleted(ctx.db, Paradigm, request.id, commit=True)
+    success = common_crud.update_row_as_deleted(ctx.db, Paradigm, id=request.id, commit=True)
     if not success:
         raise database_error

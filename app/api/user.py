@@ -86,7 +86,7 @@ def update_user_access_level(
         raise ServiceError.invalid_request("用户不存在")
 
     success = common_crud.update_row(
-        ctx.db, User, request.id, {"access_level": request.access_level}, commit=True
+        ctx.db, User, {"access_level": request.access_level}, id=request.id, commit=True
     )
     if success:
         cache.invalidate_user_access_level(ctx.cache, request.id)
@@ -103,7 +103,7 @@ def update_password(request: UpdatePasswordRequest, ctx: AllUserContext = Depend
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="原密码错误")
     hashed_new_password = hash_password(request.new_password)
     success = common_crud.update_row(
-        ctx.db, User, user_id, {"hashed_password": hashed_new_password}, commit=True
+        ctx.db, User, {"hashed_password": hashed_new_password}, id=user_id, commit=True
     )
     if not success:
         raise ServiceError.database_fail("用户修改密码失败")
@@ -112,6 +112,6 @@ def update_password(request: UpdatePasswordRequest, ctx: AllUserContext = Depend
 @router.delete("/api/deleteUser", description="删除用户", response_model=NoneResponse)
 @wrap_api_response
 def delete_user(request: DeleteModelRequest, ctx: AdministratorContext = Depends()) -> None:
-    success = common_crud.update_row_as_deleted(ctx.db, User, request.id, commit=True)
+    success = common_crud.update_row_as_deleted(ctx.db, User, id=request.id, commit=True)
     if not success:
         raise ServiceError.database_fail("删除用户失败")
