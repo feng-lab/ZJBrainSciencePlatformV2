@@ -1,6 +1,6 @@
 from typing import Any, Callable, Iterable, TypeVar
 
-from app.db.common_crud import OrmModel
+from app.db import OrmModel
 from app.db.orm import Device, Experiment, HumanSubject, Paradigm
 from app.model.schema import (
     DeviceResponse,

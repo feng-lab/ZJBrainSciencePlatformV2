@@ -81,7 +81,7 @@ def get_users_by_page(
 def update_user_access_level(
     request: UpdateUserAccessLevelRequest, ctx: AdministratorContext = Depends()
 ) -> None:
-    user_exists = common_crud.exists_row_by_id(ctx.db, User, request.id)
+    user_exists = common_crud.exists_row(ctx.db, User, id_=request.id)
     if not user_exists:
         raise ServiceError.invalid_request("用户不存在")
 

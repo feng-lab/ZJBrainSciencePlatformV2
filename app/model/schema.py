@@ -247,8 +247,12 @@ class HumanSubjectCreate(HumanSubjectSearchable):
         return value
 
 
-class HumanSubjectResponse(HumanSubjectCreate, UserNameStaffId):
+class HumanSubjectUpdate(HumanSubjectCreate):
     user_id: int = Field(ge=0)
+
+
+class HumanSubjectResponse(HumanSubjectUpdate, UserNameStaffId):
+    pass
 
 
 class ExperimentIdSearch(BaseModel):

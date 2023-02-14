@@ -11,8 +11,7 @@ from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
 from app.common.config import config
 from app.common.util import Model, T, now
-from app.db import common_crud
-from app.db.common_crud import OrmModel
+from app.db import OrmModel, common_crud
 from app.db.orm import (
     Device,
     Experiment,
@@ -666,3 +665,18 @@ def get_next_human_subject_index(
 
 def insert_human_subject_index(db: Session, index: int) -> None:
     common_crud.insert_row(db, HumanSubjectIndex, {"index": index}, commit=True, return_id=False)
+
+
+def check_human_subject_exists(db: Session, user_id: int) -> bool:
+    stmt = (
+        select(text("1"))
+        .select_from(HumanSubject)
+        .join(HumanSubject.user)
+        .where(
+            HumanSubject.user_id == user_id,
+            HumanSubject.is_deleted == False,
+            User.is_deleted == False,
+        )
+    )
+    row = db.execute(stmt).first()
+    return row is not None

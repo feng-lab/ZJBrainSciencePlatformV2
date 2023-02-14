@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
-from app.api import check_experiment_exists
+from app.api import check_experiment_exists, check_human_subject_exists
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.user_auth import AccessLevel, hash_password
@@ -15,7 +15,12 @@ from app.model.response import (
     Response,
     wrap_api_response,
 )
-from app.model.schema import HumanSubjectCreate, HumanSubjectResponse, HumanSubjectSearch
+from app.model.schema import (
+    HumanSubjectCreate,
+    HumanSubjectResponse,
+    HumanSubjectSearch,
+    HumanSubjectUpdate,
+)
 
 router = APIRouter(tags=["human subject"])
 
@@ -93,6 +98,23 @@ def get_human_subjects_by_page(
         convert.human_subject_orm_2_response, human_subjects
     )
     return PagedData(total=total, items=human_subjects_responses)
+
+
+@router.post("/api/updateHumanSubject", description="更新人类被试者", response_model=NoneResponse)
+@wrap_api_response
+def update_human_subject(update: HumanSubjectUpdate, ctx: ResearcherContext = Depends()) -> None:
+    check_human_subject_exists(ctx.db, update.user_id)
+
+    update_dict = update.dict(exclude={"user_id"})
+    success = common_crud.update_row(
+        ctx.db,
+        HumanSubject,
+        update_dict,
+        where=[HumanSubject.user_id == update.user_id],
+        commit=True,
+    )
+    if not success:
+        raise ServiceError.database_fail("更新人类被试者失败")
 
 
 @router.post(

@@ -17,7 +17,7 @@ class Base(DeclarativeBase):
 engine = sqlalchemy.create_engine(config.DATABASE_URL, **config.DATABASE_CONFIG)
 SessionLocal = sqlalchemy.orm.sessionmaker(bind=engine)
 
-OrmTable = TypeVar("OrmTable", bound=Base)
+OrmModel = TypeVar("OrmModel", bound=Base)
 
 
 def get_db_session():
@@ -37,8 +37,8 @@ def check_database_is_up_to_date() -> bool:
         return set(context.get_current_heads()) == set(directory.get_heads())
 
 
-def table_repr(cls: type[OrmTable]) -> type[OrmTable]:
-    def field_repr(obj: OrmTable) -> str:
+def table_repr(cls: type[OrmModel]) -> type[OrmModel]:
+    def field_repr(obj: OrmModel) -> str:
         field_strs = [
             f"{field_name}={getattr(obj, field_name)}"
             for field_name in obj.__table__.columns.keys()

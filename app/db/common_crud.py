@@ -1,5 +1,5 @@
 import logging
-from typing import Any, TypeVar, cast
+from typing import Any, cast
 
 from sqlalchemy import delete, insert, select, text, update
 from sqlalchemy.engine import CursorResult
@@ -8,11 +8,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.roles import WhereHavingRole
 
 from app.common.util import now
-from app.db import Base
+from app.db import OrmModel
 
 logger = logging.getLogger(__name__)
-
-OrmModel = TypeVar("OrmModel", bound=Base)
 
 
 def get_row_by_id(db: Session, table: type[OrmModel], id_: int) -> OrmModel | None:
@@ -25,13 +23,19 @@ def get_row(db: Session, table: type[OrmModel], *where: WhereHavingRole) -> OrmM
     return row
 
 
-def exists_row_by_id(db: Session, table: type[OrmModel], id_: int) -> bool:
-    stmt = (
-        select(text("1"))
-        .select_from(table)
-        .where(table.id == id_, table.is_deleted == False)
-        .limit(1)
-    )
+def exists_row(
+    db: Session,
+    table: type[OrmModel],
+    *,
+    id_: int | None = None,
+    where: list[WhereHavingRole] | None = None,
+) -> bool:
+    if id_ is not None:
+        where = [table.id == id_]
+    if where is None:
+        raise ValueError("neither id_ nor where is provided")
+
+    stmt = select(text("1")).select_from(table).where(*where, table.is_deleted == False).limit(1)
     row = db.execute(stmt).first()
     return row is not None
 
@@ -78,16 +82,6 @@ def bulk_insert_rows(
         elif commit:
             db.commit()
     return success
-
-
-def check_row_valid(db: Session, table: type[OrmModel], id_: int) -> bool | None:
-    try:
-        stmt = select(text("1")).where(table.id == id_, table.is_deleted == False)
-        result = db.execute(stmt).scalar()
-        return result is not None
-    except DBAPIError as e:
-        logger.error(f"get_row_valid error: table={table.__name__}, id={id}, msg={e}")
-        return None
 
 
 def get_deleted_rows(db: Session, table: type[OrmModel], ids: list[int]) -> list[int] | None:
