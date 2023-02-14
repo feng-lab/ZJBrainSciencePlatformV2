@@ -242,7 +242,7 @@ class HumanSubjectCreate(HumanSubjectSearchable):
 
 
 class HumanSubjectResponse(HumanSubjectCreate, UserNameStaffId):
-    pass
+    user_id: int = Field(ge=0)
 
 
 class ExperimentIdSearch(BaseModel):
