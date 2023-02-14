@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from app.db.orm import Experiment
 
@@ -87,5 +87,13 @@ class DisplayEEGRequest(BaseModel):
     channels: list[str]
 
 
+def validate_id(value: int) -> int:
+    if value < 0:
+        raise ValueError("id必须是正数")
+    return value
+
+
 class DeleteHumanSubjectRequest(BaseModel):
-    user_id: int = Field(ge=0)
+    user_ids: list[int] = Field()
+
+    validate_user_ids = validator("user_ids", each_item=True)(validate_id)

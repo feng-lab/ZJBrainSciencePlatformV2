@@ -159,11 +159,19 @@ def bulk_update_rows(
 
 
 def bulk_update_rows_as_deleted(
-    db: Session, table: type[OrmModel], ids: list[int], *, commit: bool, touch: bool = True
+    db: Session,
+    table: type[OrmModel],
+    *,
+    ids: list[int] | None = None,
+    where: list[WhereHavingRole] | None = None,
+    commit: bool,
+    touch: bool = True,
 ) -> bool:
-    return bulk_update_rows(
-        db, table, [table.id.in_(ids)], {"is_deleted": True}, commit=commit, touch=touch
-    )
+    if ids is not None:
+        where = [table.id.in_(ids)]
+    if where is None:
+        raise ValueError("no id nor where provided")
+    return bulk_update_rows(db, table, where, {"is_deleted": True}, commit=commit, touch=touch)
 
 
 def bulk_delete_rows(

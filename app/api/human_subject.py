@@ -52,13 +52,13 @@ def create_human_subject(
     )
 
 
-@router.delete("/api/deleteHumanSubject", description="删除人类被试者", response_model=NoneResponse)
+@router.delete("/api/deleteHumanSubjects", description="批量删除人类被试者", response_model=NoneResponse)
 @wrap_api_response
-def delete_human_subject(
+def delete_human_subjects(
     request: DeleteHumanSubjectRequest, ctx: ResearcherContext = Depends()
 ) -> None:
-    success = common_crud.update_row_as_deleted(
-        ctx.db, HumanSubject, where=[HumanSubject.user_id == request.user_id], commit=True
+    success = common_crud.bulk_update_rows_as_deleted(
+        ctx.db, HumanSubject, where=[HumanSubject.user_id.in_(request.user_ids)], commit=True
     )
     if not success:
         raise ServiceError.database_fail("删除人类被试者失败")

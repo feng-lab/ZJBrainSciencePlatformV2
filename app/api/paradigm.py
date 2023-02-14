@@ -105,7 +105,9 @@ def update_paradigm(request: UpdateParadigmRequest, ctx: ResearcherContext = Dep
         if not success:
             raise database_error
     if len(delete_files) > 0:
-        success = common_crud.bulk_update_rows_as_deleted(ctx.db, File, delete_files, commit=True)
+        success = common_crud.bulk_update_rows_as_deleted(
+            ctx.db, File, ids=delete_files, commit=True
+        )
         if not success:
             raise database_error
     if len(add_files) < 1 and len(delete_files) < 1:
@@ -120,7 +122,7 @@ def delete_paradigm(request: DeleteModelRequest, ctx: ResearcherContext = Depend
     orm_files = crud.list_paradigm_file_infos(ctx.db, request.id)
     if orm_files:
         success = common_crud.bulk_update_rows_as_deleted(
-            ctx.db, File, [file.id for file in orm_files], commit=False
+            ctx.db, File, ids=[file.id for file in orm_files], commit=False
         )
         if not success:
             raise database_error
