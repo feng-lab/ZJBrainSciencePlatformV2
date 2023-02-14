@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from app.db.orm import ABOBloodType, Experiment, Gender, MaritalStatus, Notification
 
@@ -239,6 +239,12 @@ class HumanSubjectCreate(HumanSubjectSearchable):
     phone_number: str | None
     email: str | None
     address: str | None
+
+    @validator("death_date", pre=True)
+    def parse_date(cls, value):
+        if isinstance(value, str) and len(value) < 1:
+            return None
+        return value
 
 
 class HumanSubjectResponse(HumanSubjectCreate, UserNameStaffId):
