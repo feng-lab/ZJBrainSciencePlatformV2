@@ -117,6 +117,7 @@ class DisplayEEGData(BaseModel):
 
 
 class CreateHumanSubjectResponse(BaseModel):
+    user_id: int
     username: str
     staff_id: str
     password: str

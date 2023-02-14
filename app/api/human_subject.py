@@ -47,7 +47,9 @@ def create_human_subject(
     if human_subject_id is None:
         raise ServiceError.database_fail("创建人类被试者失败")
 
-    return CreateHumanSubjectResponse(username=username, staff_id=username, password=password)
+    return CreateHumanSubjectResponse(
+        user_id=user_id, username=username, staff_id=username, password=password
+    )
 
 
 @router.delete("/api/deleteHumanSubject", description="删除人类被试者", response_model=NoneResponse)
