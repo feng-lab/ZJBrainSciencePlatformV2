@@ -87,13 +87,29 @@ class DisplayEEGRequest(BaseModel):
     channels: list[str]
 
 
-def validate_id(value: int) -> int:
-    if value < 0:
-        raise ValueError("id必须是正数")
-    return value
+def validate_ids(field_name: str):
+    def validate_id(value: int) -> int:
+        if value < 0:
+            raise ValueError("id必须是正数")
+        return value
+
+    return validator(field_name, each_item=True, allow_reuse=True)(validate_id)
 
 
 class DeleteHumanSubjectRequest(BaseModel):
-    user_ids: list[int] = Field()
+    user_ids: list[int]
 
-    validate_user_ids = validator("user_ids", each_item=True)(validate_id)
+    validate_user_ids = validate_ids("user_ids")
+
+
+class DeleteDevicesRequest(BaseModel):
+    device_ids: list[int]
+
+    validate_device_ids = validate_ids("device_ids")
+
+
+class UpdateDevicesInExperimentRequest(BaseModel):
+    experiment_id: int = Field(ge=0)
+    device_ids: list[int]
+
+    validate_device_ids = validate_ids("device_ids")

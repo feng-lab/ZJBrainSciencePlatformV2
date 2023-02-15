@@ -13,7 +13,6 @@ from app.common.config import config
 from app.common.util import Model, T, now
 from app.db import OrmModel, common_crud
 from app.db.orm import (
-    Device,
     Experiment,
     ExperimentAssistant,
     ExperimentHumanSubject,
@@ -542,36 +541,6 @@ def search_paradigms(db: Session, experiment_id: int, page_param: PageParm) -> l
 
 def bulk_list_paradigm_files(db: Session, paradigm_ids: list[int]) -> list[list[int]]:
     return [list_paradigm_files(db, paradigm_id) for paradigm_id in paradigm_ids]
-
-
-def get_next_device_index(db: Session, experiment_id: int) -> int:
-    stmt = (
-        select(Device.index)
-        .join(Experiment, Experiment.id == Device.experiment_id)
-        .where(
-            Device.is_deleted == False,
-            Experiment.is_deleted == False,
-            Device.experiment_id == experiment_id,
-        )
-        .order_by(Device.index.desc())
-        .limit(1)
-    )
-    last_index: int = db.execute(stmt).scalar()
-    return last_index + 1 if last_index is not None else 1
-
-
-def search_devices(
-    db: Session, experiment_id: int, page_param: PageParm
-) -> (int, Sequence[Device]):
-    base_stmt = (
-        select(Device)
-        .join(Experiment, Experiment.id == Device.experiment_id)
-        .where(Experiment.is_deleted == False, Device.experiment_id == experiment_id)
-    )
-    if not page_param.include_deleted:
-        base_stmt = base_stmt.where(Device.is_deleted == False)
-
-    return query_paged_data(db, base_stmt, page_param.offset, page_param.limit)
 
 
 def load_human_subject_user_option():

@@ -93,6 +93,18 @@ class ExperimentHumanSubject(Base):
 
 
 @table_repr
+class ExperimentDevice(Base):
+    __tablename__ = "experiment_device"
+    __table_args__ = {"comment": "实验包含的设备"}
+
+    experiment_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("experiment.id"), primary_key=True
+    )
+    device_id: Mapped[int] = mapped_column(Integer, ForeignKey("device.id"), primary_key=True)
+    index: Mapped[int] = mapped_column(Integer, nullable=False, comment="实验内序号")
+
+
+@table_repr
 class Experiment(Base, ModelMixin):
     __tablename__ = "experiment"
     __table_args__ = {"comment": "实验"}
@@ -175,13 +187,13 @@ class Device(Base, ModelMixin):
     __tablename__ = "device"
     __table_args__ = {"comment": "实验设备"}
 
-    experiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("experiment.id"), nullable=False, index=True, comment="实验ID"
-    )
     brand: Mapped[str] = mapped_column(String(255), nullable=False, comment="设备品牌")
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="设备名称")
     purpose: Mapped[str] = mapped_column(String(255), nullable=False, comment="设备用途")
-    index: Mapped[int] = mapped_column(Integer, nullable=False, comment="实验内序号")
+
+    experiments: Mapped[list[Experiment]] = relationship(
+        "Experiment", secondary=ExperimentDevice.__table__
+    )
 
 
 class Gender(StrEnum):

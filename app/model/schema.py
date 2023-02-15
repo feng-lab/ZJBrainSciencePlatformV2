@@ -201,7 +201,6 @@ class ParadigmFileCreate(ParadigmFileBase):
 
 
 class DeviceBase(BaseModel):
-    experiment_id: int = Field(ge=0)
     brand: str = Field(max_length=255)
     name: str = Field(max_length=255)
     purpose: str = Field(max_length=255)
