@@ -11,7 +11,13 @@ from app.db.orm import Device, ExperimentDevice
 from app.model import convert
 from app.model.request import DeleteDevicesRequest, UpdateDevicesInExperimentRequest
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
-from app.model.schema import CreateDeviceRequest, DeviceResponse, PageParm, UpdateDeviceRequest
+from app.model.schema import (
+    CreateDeviceRequest,
+    DeviceInfo,
+    DeviceResponse,
+    PageParm,
+    UpdateDeviceRequest,
+)
 
 router = APIRouter(tags=["device"])
 
@@ -82,16 +88,16 @@ def delete_devices_from_experiment(
         raise ServiceError.database_fail("从设备中删除设备失败")
 
 
-@router.get("/api/getDeviceInfo", description="获取设备详情", response_model=Response[DeviceResponse])
+@router.get("/api/getDeviceInfo", description="获取设备详情", response_model=Response[DeviceInfo])
 @wrap_api_response
 def get_device_info(
     device_id: int = Query(description="设备ID", ge=0), ctx: HumanSubjectContext = Depends()
-) -> DeviceResponse:
+) -> DeviceInfo:
     orm_device = common_crud.get_row_by_id(ctx.db, Device, device_id)
     if orm_device is None:
         raise ServiceError.not_found("未找到设备")
-    device_response = convert.device_orm_2_response(orm_device)
-    return device_response
+    device_info = convert.device_orm_2_info(orm_device)
+    return device_info
 
 
 @router.get(

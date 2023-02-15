@@ -214,7 +214,12 @@ class DeviceWithIndex(DeviceBase):
     index: int = Field(ge=1)
 
 
-class DeviceResponse(DeviceWithIndex, BaseModelInDB):
+class DeviceInfo(DeviceBase, ModelId):
+    class Config:
+        orm_mode = True
+
+
+class DeviceResponse(DeviceWithIndex, ModelId):
     class Config:
         orm_mode = True
 

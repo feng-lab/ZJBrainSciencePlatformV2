@@ -3,6 +3,7 @@ from typing import Any, Callable, Iterable, TypeVar
 from app.db import OrmModel
 from app.db.orm import Device, Experiment, HumanSubject, Paradigm
 from app.model.schema import (
+    DeviceInfo,
     DeviceResponse,
     ExperimentInDB,
     ExperimentResponse,
@@ -45,6 +46,10 @@ def paradigm_orm_2_response(paradigm: Paradigm) -> ParadigmResponse:
 
 def device_orm_2_response(device: Device) -> DeviceResponse:
     return DeviceResponse.from_orm(device)
+
+
+def device_orm_2_info(device: Device) -> DeviceInfo:
+    return DeviceInfo.from_orm(device)
 
 
 def human_subject_orm_2_response(human_subject: HumanSubject) -> HumanSubjectResponse:
