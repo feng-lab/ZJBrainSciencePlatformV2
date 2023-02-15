@@ -14,8 +14,8 @@ from app.model.response import NoneResponse, PagedData, Response, wrap_api_respo
 from app.model.schema import (
     CreateDeviceRequest,
     DeviceInfo,
-    DeviceResponse,
-    PageParm,
+    DeviceInfoWithIndex,
+    DeviceSearch,
     UpdateDeviceRequest,
 )
 
@@ -103,17 +103,15 @@ def get_device_info(
 @router.get(
     "/api/getDevicesByPage",
     description="分页获取设备详情",
-    response_model=Response[PagedData[DeviceResponse]],
+    response_model=Response[PagedData[DeviceInfoWithIndex]],
 )
 @wrap_api_response
 def get_devices_by_page(
-    experiment_id: int = Query(description="实验ID", default=0),
-    page_param: PageParm = Depends(),
-    ctx: HumanSubjectContext = Depends(),
-) -> PagedData[DeviceResponse]:
-    total, orm_devices = crud.search_devices(ctx.db, experiment_id, page_param)
-    device_responses = convert.map_list(convert.device_orm_2_response, orm_devices)
-    return PagedData(total=total, items=device_responses)
+    search: DeviceSearch = Depends(), ctx: HumanSubjectContext = Depends()
+) -> PagedData[DeviceInfoWithIndex]:
+    total, orm_devices = crud.search_devices(ctx.db, search)
+    device_infos = convert.map_list(convert.device_search_row_2_info_with_index, orm_devices)
+    return PagedData(total=total, items=device_infos)
 
 
 @router.post("/api/updateDevice", description="更新设备", response_model=NoneResponse)

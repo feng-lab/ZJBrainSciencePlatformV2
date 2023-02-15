@@ -1,11 +1,10 @@
 from typing import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import Row, func, select
 from sqlalchemy.orm import Session
 
-from app.db.crud import query_paged_data
 from app.db.orm import Device, Experiment, ExperimentDevice
-from app.model.schema import PageParm
+from app.model.schema import DeviceSearch
 
 
 def filter_experiment_devices_to_add(
@@ -41,15 +40,25 @@ def get_last_index(db: Session, experiment_id: int) -> int | None:
     return last_index
 
 
-def search_devices(
-    db: Session, experiment_id: int, page_param: PageParm
-) -> (int, Sequence[Device]):
-    base_stmt = (
-        select(Device)
-        .join(Experiment, Experiment.id == Device.experiment_id)
-        .where(Experiment.is_deleted == False, Device.experiment_id == experiment_id)
-    )
-    if not page_param.include_deleted:
+SearchDeviceRow = Row[tuple[int, str, str, str] | tuple[int, str, str, str, int]]
+
+
+def search_devices(db: Session, search: DeviceSearch) -> tuple[int, Sequence[SearchDeviceRow]]:
+    base_stmt = select(Device.id, Device.brand, Device.name, Device.purpose).select_from(Device)
+    if search.experiment_id is not None:
+        base_stmt = (
+            base_stmt.add_columns(ExperimentDevice.index)
+            .join(ExperimentDevice, Device.id == ExperimentDevice.device_id)
+            .join(Experiment, ExperimentDevice.experiment_id == Experiment.id)
+            .where(Experiment.id == search.experiment_id, Experiment.is_deleted == False)
+        )
+    if search.brand:
+        base_stmt = base_stmt.where(Device.brand.icontains(search.brand))
+    if search.name:
+        base_stmt = base_stmt.where(Device.name.icontains(search.name))
+    if not search.include_deleted:
         base_stmt = base_stmt.where(Device.is_deleted == False)
 
-    return query_paged_data(db, base_stmt, page_param.offset, page_param.limit)
+    rows = db.execute(base_stmt.offset(search.offset).limit(search.limit)).all()
+    total = db.execute(base_stmt.with_only_columns(func.count())).scalar()
+    return total, rows

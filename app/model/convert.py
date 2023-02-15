@@ -1,10 +1,11 @@
 from typing import Any, Callable, Iterable, TypeVar
 
 from app.db import OrmModel
+from app.db.crud.device import SearchDeviceRow
 from app.db.orm import Device, Experiment, HumanSubject, Paradigm
 from app.model.schema import (
     DeviceInfo,
-    DeviceResponse,
+    DeviceInfoWithIndex,
     ExperimentInDB,
     ExperimentResponse,
     HumanSubjectResponse,
@@ -44,12 +45,15 @@ def paradigm_orm_2_response(paradigm: Paradigm) -> ParadigmResponse:
     )
 
 
-def device_orm_2_response(device: Device) -> DeviceResponse:
-    return DeviceResponse.from_orm(device)
-
-
 def device_orm_2_info(device: Device) -> DeviceInfo:
     return DeviceInfo.from_orm(device)
+
+
+def device_search_row_2_info_with_index(row: SearchDeviceRow) -> DeviceInfoWithIndex:
+    device = DeviceInfoWithIndex(id=row.id, brand=row.brand, name=row.name, purpose=row.purpose)
+    if len(row) > 4:
+        device.index = row[4]
+    return device
 
 
 def human_subject_orm_2_response(human_subject: HumanSubject) -> HumanSubjectResponse:

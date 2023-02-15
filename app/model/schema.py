@@ -200,6 +200,10 @@ class ParadigmFileCreate(ParadigmFileBase):
     pass
 
 
+class ExperimentIdSearch(BaseModel):
+    experiment_id: int | None = Field(None, ge=0)
+
+
 class DeviceBase(BaseModel):
     brand: str = Field(max_length=255)
     name: str = Field(max_length=255)
@@ -210,21 +214,21 @@ class CreateDeviceRequest(DeviceBase):
     pass
 
 
-class DeviceWithIndex(DeviceBase):
-    index: int = Field(ge=1)
-
-
 class DeviceInfo(DeviceBase, ModelId):
     class Config:
         orm_mode = True
 
 
-class DeviceResponse(DeviceWithIndex, ModelId):
-    class Config:
-        orm_mode = True
+class DeviceInfoWithIndex(DeviceInfo):
+    index: int | None = Field(ge=1)
 
 
-class UpdateDeviceRequest(DeviceWithIndex, ModelId):
+class DeviceSearch(PageParm, ExperimentIdSearch):
+    brand: str | None
+    name: str | None
+
+
+class UpdateDeviceRequest(DeviceBase, ModelId):
     pass
 
 
@@ -257,10 +261,6 @@ class HumanSubjectUpdate(HumanSubjectCreate):
 
 class HumanSubjectResponse(HumanSubjectUpdate, UserNameStaffId):
     pass
-
-
-class ExperimentIdSearch(BaseModel):
-    experiment_id: int | None = Field(None, ge=0)
 
 
 class HumanSubjectSearch(PageParm, HumanSubjectSearchable, ExperimentIdSearch):
