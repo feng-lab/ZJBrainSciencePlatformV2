@@ -28,11 +28,9 @@ class User(Base, ModelMixin):
     __tablename__ = "user"
     __table_args__ = {"comment": "用户"}
 
-    username: Mapped[str] = mapped_column(
-        String(255), nullable=False, index=True, unique=True, comment="用户名"
-    )
+    username: Mapped[str] = mapped_column(String(255), nullable=False, index=True, comment="用户名")
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False, comment="密码哈希")
-    staff_id: Mapped[str] = mapped_column(String(255), nullable=False, comment="员工号")
+    staff_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True, comment="员工号")
     last_login_time: Mapped[datetime | None] = mapped_column(
         DateTime, nullable=True, comment="上次登录时间"
     )

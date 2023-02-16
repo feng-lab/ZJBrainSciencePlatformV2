@@ -79,8 +79,8 @@ def verify_current_user(db: Session, cache: Redis, token: str, api_access_level:
         raise_unauthorized_exception(token=token)
 
 
-def verify_password(db: Session, username: str, password: str) -> int | None:
-    user_auth = crud.get_user_auth_by_username(db, username)
+def verify_password(db: Session, staff_id: str, password: str) -> int | None:
+    user_auth = crud.get_user_auth_by_staff_id(db, staff_id)
     if user_auth is not None and crypt_context.verify(password, user_auth.hashed_password):
         return user_auth.id
     return None

@@ -24,7 +24,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     # 验证用户名与密码是否匹配
     user_id = verify_password(db, form.username, form.password)
     if user_id is None:
-        raise_unauthorized_exception(username=form.username)
+        raise_unauthorized_exception(staff_id=form.username)
 
     # 创建登录凭证
     access_token = create_access_token(user_id, config.ACCESS_TOKEN_EXPIRE_MINUTES)

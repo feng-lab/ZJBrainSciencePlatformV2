@@ -29,13 +29,16 @@ def exists_row(
     *,
     id_: int | None = None,
     where: list[WhereHavingRole] | None = None,
+    include_deleted: bool = False,
 ) -> bool:
     if id_ is not None:
         where = [table.id == id_]
     if where is None:
         raise ValueError("neither id_ nor where is provided")
+    if not include_deleted:
+        where.append(table.is_deleted == False)
 
-    stmt = select(text("1")).select_from(table).where(*where, table.is_deleted == False).limit(1)
+    stmt = select(text("1")).select_from(table).where(*where).limit(1)
     row = db.execute(stmt).first()
     return row is not None
 

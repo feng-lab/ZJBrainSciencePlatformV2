@@ -23,10 +23,10 @@ ROOT_PASSWORD = "?L09G$7g5*j@.q*4go4d"
 @router.post("/api/createUser", description="创建用户", response_model=Response[int])
 @wrap_api_response
 def create_user(request: CreateUserRequest, ctx: AdministratorContext = Depends()) -> int:
-    # 用户名唯一，幂等处理
-    user_auth = crud.get_user_auth_by_username(ctx.db, request.username)
-    if user_auth is not None:
-        return user_auth.id
+    # staff_id唯一，幂等处理
+    exists_user = common_crud.get_row(ctx.db, User, User.staff_id == request.staff_id)
+    if exists_user is not None:
+        return exists_user.id
 
     # 数据库不能保存密码明文，只能保存密码哈希值
     user_dict = request.dict(exclude={"password"}) | {
@@ -97,8 +97,8 @@ def update_user_access_level(
 @router.post("/api/updatePassword", description="用户修改密码", response_model=NoneResponse)
 @wrap_api_response
 def update_password(request: UpdatePasswordRequest, ctx: AllUserContext = Depends()) -> None:
-    username = crud.get_user_username(ctx.db, ctx.user_id)
-    user_id = verify_password(ctx.db, username, request.old_password)
+    staff_id = crud.get_user_staff_id(ctx.db, ctx.user_id)
+    user_id = verify_password(ctx.db, staff_id, request.old_password)
     if user_id is None or user_id != ctx.user_id:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="原密码错误")
     hashed_new_password = hash_password(request.new_password)
