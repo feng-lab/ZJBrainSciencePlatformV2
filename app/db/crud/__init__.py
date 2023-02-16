@@ -106,8 +106,8 @@ class SearchModel:
         return self.db.execute(stmt).scalar()
 
     def items(self, target_model: type[Model]) -> list[Model]:
-        columns = self.columns if self.columns else self.table
-        stmt = select(columns).where(*self.where)
+        columns = self.columns if self.columns else [self.table]
+        stmt = select(*columns).where(*self.where)
         if self.join_spec is not None:
             stmt = stmt.join(self.join_spec[0], self.join_spec[1], isouter=self.join_spec[2])
         if self.offset is not None:
