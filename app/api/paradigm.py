@@ -127,7 +127,7 @@ def delete_paradigm(request: DeleteModelRequest, ctx: ResearcherContext = Depend
         if not success:
             raise database_error
         for file in orm_files:
-            path = get_os_path(file.experiment_id, file.index, file.extension)
+            path = get_os_path(file.experiment_id, file.id, file.extension)
             delete_os_file(path)
 
     success = common_crud.update_row_as_deleted(ctx.db, Paradigm, id=request.id, commit=True)

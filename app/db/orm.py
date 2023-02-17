@@ -158,7 +158,6 @@ class File(Base, ModelMixin):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="逻辑路径")
     extension: Mapped[str] = mapped_column(String(50), nullable=False, comment="文件扩展名")
-    index: Mapped[int] = mapped_column(Integer, nullable=False, index=True, comment="同一实验下的文件序号")
     size: Mapped[float] = mapped_column(Float, nullable=False, comment="同一实验下的文件序号")
     is_original: Mapped[bool] = mapped_column(Boolean, nullable=False, comment="是否是设备产生的原始文件")
 

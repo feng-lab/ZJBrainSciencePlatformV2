@@ -301,16 +301,6 @@ def list_unread_notifications(
     return list(unread_notification_ids)
 
 
-def get_file_last_index(db: Session, experiment_id: int) -> int | None:
-    stmt = (
-        select(File.index)
-        .where(File.experiment_id == experiment_id, File.is_deleted == False)
-        .order_by(File.index.desc())
-        .limit(1)
-    )
-    return db.execute(stmt).scalar()
-
-
 def get_file_extensions(db: Session, experiment_id: int) -> list[str]:
     stmt = (
         select(File.extension)
@@ -336,7 +326,7 @@ def search_files(
         .where_contains(File.name, name)
         .where_contains(File.extension, extension)
         .page_param(page_param)
-        .order_by(File.index.asc())
+        .order_by(File.id.asc())
         .map_model_with(map_model)
         .paged_data(FileResponse)
     )
@@ -503,7 +493,7 @@ def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
 def list_paradigm_file_infos(db: Session, paradigm_id: int) -> list[File]:
     stmt = (
         select(File)
-        .options(load_only(File.id, File.experiment_id, File.index, File.extension))
+        .options(load_only(File.id, File.experiment_id, File.extension))
         .join(Paradigm.files)
         .join(
             Experiment,

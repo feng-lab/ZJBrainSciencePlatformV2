@@ -25,7 +25,7 @@ def display_eeg(
 ) -> dict[str, Any]:
     grpc_request = GrpcDisplayEEGRequest(**request.dict())
     file = common_crud.get_row_by_id(ctx.db, File, request.file_id)
-    grpc_request.file_path = str(get_os_path(file.experiment_id, file.index, file.extension))
+    grpc_request.file_path = str(get_os_path(file.experiment_id, file.id, file.extension))
     grpc_request.file_type = file.extension
     grpc_response = stub.displayEEG(grpc_request)
     response_dict = serialize_protobuf(grpc_response)

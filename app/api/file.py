@@ -1,12 +1,12 @@
 import logging
 import os.path
 from pathlib import Path
+from typing import BinaryIO
 
 from fastapi import APIRouter, Depends
 from fastapi import File as FastApiFile
 from fastapi import Form, Query, UploadFile
 from fastapi.responses import FileResponse as FastApiFileResponse
-from sqlalchemy.orm import Session
 
 from app.common.config import config
 from app.common.context import HumanSubjectContext, NotLogonContext, ResearcherContext
@@ -30,23 +30,31 @@ def upload_file(
     file: UploadFile = FastApiFile(),
     ctx: ResearcherContext = Depends(),
 ) -> int:
-    file_index = get_next_index(ctx.db, experiment_id)
+    database_error = ServiceError.database_fail("上传文件失败")
+
     name = file.filename
     extension = name.rsplit(".", 1)[-1].lower()
-    store_path = get_os_path(experiment_id, file_index, extension)
-    write_file(file, store_path)
-    file_size = os.path.getsize(store_path) / 1024 / 1024
     file_dict = {
         "experiment_id": experiment_id,
         "name": name,
         "extension": extension,
-        "index": file_index,
-        "size": file_size,
+        "size": -1.0,
         "is_original": is_original,
     }
-    file_id = common_crud.insert_row(ctx.db, File, file_dict, commit=True)
-    if not file_id:
-        raise ServiceError.database_fail("上传文件失败")
+    file_id = common_crud.insert_row(ctx.db, File, file_dict, commit=False)
+    if file_id is None:
+        raise database_error
+
+    store_path = get_os_path(experiment_id, file_id, extension)
+    write_file(file.file, store_path)
+
+    file_size = os.path.getsize(store_path) / 1024 / 1024
+    update_size_success = common_crud.update_row(
+        ctx.db, File, {"size": file_size}, id=file_id, commit=True
+    )
+    if not update_size_success:
+        raise database_error
+
     return file_id
 
 
@@ -82,7 +90,7 @@ def download_file(
     if file is None:
         raise ServiceError.not_found("未找到文件")
 
-    os_path = get_os_path(file.experiment_id, file.index, file.extension)
+    os_path = get_os_path(file.experiment_id, file_id, file.extension)
     return FastApiFileResponse(path=os_path, filename=file.name)
 
 
@@ -93,7 +101,7 @@ def delete_file(request: DeleteModelRequest, ctx: ResearcherContext = Depends())
     if file is None:
         return None
 
-    os_path = get_os_path(file.experiment_id, file.index, file.extension)
+    os_path = get_os_path(file.experiment_id, file.id, file.extension)
     delete_os_file(os_path)
 
     success = common_crud.update_row_as_deleted(ctx.db, File, id=request.id, commit=True)
@@ -101,21 +109,16 @@ def delete_file(request: DeleteModelRequest, ctx: ResearcherContext = Depends())
         raise ServiceError.database_fail("删除文件失败")
 
 
-def get_next_index(db: Session, experiment_id: int) -> int:
-    last_index = crud.get_file_last_index(db, experiment_id)
-    return last_index + 1 if last_index is not None else 1
-
-
-def get_os_path(experiment_id: int, file_index: int, extension: str) -> Path:
-    file_name = f"{file_index}.{extension}" if extension else str(file_index)
+def get_os_path(experiment_id: int, file_id: int, extension: str) -> Path:
+    file_name = f"{file_id}.{extension}" if extension else str(file_id)
     return config.FILE_ROOT / str(experiment_id) / file_name
 
 
-def write_file(file: UploadFile, store_path: Path) -> None:
+def write_file(file: BinaryIO, store_path: Path) -> None:
     try:
         store_path.parent.mkdir(exist_ok=True)
         with open(store_path, "wb") as f:
-            while content := file.file.read(config.FILE_CHUNK_SIZE):
+            while content := file.read(config.FILE_CHUNK_SIZE):
                 f.write(content)
     except Exception as e:
         logger.error(f"fail to write file, {store_path=}")
@@ -123,7 +126,7 @@ def write_file(file: UploadFile, store_path: Path) -> None:
     else:
         logger.info(f"write file success, {store_path=}")
     finally:
-        file.file.close()
+        file.close()
 
 
 def delete_os_file(path: Path) -> None:
