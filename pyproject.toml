@@ -19,6 +19,10 @@ python-dateutil = "^2.8.2"
 grpcio-tools = "^1.51.1"
 redis = { extras = ["hiredis"], version = "^4.4.0" }
 
+[tool.poetry.group.alembic.dependencies]
+alembic = "^1.9.0"
+mysqlclient = "^2.1.1"
+
 [tool.poetry.group.dev]
 optional = true
 
@@ -27,10 +31,12 @@ black = "^22.12.0"
 isort = "^5.11.2"
 ipython = "^8.7.0"
 
-[tool.poetry.group.alembic.dependencies]
-alembic = "^1.9.0"
-mysqlclient = "^2.1.1"
+[tool.poetry.group.test]
+optional = true
 
+[tool.poetry.group.test.dependencies]
+pytest = "^7.2.1"
+httpx = "^0.23.3"
 
 [build-system]
 requires = ["poetry-core"]
@@ -44,4 +50,4 @@ skip-magic-trailing-comma = true
 [tool.isort]
 profile = "black"
 line_length = 100
-src_paths = ["app", "alembic"]
+src_paths = ["app", "alembic", "test"]
