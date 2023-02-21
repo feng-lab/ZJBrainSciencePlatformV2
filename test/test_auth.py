@@ -1,4 +1,4 @@
-from test.conftest import client
+from test import client
 
 import pytest
 
