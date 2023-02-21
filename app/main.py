@@ -31,6 +31,7 @@ from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener, request_id_ct
 from app.common.user_auth import AccessLevel, hash_password
 from app.common.util import generate_request_id
 from app.db import SessionLocal, check_database_is_up_to_date, crud
+from app.db.crud.experiment import insert_or_update_experiment
 from app.db.orm import Experiment
 from app.model.response import CODE_FAIL, CODE_SESSION_TIMEOUT, NoneResponse
 from app.model.schema import UserCreate
@@ -179,7 +180,7 @@ def create_default_experiment(db: Session) -> None:
         "end_at": datetime(year=2023, month=1, day=1, hour=0, minute=0, second=0),
         "main_operator": 1,
     }
-    crud.insert_or_update_experiment(db, 0, default_experiment)
+    insert_or_update_experiment(db, 0, default_experiment)
 
 
 def create_root_user(db: Session) -> None:

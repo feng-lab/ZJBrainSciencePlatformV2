@@ -2,18 +2,23 @@ from fastapi import APIRouter, Depends, Query
 
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
-from app.db import common_crud, crud
+from app.db import common_crud
+from app.db.crud import experiment as crud
 from app.db.orm import Experiment, ExperimentAssistant, User
 from app.model import convert
 from app.model.request import (
     DeleteModelRequest,
-    GetExperimentsByPageSortBy,
-    GetExperimentsByPageSortOrder,
     UpdateExperimentAssistantsRequest,
     UpdateExperimentRequest,
 )
 from app.model.response import NoneResponse, Response, wrap_api_response
-from app.model.schema import CreateExperimentRequest, ExperimentResponse, PageParm, UserInfo
+from app.model.schema import (
+    CreateExperimentRequest,
+    ExperimentResponse,
+    ExperimentSearch,
+    ExperimentSimpleResponse,
+    UserInfo,
+)
 
 router = APIRouter(tags=["experiment"])
 
@@ -73,22 +78,14 @@ def get_experiment_info(
 @router.get(
     "/api/getExperimentsByPage",
     description="获取实验列表",
-    response_model=Response[list[ExperimentResponse]],
+    response_model=Response[list[ExperimentSimpleResponse]],
 )
 @wrap_api_response
 def get_experiments_by_page(
-    search: str = Query(description="搜索任务名", default=""),
-    sort_by: GetExperimentsByPageSortBy = Query(
-        description="排序依据", default=GetExperimentsByPageSortBy.START_TIME
-    ),
-    sort_order: GetExperimentsByPageSortOrder = Query(
-        description="排序顺序", default=GetExperimentsByPageSortOrder.DESC
-    ),
-    page_param: PageParm = Depends(),
-    ctx: HumanSubjectContext = Depends(),
-) -> list[ExperimentResponse]:
-    orm_experiments = crud.search_experiments(ctx.db, search, sort_by, sort_order, page_param)
-    experiments = convert.map_list(convert.experiment_orm_2_response, orm_experiments)
+    search: ExperimentSearch = Depends(), ctx: HumanSubjectContext = Depends()
+) -> list[ExperimentSimpleResponse]:
+    orm_experiments = crud.search_experiments(ctx.db, search)
+    experiments = convert.map_list(convert.experiment_orm_2_simple_response, orm_experiments)
     return experiments
 
 
@@ -128,8 +125,8 @@ def delete_experiment(request: DeleteModelRequest, ctx: ResearcherContext = Depe
 def add_experiment_assistants(
     request: UpdateExperimentAssistantsRequest, ctx: ResearcherContext = Depends()
 ) -> None:
-    exist_assistants = crud.search_experiment_assistants(
-        ctx.db, request.experiment_id, request.assistant_ids
+    exist_assistants = set(
+        crud.search_experiment_assistants(ctx.db, request.experiment_id, request.assistant_ids)
     )
     assistants = [
         {"user_id": assistant_id, "experiment_id": request.experiment_id}

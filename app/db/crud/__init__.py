@@ -3,18 +3,17 @@ import sys
 from datetime import datetime
 from typing import Any, Callable, Sequence, cast
 
-from sqlalchemy import Select, and_, func, insert, or_, select, text, update
+from sqlalchemy import Select, and_, func, insert, select, text, update
 from sqlalchemy.engine import CursorResult, Row
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session, joinedload, load_only, subqueryload
 from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
 from app.common.config import config
 from app.common.util import Model, T, now
 from app.db import OrmModel, common_crud
+from app.db.crud.experiment import load_user_info_option
 from app.db.orm import (
     Experiment,
-    ExperimentAssistant,
     ExperimentHumanSubject,
     File,
     HumanSubject,
@@ -23,7 +22,6 @@ from app.db.orm import (
     Paradigm,
     User,
 )
-from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 from app.model.response import PagedData
 from app.model.schema import (
     FileInDB,
@@ -330,131 +328,6 @@ def search_files(
         .map_model_with(map_model)
         .paged_data(FileResponse)
     )
-
-
-def insert_or_update_experiment(db: Session, id_: int, row: dict[str, Any]) -> None:
-    success = False
-    try:
-        exists_stmt = (
-            select(Experiment.id)
-            .where(
-                or_(
-                    Experiment.id == id_,
-                    and_(
-                        Experiment.name == row["name"], Experiment.description == row["description"]
-                    ),
-                )
-            )
-            .order_by(Experiment.id.asc())
-            .limit(1)
-        )
-        exists_result = db.execute(exists_stmt).first()
-        if exists_result is None:
-            insert_result = cast(CursorResult, db.execute(insert(Experiment).values(**row)))
-            assert insert_result.rowcount == 1
-            exists_experiment_id = insert_result.inserted_primary_key.id
-        else:
-            exists_experiment_id = exists_result.id
-        if exists_experiment_id != id_:
-            # noinspection PyTypeChecker
-            update_result = cast(
-                CursorResult,
-                db.execute(
-                    update(Experiment)
-                    .where(Experiment.id == exists_experiment_id)
-                    .values(id=id_, **row)
-                ),
-            )
-            assert update_result.rowcount == 1
-        success = True
-    except DBAPIError as e:
-        logger.error(f"insert or update default experiment error, msg={e}")
-    finally:
-        if success:
-            db.commit()
-        else:
-            db.rollback()
-
-
-def load_user_info_option(strategy, relation_column):
-    return strategy(relation_column).load_only(User.id, User.username, User.staff_id)
-
-
-def get_experiment_by_id(db: Session, experiment_id: int) -> Experiment | None:
-    stmt = (
-        select(Experiment)
-        .where(Experiment.id == experiment_id, Experiment.is_deleted == False)
-        .options(
-            load_user_info_option(joinedload, Experiment.main_operator_obj),
-            load_user_info_option(subqueryload, Experiment.assistants),
-        )
-    )
-    experiment = db.execute(stmt).scalar()
-    return experiment
-
-
-SEARCH_EXPERIMENT_SORT_BY_COLUMN = {
-    GetExperimentsByPageSortBy.START_TIME: Experiment.start_at,
-    GetExperimentsByPageSortBy.TYPE: Experiment.type,
-}
-
-
-def search_experiments(
-    db: Session,
-    search: str,
-    sort_by: GetExperimentsByPageSortBy,
-    sort_order: GetExperimentsByPageSortOrder,
-    page_param: PageParm,
-) -> list[Experiment]:
-    stmt = (
-        select(Experiment)
-        .where(Experiment.id != 0)
-        .offset(page_param.offset)
-        .limit(page_param.limit)
-        .options(
-            load_user_info_option(joinedload, Experiment.main_operator_obj),
-            load_user_info_option(subqueryload, Experiment.assistants),
-        )
-    )
-    if search:
-        stmt = stmt.where(Experiment.name.ilike(f"%{search}%"))
-    if not page_param.include_deleted:
-        stmt = stmt.where(Experiment.is_deleted == False)
-    order_by_column = SEARCH_EXPERIMENT_SORT_BY_COLUMN[sort_by]
-    if sort_order is GetExperimentsByPageSortOrder.DESC:
-        stmt = stmt.order_by(order_by_column.desc())
-    else:
-        stmt = stmt.order_by(order_by_column.asc())
-    experiments = db.execute(stmt).scalars().all()
-    return list(experiments)
-
-
-def list_experiment_assistants(db: Session, experiment_id: int) -> list[User]:
-    stmt = (
-        select(User.id, User.username, User.staff_id)
-        .select_from(ExperimentAssistant)
-        .join(
-            Experiment,
-            and_(
-                ExperimentAssistant.experiment_id == Experiment.id, Experiment.is_deleted == False
-            ),
-        )
-        .join(User, and_(ExperimentAssistant.user_id == User.id, User.is_deleted == False))
-        .where(ExperimentAssistant.experiment_id == experiment_id)
-    )
-    users = db.execute(stmt).all()
-    # noinspection PyTypeChecker
-    return list(users)
-
-
-def search_experiment_assistants(
-    db: Session, experiment_id: int, assistant_ids: list[int]
-) -> list[int]:
-    stmt = select(ExperimentAssistant.user_id).where(
-        ExperimentAssistant.experiment_id == experiment_id,
-        ExperimentAssistant.user_id.in_(assistant_ids),
-    )
-    return list(db.execute(stmt).scalars().all())
 
 
 def load_paradigm_creator_option():

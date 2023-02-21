@@ -8,6 +8,7 @@ from app.model.schema import (
     DeviceInfoWithIndex,
     ExperimentInDB,
     ExperimentResponse,
+    ExperimentSimpleResponse,
     HumanSubjectResponse,
     ParadigmInDB,
     ParadigmResponse,
@@ -35,6 +36,10 @@ def experiment_orm_2_response(experiment: Experiment) -> ExperimentResponse:
         assistants=map_list(UserInfo.from_orm, experiment.assistants),
         **ExperimentInDB.from_orm(experiment).dict(exclude={"main_operator"}),
     )
+
+
+def experiment_orm_2_simple_response(experiment: Experiment) -> ExperimentSimpleResponse:
+    return ExperimentSimpleResponse.from_orm(experiment)
 
 
 def paradigm_orm_2_response(paradigm: Paradigm) -> ParadigmResponse:

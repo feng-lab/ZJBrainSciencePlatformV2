@@ -3,6 +3,7 @@ from datetime import date, datetime
 from pydantic import BaseModel, Field, validator
 
 from app.db.orm import ABOBloodType, Experiment, Gender, MaritalStatus, Notification
+from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 
 
 class ModelId(BaseModel):
@@ -128,7 +129,18 @@ class UserInfo(BaseModel):
         orm_mode = True
 
 
-class ExperimentResponse(ExperimentBase, BaseModelInDB):
+class ExperimentSearch(PageParm):
+    search: str = ""
+    sort_by: GetExperimentsByPageSortBy = GetExperimentsByPageSortBy.START_TIME
+    sort_order: GetExperimentsByPageSortOrder = GetExperimentsByPageSortOrder.DESC
+
+
+class ExperimentSimpleResponse(ExperimentBase, ModelId):
+    class Config:
+        orm_mode = True
+
+
+class ExperimentResponse(ExperimentSimpleResponse):
     main_operator: UserInfo
     assistants: list[UserInfo]
 
