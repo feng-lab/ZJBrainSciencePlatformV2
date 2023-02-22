@@ -11,11 +11,13 @@ from fastapi.responses import FileResponse as FastApiFileResponse
 from app.common.config import config
 from app.common.context import HumanSubjectContext, NotLogonContext, ResearcherContext
 from app.common.exception import ServiceError
-from app.db import common_crud, crud
+from app.db import common_crud
+from app.db.crud import file as crud
 from app.db.orm import File
+from app.model import convert
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
-from app.model.schema import FileResponse, PageParm
+from app.model.schema import FileResponse, FileSearch
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +66,7 @@ def get_file_types(
     experiment_id: int = Query(description="实验ID"), ctx: HumanSubjectContext = Depends()
 ) -> list[str]:
     extensions = crud.get_file_extensions(ctx.db, experiment_id)
-    return extensions
+    return list(extensions)
 
 
 @router.get(
@@ -72,14 +74,11 @@ def get_file_types(
 )
 @wrap_api_response
 def get_files_by_page(
-    experiment_id: int = Query(description="实验ID", default=0),
-    name: str = Query(description="文件名，模糊查找", default=""),
-    file_type: str = Query(description="文件类型，模糊查找", default=""),
-    page_param: PageParm = Depends(),
-    ctx: HumanSubjectContext = Depends(),
+    search: FileSearch = Depends(), ctx: HumanSubjectContext = Depends()
 ) -> PagedData[FileResponse]:
-    files = crud.search_files(ctx.db, experiment_id, name, file_type, page_param)
-    return files
+    total, files = crud.search_files(ctx.db, search)
+    file_responses = convert.map_list(convert.file_orm_2_response, files)
+    return PagedData(total=total, items=file_responses)
 
 
 @router.get("/api/downloadFile/{file_id}", description="下载文件")

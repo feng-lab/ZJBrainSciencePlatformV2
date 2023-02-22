@@ -7,15 +7,12 @@ from sqlalchemy.engine import CursorResult, Row
 from sqlalchemy.orm import Session, joinedload, load_only, subqueryload
 from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
-from app.common.config import config
 from app.common.util import Model, T, now
 from app.db import OrmModel
 from app.db.crud.experiment import load_user_info_option
 from app.db.orm import Experiment, File, Notification, Paradigm, User
 from app.model.response import PagedData
 from app.model.schema import (
-    FileInDB,
-    FileResponse,
     NotificationInDB,
     NotificationResponse,
     PageParm,
@@ -286,37 +283,6 @@ def list_unread_notifications(
         stmt = stmt.where(Notification.id.in_(msg_ids))
     unread_notification_ids = db.execute(stmt).scalars().all()
     return list(unread_notification_ids)
-
-
-def get_file_extensions(db: Session, experiment_id: int) -> list[str]:
-    stmt = (
-        select(File.extension)
-        .where(File.experiment_id == experiment_id, File.is_deleted == False)
-        .group_by(File.extension)
-    )
-    return list(db.execute(stmt).scalars().all())
-
-
-def search_files(
-    db: Session, experiment_id: int, name: str, extension: str, page_param: PageParm
-) -> PagedData[FileResponse]:
-    def map_model(row: Row) -> FileResponse:
-        file = FileResponse(**FileInDB.from_orm(row[0]).dict())
-        if file.extension in config.IMAGE_FILE_EXTENSIONS:
-            file.url = f"/api/downloadFile/{file.id}"
-        return file
-
-    return (
-        SearchModel(db, File)
-        .where_eq(File.experiment_id, experiment_id)
-        .where_null(File.paradigm_id)
-        .where_contains(File.name, name)
-        .where_contains(File.extension, extension)
-        .page_param(page_param)
-        .order_by(File.id.asc())
-        .map_model_with(map_model)
-        .paged_data(FileResponse)
-    )
 
 
 def load_paradigm_creator_option():

@@ -1,14 +1,16 @@
 from typing import Any, Callable, Iterable, TypeVar
 
+from app.common.config import config
 from app.db import OrmModel
 from app.db.crud.device import SearchDeviceRow
-from app.db.orm import Device, Experiment, HumanSubject, Paradigm
+from app.db.orm import Device, Experiment, File, HumanSubject, Paradigm
 from app.model.schema import (
     DeviceInfo,
     DeviceInfoWithIndex,
     ExperimentInDB,
     ExperimentResponse,
     ExperimentSimpleResponse,
+    FileResponse,
     HumanSubjectResponse,
     ParadigmInDB,
     ParadigmResponse,
@@ -67,3 +69,10 @@ def human_subject_orm_2_response(human_subject: HumanSubject) -> HumanSubjectRes
         staff_id=human_subject.user.staff_id,
         **orm_2_dict(human_subject),
     )
+
+
+def file_orm_2_response(file: File) -> FileResponse:
+    response = FileResponse.from_orm(file)
+    if file.extension in config.IMAGE_FILE_EXTENSIONS:
+        response.url = f"/api/downloadFile/{file.id}"
+    return response
