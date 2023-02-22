@@ -4,7 +4,8 @@ from app.api import check_experiment_exists, check_human_subject_exists
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.user_auth import AccessLevel, hash_password
-from app.db import common_crud, crud
+from app.db import common_crud
+from app.db.crud import human_subject as crud
 from app.db.orm import ExperimentHumanSubject, HumanSubject, User
 from app.model import convert
 from app.model.request import DeleteHumanSubjectRequest, UpdateExperimentHumanSubjectRequest
