@@ -11,7 +11,11 @@ from app.model.schema import FileSearch
 def get_file_extensions(db: Session, experiment_id: int) -> Sequence[str]:
     stmt = (
         select(File.extension)
-        .where(File.experiment_id == experiment_id, File.is_deleted == False)
+        .where(
+            File.experiment_id == experiment_id,
+            File.is_deleted == False,
+            File.paradigm_id.is_(None),
+        )
         .group_by(File.extension)
     )
     extensions = db.execute(stmt).scalars().all()
