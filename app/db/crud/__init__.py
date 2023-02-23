@@ -369,3 +369,8 @@ def query_paged_data(
     total_stmt = base_stmt.with_only_columns(func.count())
     total = db.execute(total_stmt).scalar()
     return total, human_subjects
+
+
+def send_heartbeat(db: Session) -> None:
+    db.execute(select(text("1")))
+    logger.info("database heartbeat sent")
