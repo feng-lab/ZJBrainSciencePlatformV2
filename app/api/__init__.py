@@ -3,7 +3,7 @@ from sqlalchemy.sql.roles import WhereHavingRole
 
 from app.common.exception import ServiceError
 from app.db import OrmModel, common_crud
-from app.db.crud import human_subject
+from app.db.crud import human_subject as crud_human_subject
 from app.db.orm import Device, Experiment, User
 
 
@@ -20,7 +20,7 @@ def check_device_exists(db: Session, device_id: int) -> None:
 
 
 def check_human_subject_exists(db: Session, user_id: int) -> None:
-    if not human_subject.check_human_subject_exists(db, user_id):
+    if not crud_human_subject.check_human_subject_exists(db, user_id):
         raise ServiceError.not_found("被试者不存在")
 
 
