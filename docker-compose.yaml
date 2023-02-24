@@ -5,7 +5,7 @@ services:
   platform:
     build:
       context: .
-      dockerfile: dockerfile/platform.Dockerfile
+      dockerfile: dockerfile/platform.Dockerfile.old
     ports:
       - "1919:80"
     environment:
@@ -37,7 +37,6 @@ services:
     ports:
       - "8100:3306"
     volumes:
-      - ./mysql/initdb.d:/docker-entrypoint-initdb.d
       - ~/mysql/ZJBrainSciencePlatform/data:/var/lib/mysql
       - ~/log/ZJBrainSciencePlatform/mysql:/var/log/mysql
     restart: always

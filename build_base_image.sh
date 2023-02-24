@@ -9,8 +9,9 @@ echo -e '\e[33mReading config...\e[0m'
 source "${scriptDir}/config.sh"
 
 # 构建镜像
-imageVersion=$(git -C "$projectDir" rev-parse --verify --short HEAD)
-imageTag="${BASE_IMAGE_REPO}:${imageVersion}"
+imageRepo=${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-base
+imageVersion=$(git -C "$projectDir" rev-parse --short=8 HEAD)
+imageTag=${imageRepo}:${imageVersion}
 echo -e "\e[33mBuilding image \e[35m${imageTag}\e[0m\e[33m...\e[0m"
 docker build \
   --file "$dockerfileDir/base.Dockerfile" \
