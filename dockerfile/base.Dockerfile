@@ -1,9 +1,7 @@
-FROM python:3.11
+ARG PYTHON_VERSION
+FROM python:${PYTHON_VERSION}
 
-WORKDIR /code
-RUN pip install --no-cache-dir poetry && \
+ARG POETRY_VERSION
+ARG PIP_INDEX_OPTION=""
+RUN pip install --no-cache-dir ${PIP_INDEX_OPTION} "poetry==${POETRY_VERSION}" && \
     poetry config virtualenvs.create false
-
-COPY poetry.lock pyproject.toml /code/
-
-RUN poetry install --with=alembic --no-interaction --no-cache
