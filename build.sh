@@ -115,7 +115,7 @@ if [ "$BUILD_IMAGE" == on ]; then
   docker build \
     --file "${dockerfileDir}/${IMAGE}.Dockerfile" \
     --tag "$imageTag" \
-    "$imageBuildArg" \
+    $imageBuildArg \
     "$projectDir"
 fi
 
