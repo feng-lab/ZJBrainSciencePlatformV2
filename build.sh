@@ -95,11 +95,11 @@ if [ "$BUILD_IMAGE" == on ]; then
     exit 1
   fi
   # 检查是否有未提交的文件
-  if ! git -C "$projectDir" diff-index --quiet HEAD --; then
+  if git -C "$projectDir" diff-index --quiet HEAD; then
+    echo -e "\e[33mWorkspace clean\e[0m"
+  else
     echo -e "\e[31mWorkspace not clean, commit or stash your changes\e[0m" >&2
     exit 1
-  else
-    echo -e "\e[33mWorkspace clean\e[0m"
   fi
 
   imageRepo=${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-${IMAGE}
