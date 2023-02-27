@@ -3,7 +3,7 @@ set -euo pipefail
 
 print-usage() {
   cat <<EOF
-Usage: $0 [OPTIONS] [IMAGE] [IMAGE_VERSION]
+Usage: $0 [OPTIONS] [service] [imageVersion]
 
 Image: platform | database
   Docker image name, default is platform
@@ -31,39 +31,37 @@ set-option() {
   eval "$1=$option"
 }
 
-projectDir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
-scriptDir=$(cd -- "${projectDir}/deploy_config" &>/dev/null && pwd)
-dockerfileDir=$(cd -- "$projectDir/dockerfile" &>/dev/null && pwd)
+# 读取通用配置
+source "$(dirname -- "${BASH_SOURCE[0]}")/deploy/config/config.sh"
 
 # 解析参数
-
-IMAGE=platform
-IMAGE_VERSION=
-CURRENT_ENV=TESTING
-CHECK_CLEAN=on
-BUILD_IMAGE=off
-PUSH_IMAGE=off
-DEPLOY_STACK=off
+service=platform
+imageVersion=
+currentEnv=TESTING
+checkClean=on
+buildImage=off
+pushImage=off
+deployStack=off
 
 while getopts 'TPc:b:p:d:h' OPT; do
   case $OPT in
   T)
-    CURRENT_ENV=TESTING
+    currentEnv=TESTING
     ;;
   P)
-    CURRENT_ENV=PRODUCTION
+    currentEnv=PRODUCTION
     ;;
   c)
-    set-option CHECK_CLEAN on
+    set-option checkClean
     ;;
   b)
-    set-option BUILD_IMAGE off
+    set-option buildImage
     ;;
   p)
-    set-option PUSH_IMAGE off
+    set-option pushImage
     ;;
   d)
-    set-option DEPLOY_STACK off
+    set-option deployStack
     ;;
   h)
     print-usage
@@ -78,48 +76,53 @@ done
 shift $(($OPTIND - 1))
 
 if [ "${1:-}" ]; then
-  IMAGE=$1
-  if [[ ! "$IMAGE" =~ platform|database|cache ]]; then
-    echo >&2 invalid image: "$IMAGE"
+  service=$1
+  if [[ ! "$service" =~ platform|database|cache ]]; then
+    echo >&2 invalid image: "$service"
     exit 1
   fi
 fi
-if [ "${2:-}" ]; then
-  IMAGE_VERSION=$2
-else
-  IMAGE_VERSION=$(git -C "$projectDir" rev-parse --short=8 HEAD)
+
+# 解析镜像版本
+# build.sh参数传入的版本 > deploy/image-version/service.version > 生成的版本号
+imageVersion=${2:-}
+if [ -z "$imageVersion" ] && [ -f "${imageVersionDir}/${service}.version" ]; then
+  imageVersion=$(head -n 1 "${imageVersionDir}/${service}.version")
+fi
+if [ -z "$imageVersion" ]; then
+  imageVersion=$(generate-tag-version)
 fi
 
-# 读取配置
-source "${scriptDir}/config.sh"
-source "${scriptDir}/config_${CURRENT_ENV}.sh"
-echo -e "\e[33mRead config: config.sh, config_${CURRENT_ENV}.sh\e[0m"
-
-if [ "$IMAGE" == cache ]; then
-  IMAGE_TAG=$CACHE_IMAGE_TAG
+if [ "$service" == cache ]; then
+  imageTag=$CACHE_IMAGE_TAG
 else
-  IMAGE_TAG=${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-${IMAGE}:${IMAGE_VERSION}
+  imageTag=${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-${service}:${imageVersion}
 fi
 
 echo -e '\e[33mArguments:'
-echo "IMAGE=${IMAGE}"
-echo "IMAGE_VERSION=${IMAGE_VERSION}"
-echo "IMAGE_TAG=${IMAGE_TAG}"
-echo "ENV=${CURRENT_ENV}"
-echo "CHECK_CLEAN=${CHECK_CLEAN}"
-echo "BUILD_IMAGE=${BUILD_IMAGE}"
-echo "PUSH_IMAGE=${PUSH_IMAGE}"
-echo "DEPLOY_STACK=${DEPLOY_STACK}"
+echo "service=${service}"
+echo "imageVersion=${imageVersion}"
+echo "imageTag=${imageTag}"
+echo "env=${currentEnv}"
+echo "checkClean=${checkClean}"
+echo "buildImage=${buildImage}"
+echo "pushImage=${pushImage}"
+echo "deployStack=${deployStack}"
 echo -e '\n\e[0m'
 
-# 构建并推送镜像
-if [ "$BUILD_IMAGE" == on ]; then
-  if [ "$IMAGE" == cache ]; then
+# 读取环境对应的配置
+source "${configDir}/${currentEnv}.config.sh"
+
+# 构建镜像
+if [ "$buildImage" == on ]; then
+  # 排除不需要构建镜像的服务
+  if [ "$service" == cache ]; then
     echo -e "\e[31mcache doesn't need build image" >&2
     exit 1
   fi
+
   # 检查是否有未提交的文件
-  if [ "$CHECK_CLEAN" == on ]; then
+  if [ "$checkClean" == on ]; then
     if git -C "$projectDir" diff-index --quiet HEAD; then
       echo -e "\e[33mWorkspace clean\e[0m"
     else
@@ -128,44 +131,44 @@ if [ "$BUILD_IMAGE" == on ]; then
     fi
   fi
 
-  baseImageTag=${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-base:${BASE_IMAGE_VERSION}
+  baseImageVersion=$(head -n 1 "${imageVersionDir}/base.version")
+  baseImageTag=${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-base:${baseImageVersion}
   imageBuildArg=''
-  if [ "$IMAGE" == platform ]; then
+  if [ "$service" == platform ]; then
     imageBuildArg="--build-arg BASE_IMAGE_TAG=${baseImageTag}"
   fi
-
-  echo -e "\e[33mBuilding image \e[35m${IMAGE_TAG}\e[0m"
+  echo -e "\e[33mBuilding image \e[35m${imageTag}\e[0m"
   docker build \
-    --file "${dockerfileDir}/${IMAGE}.Dockerfile" \
-    --tag "$IMAGE_TAG" \
+    --file "${dockerfileDir}/${service}.Dockerfile" \
+    --tag "$imageTag" \
     $imageBuildArg \
     "$projectDir"
+
+  echo -e "\e[33mWriting \e[35m${imageVersion}\e[33m into \e[35m${imageVersionDir}/${service}.version\e[0m"
+  echo "$imageVersion" >"${imageVersionDir}/${service}.version"
 fi
 
 # 推送镜像
-if [ "$PUSH_IMAGE" == on ]; then
-  if [ "$IMAGE" == cache ]; then
+if [ "$pushImage" == on ]; then
+  if [ "$service" == cache ]; then
     echo -e "\e[31mcache doesn't need push image" >&2
     exit 1
   fi
-  echo -e "\e[33mPushing image \e[35m${IMAGE_TAG}\e[33m to DockerHub\e[0m"
+  echo -e "\e[33mPushing image \e[35m${imageTag}\e[33m to DockerHub\e[0m"
   docker login --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN"
-  docker push "$IMAGE_TAG"
+  docker push "$imageTag"
 fi
 
 # 部署 Docker Stack
-if [ "$DEPLOY_STACK" == on ]; then
-  if [ "$IMAGE" != cache ] && [ -z "$IMAGE_VERSION" ]; then
-    echo -e "\e[31mIMAGE_VERSION not provided\e[0m" >&2
-    exit 1
-  fi
-  export IMAGE_TAG
-  if [ "$IMAGE" == platform ]; then
+if [ "$deployStack" == on ]; then
+  # 根据配置替换 compose.yaml
+  export IMAGE_TAG=$imageTag
+  if [ "$service" == platform ]; then
     export REPLICAS=$PLATFORM_REPLICAS
   fi
   tmpComposeYaml=$(mktemp)
   trap 'rm -f "$tmpComposeYaml"' EXIT
-  envsubst <"${dockerfileDir}/${IMAGE}.compose.yaml" >"$tmpComposeYaml"
+  envsubst <"${composeDir}/${service}.compose.yaml" >"$tmpComposeYaml"
   cat "$tmpComposeYaml"
 
   if [ "$SSH_CONFIG_HOST" ]; then
@@ -173,7 +176,7 @@ if [ "$DEPLOY_STACK" == on ]; then
   else
     sshConfig=${SSH_USER}@${SSH_IP}
   fi
-  echo -e "\e[33mDeploying \e[35m${IMAGE}\e[33m to \e[35m${CURRENT_ENV}\e[0m"
-  scp "$tmpComposeYaml" "${sshConfig}:/data/${IMAGE}.compose.yaml"
-  ssh "$sshConfig" docker stack deploy -c "/data/${IMAGE}.compose.yaml" "$DOCKER_STACK"
+  echo -e "\e[33mDeploying \e[35m${service}\e[33m to \e[35m${currentEnv}\e[0m"
+  scp "$tmpComposeYaml" "${sshConfig}:/data/${service}.compose.yaml"
+  ssh "$sshConfig" docker stack deploy -c "/data/${service}.compose.yaml" "$DOCKER_STACK_NAME"
 fi

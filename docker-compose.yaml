@@ -27,7 +27,7 @@ services:
   database:
     build:
       context: .
-      dockerfile: dockerfile/database.Dockerfile
+      dockerfile: deploy/dockerfile/database.Dockerfile
     environment:
       MYSQL_ROOT_PASSWORD: zjlab2022root
       MYSQL_USER: zjlab
