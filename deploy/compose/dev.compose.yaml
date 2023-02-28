@@ -1,16 +1,11 @@
 version: "3"
-# noinspection ComposeUnknownKeys
-name: zj-brain-science-platform
 services:
   platform:
-    build:
-      context: .
-      dockerfile: dockerfile/platform.Dockerfile.old
+    image: ${PLATFORM_IMAGE_TAG}
     ports:
       - "1919:80"
     environment:
-      DATABASE_URL: mysql+pymysql://zjlab:zjlab2022@database:3306/zj_brain_science_platform
-      # DATABASE_CONFIG: '{"echo": true}'
+      DATABASE_URL: ${DATABASE_URL}
       ALGORITHM_GRPC_ADDRESS: algorithm
       CACHE_HOST: cache
       CACHE_PORT: 6379
@@ -25,9 +20,7 @@ services:
       - platform-net
 
   database:
-    build:
-      context: .
-      dockerfile: deploy/dockerfile/database.Dockerfile
+    image: ${DATABASE_IMAGE_TAG}
     environment:
       MYSQL_ROOT_PASSWORD: zjlab2022root
       MYSQL_USER: zjlab
@@ -44,24 +37,13 @@ services:
       - platform-net
 
   cache:
-    image: redis:7.0
+    image: ${CACHE_IMAGE_TAG}
     ports:
       - "8200:6379"
     restart: always
     networks:
       - platform-net
 
-  alembic:
-    image: zj-brain-science-platform-base:latest
-    restart: "no"
-    volumes:
-      - .:/code
-    depends_on:
-      - database
-    profiles:
-      - alembic
-    networks:
-      - platform-net
 
 networks:
   platform-net:
