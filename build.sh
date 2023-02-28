@@ -3,9 +3,9 @@ set -euo pipefail
 
 print-usage() {
   cat <<EOF
-Usage: $0 [OPTIONS] [service] [imageVersion]
+Usage: $0 [OPTIONS] [SERVICE] [IMAGE VERSION]
 
-Image: platform | database
+Service: platform | database | cache
   Docker image name, default is platform
 
 Image version:
@@ -74,6 +74,15 @@ while getopts 'TPc:b:p:d:h' OPT; do
   esac
 done
 shift $(($OPTIND - 1))
+
+if [ "$buildImage" == off ] && [ "$pushImage" == on ]; then
+  echo -e "\e[31mcannot push image without build\e[0m" >&2
+  exit 1
+fi
+if [ "$buildImage" == on ] && [ "$pushImage" == off ] && [ "$deployStack" == on ]; then
+  echo -e "\e[31mcannot deploy not pushed image\e[0m" >&2
+  exit 1
+fi
 
 if [ "${1:-}" ]; then
   service=$1
@@ -149,10 +158,6 @@ fi
 
 # 推送镜像
 if [ "$pushImage" == on ]; then
-  if [ "$buildImage" == off ]; then
-    echo -e "\e[31mcannot push image without build\e[0m" >&2
-    exit 1
-  fi
   if [ "$service" == cache ]; then
     echo -e "\e[31mcache doesn't need push image\e[0m" >&2
     exit 1
