@@ -84,12 +84,11 @@ if [ "${1:-}" ]; then
 fi
 
 # 解析镜像版本
-# build.sh参数传入的版本 > deploy/image-version/service.version > 生成的版本号
 imageVersion=${2:-}
-if [ -z "$imageVersion" ] && [ -f "${imageVersionDir}/${service}.version" ]; then
+if [ -z "$imageVersion" ] && [ "$buildImage" == off ] && [ -f "${imageVersionDir}/${service}.version" ]; then
   imageVersion=$(head -n 1 "${imageVersionDir}/${service}.version")
 fi
-if [ -z "$imageVersion" ]; then
+if [ -z "$imageVersion" ] && [ "$buildImage" == on ]; then
   imageVersion=$(generate-tag-version)
 fi
 
@@ -150,8 +149,12 @@ fi
 
 # 推送镜像
 if [ "$pushImage" == on ]; then
+  if [ "$buildImage" == off ]; then
+    echo -e "\e[31mcannot push image without build\e[0m" >&2
+    exit 1
+  fi
   if [ "$service" == cache ]; then
-    echo -e "\e[31mcache doesn't need push image" >&2
+    echo -e "\e[31mcache doesn't need push image\e[0m" >&2
     exit 1
   fi
   echo -e "\e[33mPushing image \e[35m${imageTag}\e[33m to DockerHub\e[0m"
@@ -161,6 +164,11 @@ fi
 
 # 部署 Docker Stack
 if [ "$deployStack" == on ]; then
+  if [ "$service" != cache ] && [ -z "$imageVersion" ]; then
+    echo -e "\e[31mno imageVersion provided\e[0m" >&2
+    exit 1
+  fi
+
   # 根据配置替换 compose.yaml
   export IMAGE_TAG=$imageTag
   if [ "$service" == platform ]; then
