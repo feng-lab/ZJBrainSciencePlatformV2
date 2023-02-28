@@ -16,8 +16,6 @@ services:
     depends_on:
       - database
       - cache
-    networks:
-      - platform-net
 
   database:
     image: ${DATABASE_IMAGE_TAG}
@@ -33,18 +31,9 @@ services:
       - ~/mysql/ZJBrainSciencePlatform/data:/var/lib/mysql
       - ~/log/ZJBrainSciencePlatform/mysql:/var/log/mysql
     restart: always
-    networks:
-      - platform-net
 
   cache:
     image: ${CACHE_IMAGE_TAG}
     ports:
       - "8200:6379"
     restart: always
-    networks:
-      - platform-net
-
-
-networks:
-  platform-net:
-    driver: bridge
