@@ -80,8 +80,14 @@ else
 fi
 DATABASE_URL="mysql+pymysql://zjlab:zjlab2022@${databaseHost}:${databasePort}/zj_brain_science_platform"
 
-PLATFORM_IMAGE_TAG="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-platform:$(head -n 1 "${imageVersionDir}/platform.version")"
-DATABASE_IMAGE_TAG="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-database:$(head -n 1 "${imageVersionDir}/database.version")"
+PLATFORM_IMAGE_TAG="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-platform"
+if [ -f "${imageVersionDir}/platform.version" ]; then
+  PLATFORM_IMAGE_TAG="${PLATFORM_IMAGE_TAG}:$(head -n 1 "${imageVersionDir}/platform.version")"
+fi
+DATABASE_IMAGE_TAG="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-database"
+if [ -f "${imageVersionDir}/database.version" ]; then
+  DATABASE_IMAGE_TAG="${DATABASE_IMAGE_TAG}:$(head -n 1 "${imageVersionDir}/database.version")"
+fi
 export PLATFORM_IMAGE_TAG DATABASE_IMAGE_TAG DATABASE_URL
 
 docker compose \
