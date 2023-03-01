@@ -16,6 +16,7 @@ Options:
   -P             Use PRODUCTION env
   -c on | off    Check workspace is clean (default on)
   -b on | off    Build new docker image (default off)
+  -w on | off    Write built image version in deploy/image-version (default on for database, off for other services)
   -p on | off    Push image to docker hub (default off)
   -d on | off    Deploy docker stack (default off)
   -h             Print this help and exit
@@ -40,10 +41,11 @@ imageVersion=
 currentEnv=TESTING
 checkClean=on
 buildImage=off
+inputWriteVersion=
 pushImage=off
 deployStack=off
 
-while getopts 'TPc:b:p:d:h' OPT; do
+while getopts 'TPc:b:w:p:d:h' OPT; do
   case $OPT in
   T)
     currentEnv=TESTING
@@ -56,6 +58,9 @@ while getopts 'TPc:b:p:d:h' OPT; do
     ;;
   b)
     set-option buildImage
+    ;;
+  w)
+    set-option inputWriteVersion
     ;;
   p)
     set-option pushImage
@@ -92,6 +97,16 @@ if [ "${1:-}" ]; then
   fi
 fi
 
+if [ -z "$inputWriteVersion" ]; then
+  if [ "$service" == database ]; then
+    writeVersion=on
+  else
+    writeVersion=off
+  fi
+else
+  writeVersion=$inputWriteVersion
+fi
+
 # 解析镜像版本
 imageVersion=${2:-}
 if [ -z "$imageVersion" ] && [ "$buildImage" == off ] && [ -f "${imageVersionDir}/${service}.version" ]; then
@@ -108,15 +123,17 @@ else
 fi
 
 echo -e '\e[33mArguments:'
-echo "service=${service}"
-echo "imageVersion=${imageVersion}"
-echo "imageTag=${imageTag}"
-echo "env=${currentEnv}"
-echo "checkClean=${checkClean}"
-echo "buildImage=${buildImage}"
-echo "pushImage=${pushImage}"
-echo "deployStack=${deployStack}"
-echo -e '\n\e[0m'
+cat <<EOF | column -t -s '|'
+  service|${service}
+  imageTag|${imageTag}
+  env|${currentEnv}
+  checkClean|${checkClean}
+  buildImage|${buildImage}
+  writeVersion|${writeVersion}
+  pushImage|${pushImage}
+  deployStack|${deployStack}
+EOF
+echo -e '\e[0m'
 
 # 读取环境对应的配置
 source "${configDir}/${currentEnv}.config.sh"
@@ -131,7 +148,7 @@ if [ "$buildImage" == on ]; then
 
   # 检查是否有未提交的文件
   if [ "$checkClean" == on ]; then
-    if git -C "$projectDir" diff-index --quiet HEAD; then
+    if [ -z "$(git -C "$projectDir" status --porcelain)" ]; then
       echo -e "\e[33mWorkspace clean\e[0m"
     else
       echo -e "\e[31mWorkspace not clean, commit or stash your changes\e[0m" >&2
@@ -152,8 +169,10 @@ if [ "$buildImage" == on ]; then
     $imageBuildArg \
     "$projectDir"
 
-  echo -e "\e[33mWriting \e[35m${imageVersion}\e[33m into \e[35m${imageVersionDir}/${service}.version\e[0m"
-  echo "$imageVersion" >"${imageVersionDir}/${service}.version"
+  if [ "$writeVersion" == on ]; then
+    echo -e "\e[33mWriting \e[35m${imageVersion}\e[33m into \e[35m${imageVersionDir}/${service}.version\e[0m"
+    echo "$imageVersion" >"${imageVersionDir}/${service}.version"
+  fi
 fi
 
 # 推送镜像
@@ -182,14 +201,13 @@ if [ "$deployStack" == on ]; then
   tmpComposeYaml=$(mktemp)
   trap 'rm -f "$tmpComposeYaml"' EXIT
   envsubst <"${composeDir}/${service}.compose.yaml" >"$tmpComposeYaml"
-  cat "$tmpComposeYaml"
 
   if [ "$SSH_CONFIG_HOST" ]; then
     sshConfig=$SSH_CONFIG_HOST
   else
     sshConfig=${SSH_USER}@${SSH_IP}
   fi
-  echo -e "\e[33mDeploying \e[35m${service}\e[33m to \e[35m${currentEnv}\e[0m"
+  echo -e "\e[33mDeploying \e[35m${imageTag}\e[33m to \e[35m${currentEnv}\e[0m"
   scp "$tmpComposeYaml" "${sshConfig}:/data/${service}.compose.yaml"
   ssh "$sshConfig" docker stack deploy -c "/data/${service}.compose.yaml" "$DOCKER_STACK_NAME"
 fi
