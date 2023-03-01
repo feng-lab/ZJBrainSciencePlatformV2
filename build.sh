@@ -78,7 +78,7 @@ while getopts 'TPc:b:w:p:d:h' OPT; do
     ;;
   esac
 done
-shift $(($OPTIND - 1))
+shift $((OPTIND - 1))
 
 if [ "$buildImage" == off ] && [ "$pushImage" == on ]; then
   echo -e "\e[31mcannot push image without build\e[0m" >&2
@@ -123,7 +123,7 @@ else
 fi
 
 echo -e '\e[33mArguments:'
-cat <<EOF | column -t -s '|'
+cat <<EOF | column --table --separator '|'
   service|${service}
   imageTag|${imageTag}
   env|${currentEnv}
@@ -158,15 +158,15 @@ if [ "$buildImage" == on ]; then
 
   baseImageVersion=$(head -n 1 "${imageVersionDir}/base.version")
   baseImageTag=${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-base:${baseImageVersion}
-  imageBuildArg=''
+  imageBuildArgs=()
   if [ "$service" == platform ]; then
-    imageBuildArg="--build-arg BASE_IMAGE_TAG=${baseImageTag}"
+    imageBuildArgs+=(--build-arg "BASE_IMAGE_TAG=${baseImageTag}")
   fi
   echo -e "\e[33mBuilding image \e[35m${imageTag}\e[0m"
   docker build \
     --file "${dockerfileDir}/${service}.Dockerfile" \
     --tag "$imageTag" \
-    $imageBuildArg \
+    "${imageBuildArgs[@]}" \
     "$projectDir"
 
   if [ "$writeVersion" == on ]; then
