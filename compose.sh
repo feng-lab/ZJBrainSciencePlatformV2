@@ -52,7 +52,7 @@ while getopts 'LTPh' OPT; do
     ;;
   esac
 done
-shift $(($OPTIND - 1))
+shift $((OPTIND - 1))
 
 command="${1:-up-depends}"
 args=()
@@ -74,22 +74,16 @@ if [ -z "$env" ] || [ "$env" == LOCAL ]; then
   databaseHost=database
   databasePort=3306
 else
-  source "${configDir}/${env}.config.sh"
+  # shellcheck source=deploy/config/TESTING.config.sh
+  source "${configDir:?}/${env}.config.sh"
   databaseHost=$SSH_IP
   databasePort=8100
 fi
-DATABASE_URL="mysql+pymysql://zjlab:zjlab2022@${databaseHost}:${databasePort}/zj_brain_science_platform"
+export DATABASE_URL="mysql+pymysql://zjlab:zjlab2022@${databaseHost}:${databasePort}/zj_brain_science_platform"
 
-PLATFORM_IMAGE_TAG="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-platform"
-if [ -f "${imageVersionDir}/platform.version" ]; then
-  PLATFORM_IMAGE_TAG="${PLATFORM_IMAGE_TAG}:$(head -n 1 "${imageVersionDir}/platform.version")"
-fi
-DATABASE_IMAGE_TAG="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-database"
-if [ -f "${imageVersionDir}/database.version" ]; then
-  DATABASE_IMAGE_TAG="${DATABASE_IMAGE_TAG}:$(head -n 1 "${imageVersionDir}/database.version")"
-fi
-export PLATFORM_IMAGE_TAG DATABASE_IMAGE_TAG DATABASE_URL
+export PLATFORM_IMAGE_TAG="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-platform"
+export DATABASE_IMAGE_TAG="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-database"
 
 docker compose \
-  --file "${composeDir}/dev.compose.yaml" \
+  --file "${composeDir:?}/dev.compose.yaml" \
   "${args[@]}"

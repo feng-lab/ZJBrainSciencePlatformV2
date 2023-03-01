@@ -16,9 +16,9 @@ Options:
   -P             Use PRODUCTION env
   -c on | off    Check workspace is clean (default on)
   -b on | off    Build new docker image (default off)
-  -w on | off    Write built image version in deploy/image-version (default on for database, off for other services)
   -p on | off    Push image to docker hub (default off)
   -d on | off    Deploy docker stack (default off)
+  -n             Don't actually do any operation, just print what would be done
   -h             Print this help and exit
 EOF
 }
@@ -41,11 +41,11 @@ imageVersion=
 currentEnv=TESTING
 checkClean=on
 buildImage=off
-inputWriteVersion=
 pushImage=off
 deployStack=off
+dryRun=off
 
-while getopts 'TPc:b:w:p:d:h' OPT; do
+while getopts 'TPc:b:p:d:nh' OPT; do
   case $OPT in
   T)
     currentEnv=TESTING
@@ -59,14 +59,14 @@ while getopts 'TPc:b:w:p:d:h' OPT; do
   b)
     set-option buildImage
     ;;
-  w)
-    set-option inputWriteVersion
-    ;;
   p)
     set-option pushImage
     ;;
   d)
     set-option deployStack
+    ;;
+  n)
+    dryRun=on
     ;;
   h)
     print-usage
@@ -97,19 +97,9 @@ if [ "${1:-}" ]; then
   fi
 fi
 
-if [ -z "$inputWriteVersion" ]; then
-  if [ "$service" == database ]; then
-    writeVersion=on
-  else
-    writeVersion=off
-  fi
-else
-  writeVersion=$inputWriteVersion
-fi
-
 # 解析镜像版本
 imageVersion=${2:-}
-if [ -z "$imageVersion" ] && [ "$buildImage" == off ] && [ -f "${imageVersionDir}/${service}.version" ]; then
+if [ -z "$imageVersion" ] && [ "$buildImage" == off ] && [ -f "${imageVersionDir:?}/${service}.version" ]; then
   imageVersion=$(head -n 1 "${imageVersionDir}/${service}.version")
 fi
 if [ -z "$imageVersion" ] && [ "$buildImage" == on ]; then
@@ -119,24 +109,36 @@ fi
 if [ "$service" == cache ]; then
   imageTag=$CACHE_IMAGE_TAG
 else
-  imageTag=${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-${service}:${imageVersion}
+  imageRepo=${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-${service}
+  imageTag=${imageRepo}:${imageVersion}
+  imageTagLatest=${imageRepo}:latest
 fi
 
 echo -e '\e[33mArguments:'
 cat <<EOF | column --table --separator '|'
+  dryRun|${dryRun}
   service|${service}
   imageTag|${imageTag}
   env|${currentEnv}
   checkClean|${checkClean}
   buildImage|${buildImage}
-  writeVersion|${writeVersion}
   pushImage|${pushImage}
   deployStack|${deployStack}
 EOF
 echo -e '\e[0m'
 
+docker=(docker)
+scp=(scp)
+ssh=(ssh)
+if [ "$dryRun" == "on" ]; then
+  docker=(echo docker)
+  scp=(echo scp)
+  ssh=(echo ssh)
+fi
+
 # 读取环境对应的配置
-source "${configDir}/${currentEnv}.config.sh"
+# shellcheck source=deploy/config/TESTING.config.sh
+source "${configDir:?}/${currentEnv}.config.sh"
 
 # 构建镜像
 if [ "$buildImage" == on ]; then
@@ -148,7 +150,7 @@ if [ "$buildImage" == on ]; then
 
   # 检查是否有未提交的文件
   if [ "$checkClean" == on ]; then
-    if [ -z "$(git -C "$projectDir" status --porcelain)" ]; then
+    if [ -z "$(git -C "${projectDir:?}" status --porcelain)" ]; then
       echo -e "\e[33mWorkspace clean\e[0m"
     else
       echo -e "\e[31mWorkspace not clean, commit or stash your changes\e[0m" >&2
@@ -163,16 +165,12 @@ if [ "$buildImage" == on ]; then
     imageBuildArgs+=(--build-arg "BASE_IMAGE_TAG=${baseImageTag}")
   fi
   echo -e "\e[33mBuilding image \e[35m${imageTag}\e[0m"
-  docker build \
-    --file "${dockerfileDir}/${service}.Dockerfile" \
+  "${docker[@]}" build \
+    --file "${dockerfileDir:?}/${service}.Dockerfile" \
     --tag "$imageTag" \
+    --tag "$imageTagLatest" \
     "${imageBuildArgs[@]}" \
     "$projectDir"
-
-  if [ "$writeVersion" == on ]; then
-    echo -e "\e[33mWriting \e[35m${imageVersion}\e[33m into \e[35m${imageVersionDir}/${service}.version\e[0m"
-    echo "$imageVersion" >"${imageVersionDir}/${service}.version"
-  fi
 fi
 
 # 推送镜像
@@ -181,9 +179,11 @@ if [ "$pushImage" == on ]; then
     echo -e "\e[31mcache doesn't need push image\e[0m" >&2
     exit 1
   fi
+  "${docker[@]}" login --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN"
   echo -e "\e[33mPushing image \e[35m${imageTag}\e[33m to DockerHub\e[0m"
-  docker login --username "$DOCKER_USERNAME" --password "$DOCKER_TOKEN"
-  docker push "$imageTag"
+  "${docker[@]}" push "$imageTag"
+  echo -e "\e[33mPushing image \e[35m${imageTagLatest}\e[33m to DockerHub\e[0m"
+  "${docker[@]}" push "$imageTagLatest"
 fi
 
 # 部署 Docker Stack
@@ -200,7 +200,10 @@ if [ "$deployStack" == on ]; then
   fi
   tmpComposeYaml=$(mktemp)
   trap 'rm -f "$tmpComposeYaml"' EXIT
-  envsubst <"${composeDir}/${service}.compose.yaml" >"$tmpComposeYaml"
+  envsubst <"${composeDir:?}/${service}.compose.yaml" >"$tmpComposeYaml"
+  if [ "$dryRun" == on ]; then
+    cat "$tmpComposeYaml"
+  fi
 
   if [ "$SSH_CONFIG_HOST" ]; then
     sshConfig=$SSH_CONFIG_HOST
@@ -208,6 +211,12 @@ if [ "$deployStack" == on ]; then
     sshConfig=${SSH_USER}@${SSH_IP}
   fi
   echo -e "\e[33mDeploying \e[35m${imageTag}\e[33m to \e[35m${currentEnv}\e[0m"
-  scp "$tmpComposeYaml" "${sshConfig}:/data/${service}.compose.yaml"
-  ssh "$sshConfig" docker stack deploy -c "/data/${service}.compose.yaml" "$DOCKER_STACK_NAME"
+  "${scp[@]}" "$tmpComposeYaml" "${sshConfig}:/data/${service}.compose.yaml"
+  "${ssh[@]}" "$sshConfig" bash <<EOF
+set -euo pipefail
+docker login --username "${DOCKER_USERNAME}" --password "${DOCKER_TOKEN}"
+docker stack deploy --compose-file "/data/${service}.compose.yaml" --with-registry-auth "$DOCKER_STACK_NAME"
+sleep 3
+docker service ps "${DOCKER_STACK_NAME}_${service}"
+EOF
 fi
