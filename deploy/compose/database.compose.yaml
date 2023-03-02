@@ -12,6 +12,7 @@ services:
       - "8100:3306"
     volumes:
       - ~/mysql/ZJBrainSciencePlatform/data:/var/lib/mysql
+      - ~/mysql/ZJBrainSciencePlatform/backup:/backup
       - ~/log/ZJBrainSciencePlatform/mysql:/var/log/mysql
     deploy:
       replicas: 1
