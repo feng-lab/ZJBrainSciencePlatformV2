@@ -5,13 +5,15 @@ services:
     ports:
       - "1919:80"
     environment:
+      LOG_ROOT: /log
+      FILE_ROOT: /file
       DATABASE_URL: ${DATABASE_URL}
       ALGORITHM_GRPC_ADDRESS: algorithm
       CACHE_HOST: cache
       CACHE_PORT: 6379
     volumes:
-      - ~/log/ZJBrainSciencePlatform/app:/root/log/ZJBrainSciencePlatform/app
-      - ~/data/ZJBrainSciencePlatform/file:/root/data/ZJBrainSciencePlatform/file
+      - /data/ZJBrainSciencePlatform/data/file:/file
+      - /data/ZJBrainSciencePlatform/log/platform:/log
     restart: always
     depends_on:
       - database
@@ -28,9 +30,9 @@ services:
     ports:
       - "8100:3306"
     volumes:
-      - ~/mysql/ZJBrainSciencePlatform/data:/var/lib/mysql
-      - ~/mysql/ZJBrainSciencePlatform/backup:/backup
-      - ~/log/ZJBrainSciencePlatform/mysql:/var/log/mysql
+      - /data/ZJBrainSciencePlatform/mysql/data:/var/lib/mysql
+      - /data/ZJBrainSciencePlatform/mysql/backup:/backup
+      - /data/ZJBrainSciencePlatform/mysql/log:/var/log/mysql
     restart: always
 
   cache:

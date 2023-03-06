@@ -11,9 +11,9 @@ services:
     ports:
       - "8100:3306"
     volumes:
-      - ~/mysql/ZJBrainSciencePlatform/data:/var/lib/mysql
-      - ~/mysql/ZJBrainSciencePlatform/backup:/backup
-      - ~/log/ZJBrainSciencePlatform/mysql:/var/log/mysql
+      - /data/ZJBrainSciencePlatform/mysql/data:/var/lib/mysql
+      - /data/ZJBrainSciencePlatform/mysql/backup:/backup
+      - /data/ZJBrainSciencePlatform/mysql/log:/var/log/mysql
     deploy:
       replicas: 1
       restart_policy:
