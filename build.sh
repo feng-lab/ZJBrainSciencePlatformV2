@@ -24,7 +24,7 @@ EOF
 }
 
 set-option() {
-  local option=$OPTARG
+  local option="$OPTARG"
   if [ "$option" != on ] && [ "$option" != off ]; then
     echo -e "\e[31mInvalid option value for ${1}: ${option}\e[0m" >&2
     exit 1
@@ -36,14 +36,14 @@ set-option() {
 source "$(dirname -- "${BASH_SOURCE[0]}")/deploy/config/config.sh"
 
 # 解析参数
-service=platform
-imageVersion=
-currentEnv=TESTING
-checkClean=on
-buildImage=off
-pushImage=off
-deployStack=off
-dryRun=off
+service='platform'
+imageVersion=''
+currentEnv='TESTING'
+checkClean='on'
+buildImage='off'
+pushImage='off'
+deployStack='off'
+dryRun='off'
 
 while getopts 'TPc:b:p:d:nh' OPT; do
   case $OPT in
@@ -90,9 +90,9 @@ if [ "$buildImage" == on ] && [ "$pushImage" == off ] && [ "$deployStack" == on 
 fi
 
 if [ "${1:-}" ]; then
-  service=$1
+  service="$1"
   if [[ ! "$service" =~ platform|database|cache ]]; then
-    echo >&2 invalid image: "$service"
+    echo >&2 invalid service: "$service"
     exit 1
   fi
 fi
@@ -100,18 +100,18 @@ fi
 # 解析镜像版本
 imageVersion=${2:-}
 if [ -z "$imageVersion" ] && [ "$buildImage" == off ] && [ -f "${imageVersionDir:?}/${service}.version" ]; then
-  imageVersion=$(head -n 1 "${imageVersionDir}/${service}.version")
+  imageVersion="$(head -n 1 "${imageVersionDir}/${service}.version")"
 fi
 if [ -z "$imageVersion" ] && [ "$buildImage" == on ]; then
-  imageVersion=$(generate-tag-version)
+  imageVersion="$(generate-tag-version)"
 fi
 
 if [ "$service" == cache ]; then
-  imageTag=$CACHE_IMAGE_TAG
+  imageTag="$CACHE_IMAGE_TAG"
 else
-  imageRepo=${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-${service}
-  imageTag=${imageRepo}:${imageVersion}
-  imageTagLatest=${imageRepo}:latest
+  imageRepo="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-${service}"
+  imageTag="${imageRepo}:${imageVersion}"
+  imageTagLatest="${imageRepo}:latest"
 fi
 
 echo -e '\e[33mArguments:'
@@ -158,8 +158,8 @@ if [ "$buildImage" == on ]; then
     fi
   fi
 
-  baseImageVersion=$(head -n 1 "${imageVersionDir}/base.version")
-  baseImageTag=${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-base:${baseImageVersion}
+  baseImageVersion="$(head -n 1 "${imageVersionDir}/base.version")"
+  baseImageTag="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-base:${baseImageVersion}"
   imageBuildArgs=()
   if [ "$service" == platform ]; then
     imageBuildArgs+=(--build-arg "BASE_IMAGE_TAG=${baseImageTag}")
@@ -194,21 +194,22 @@ if [ "$deployStack" == on ]; then
   fi
 
   # 根据配置替换 compose.yaml
-  export IMAGE_TAG=$imageTag
+  export IMAGE_TAG="$imageTag"
   if [ "$service" == platform ]; then
-    export REPLICAS=$PLATFORM_REPLICAS
+    export REPLICAS="$PLATFORM_REPLICAS"
   fi
-  tmpComposeYaml=$(mktemp)
+  tmpComposeYaml="$(mktemp)"
   trap 'rm -f "$tmpComposeYaml"' EXIT
-  envsubst <"${composeDir:?}/${service}.compose.yaml" >"$tmpComposeYaml"
+  # shellcheck disable=SC2016
+  envsubst '$IMAGE_TAG $REPLICAS' <"${composeDir:?}/${service}.compose.yaml" >"$tmpComposeYaml"
   if [ "$dryRun" == on ]; then
     cat "$tmpComposeYaml"
   fi
 
   if [ "$SSH_CONFIG_HOST" ]; then
-    sshConfig=$SSH_CONFIG_HOST
+    sshConfig="$SSH_CONFIG_HOST"
   else
-    sshConfig=${SSH_USER}@${SSH_IP}
+    sshConfig="${SSH_USER}@${SSH_IP}"
   fi
   echo -e "\e[33mDeploying \e[35m${imageTag}\e[33m to \e[35m${currentEnv}\e[0m"
   "${scp[@]}" "$tmpComposeYaml" "${sshConfig}:/data/${service}.compose.yaml"
