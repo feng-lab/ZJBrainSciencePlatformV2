@@ -212,12 +212,12 @@ if [ "$deployStack" == on ]; then
     sshConfig="${SSH_USER}@${SSH_IP}"
   fi
   echo -e "\e[33mDeploying \e[35m${imageTag}\e[33m to \e[35m${currentEnv}\e[0m"
-  "${scp[@]}" "$tmpComposeYaml" "${sshConfig}:/data/ZJBrainSciencePlatform/compose/{service}.compose.yaml"
+  "${scp[@]}" "$tmpComposeYaml" "${sshConfig}:/data/ZJBrainSciencePlatform/compose/${service}.compose.yaml"
   "${ssh[@]}" "$sshConfig" bash <<EOF
 set -euo pipefail
 mkdir -p /data/ZJBrainSciencePlatform/data/file && cd /data/ZJBrainSciencePlatform && mkdir log mysql compose && cd mysql && mkdir backup data log
 docker login --username "${DOCKER_USERNAME}" --password "${DOCKER_TOKEN}"
-docker stack deploy --compose-file "/data/ZJBrainSciencePlatform/compose/{service}.compose.yaml" --with-registry-auth "$DOCKER_STACK_NAME"
+docker stack deploy --compose-file "/data/ZJBrainSciencePlatform/compose/${service}.compose.yaml" --with-registry-auth "$DOCKER_STACK_NAME"
 sleep 3
 docker service ps "${DOCKER_STACK_NAME}_${service}"
 EOF
