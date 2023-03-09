@@ -28,10 +28,13 @@ from app.api.user import router as user_router
 from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener, request_id_ctxvar
+from app.common.schedule import repeat_task
 from app.common.user_auth import AccessLevel, hash_password
 from app.common.util import generate_request_id
 from app.db import SessionLocal, check_database_is_up_to_date, crud
+from app.db.crud import send_heartbeat
 from app.db.crud.experiment import insert_or_update_experiment
+from app.db.crud.human_subject import get_next_human_subject_index, insert_human_subject_index
 from app.db.orm import Experiment
 from app.model.response import CODE_FAIL, CODE_SESSION_TIMEOUT, NoneResponse
 from app.model.schema import UserCreate
@@ -85,6 +88,16 @@ def startup() -> None:
         create_root_user(db)
         create_default_experiment(db)
         init_default_human_subject_index(db)
+    finally:
+        db.close()
+
+
+@app.on_event("startup")
+@repeat_task(config.DATABASE_HEARTBEAT_INTERVAL_SECONDS)
+def database_heartbeat() -> None:
+    db = SessionLocal()
+    try:
+        send_heartbeat(db)
     finally:
         db.close()
 
@@ -194,5 +207,5 @@ def create_root_user(db: Session) -> None:
 
 
 def init_default_human_subject_index(db: Session) -> None:
-    if crud.get_next_human_subject_index(db, update_index=False, exit_if_update_error=True) is None:
-        crud.insert_human_subject_index(db, 1)
+    if get_next_human_subject_index(db, update_index=False, exit_if_update_error=True) is None:
+        insert_human_subject_index(db, 1)

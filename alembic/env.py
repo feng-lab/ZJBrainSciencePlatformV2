@@ -1,7 +1,5 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, pool
-
 from alembic import context
 
 # this is the Alembic Config object, which provides
@@ -18,6 +16,7 @@ if config.config_file_name is not None:
 from app.db.orm import User
 
 target_metadata = User.metadata
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -37,7 +36,11 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    # url = config.get_main_option("sqlalchemy.url")
+    from app.common.config import config
+
+    url = config.DATABASE_URL
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -63,9 +66,12 @@ def run_migrations_online() -> None:
             if script.upgrade_ops.is_empty():
                 directives[:] = []
 
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section), prefix="sqlalchemy.", poolclass=pool.NullPool
-    )
+    # connectable = engine_from_config(
+    #     config.get_section(config.config_ini_section), prefix="sqlalchemy.", poolclass=pool.NullPool
+    # )
+    from app.db import engine
+
+    connectable = engine
 
     with connectable.connect() as connection:
         context.configure(

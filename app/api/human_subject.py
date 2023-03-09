@@ -4,7 +4,8 @@ from app.api import check_experiment_exists, check_human_subject_exists
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.user_auth import AccessLevel, hash_password
-from app.db import common_crud, crud
+from app.db import common_crud
+from app.db.crud import human_subject as crud
 from app.db.orm import ExperimentHumanSubject, HumanSubject, User
 from app.model import convert
 from app.model.request import DeleteHumanSubjectRequest, UpdateExperimentHumanSubjectRequest
@@ -63,10 +64,15 @@ def delete_human_subjects(
     request: DeleteHumanSubjectRequest, ctx: ResearcherContext = Depends()
 ) -> None:
     success = common_crud.bulk_update_rows_as_deleted(
-        ctx.db, HumanSubject, where=[HumanSubject.user_id.in_(request.user_ids)], commit=True
+        ctx.db, HumanSubject, where=[HumanSubject.user_id.in_(request.user_ids)], commit=False
     )
     if not success:
         raise ServiceError.database_fail("删除人类被试者失败")
+    success = common_crud.bulk_update_rows_as_deleted(
+        ctx.db, User, where=[User.id.in_(request.user_ids)], commit=True
+    )
+    if not success:
+        raise ServiceError.database_fail("删除人类被试者用户失败")
 
 
 @router.get(

@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+
+  platform:
+    image: ${IMAGE_TAG}
+    ports:
+      - "1919:80"
+    environment:
+      LOG_ROOT: /log
+      FILE_ROOT: /file
+      DATABASE_URL: mysql+pymysql://zjlab:zjlab2022@database:3306/zj_brain_science_platform
+      ALGORITHM_GRPC_ADDRESS: algorithm
+      CACHE_HOST: cache
+      CACHE_PORT: 6379
+    volumes:
+      - /data/ZJBrainSciencePlatform/data/file:/file
+      - /data/ZJBrainSciencePlatform/log/platform:/log
+    deploy:
+      replicas: ${REPLICAS}
+      restart_policy:
+        condition: on-failure
+        delay: 3s

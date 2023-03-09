@@ -22,6 +22,10 @@ class PageParm(BaseModel):
     include_deleted: bool = Field(False)
 
 
+class ExperimentIdSearch(BaseModel):
+    experiment_id: int | None = Field(None, ge=0)
+
+
 class UserNameStaffId(BaseModel):
     username: str = Field(max_length=255)
     staff_id: str = Field(max_length=50)
@@ -171,13 +175,16 @@ class FileCreate(FileBase):
     pass
 
 
-class FileInDB(FileBase, BaseModelInDB):
+class FileSearch(PageParm, ExperimentIdSearch):
+    name: str = Field("", max_length=255)
+    file_type: str = Field("", max_length=255)
+
+
+class FileResponse(FileBase, BaseModelInDB):
+    url: str | None
+
     class Config:
         orm_mode = True
-
-
-class FileResponse(FileInDB):
-    url: str | None
 
 
 class ParadigmBase(BaseModel):
@@ -209,10 +216,6 @@ class ParadigmFileBase(BaseModel):
 
 class ParadigmFileCreate(ParadigmFileBase):
     pass
-
-
-class ExperimentIdSearch(BaseModel):
-    experiment_id: int | None = Field(None, ge=0)
 
 
 class DeviceBase(BaseModel):

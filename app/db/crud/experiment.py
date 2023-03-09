@@ -83,7 +83,7 @@ def search_experiments(db: Session, search: ExperimentSearch) -> Sequence[Experi
         .options(raiseload(Experiment.main_operator_obj), raiseload(Experiment.assistants))
     )
     if search.search:
-        stmt = stmt.where(Experiment.name.icontains(search))
+        stmt = stmt.where(Experiment.name.icontains(search.search))
     if not search.include_deleted:
         stmt = stmt.where(Experiment.is_deleted == False)
     order_by_column = SEARCH_EXPERIMENT_SORT_BY_COLUMN[search.sort_by]

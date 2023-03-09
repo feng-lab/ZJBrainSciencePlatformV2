@@ -1,0 +1,42 @@
+version: "3"
+services:
+  platform:
+    image: ${PLATFORM_IMAGE_TAG}
+    ports:
+      - "1919:80"
+    environment:
+      LOG_ROOT: /log
+      FILE_ROOT: /file
+      DATABASE_URL: ${DATABASE_URL}
+      ALGORITHM_GRPC_ADDRESS: algorithm
+      CACHE_HOST: cache
+      CACHE_PORT: 6379
+    volumes:
+      - /data/ZJBrainSciencePlatform/data/file:/file
+      - /data/ZJBrainSciencePlatform/log/platform:/log
+    restart: always
+    depends_on:
+      - database
+      - cache
+
+  database:
+    image: ${DATABASE_IMAGE_TAG}
+    environment:
+      MYSQL_ROOT_PASSWORD: zjlab2022root
+      MYSQL_USER: zjlab
+      MYSQL_PASSWORD: zjlab2022
+      MYSQL_DATABASE: zj_brain_science_platform
+      TZ: Asia/Shanghai
+    ports:
+      - "8100:3306"
+    volumes:
+      - /data/ZJBrainSciencePlatform/mysql/data:/var/lib/mysql
+      - /data/ZJBrainSciencePlatform/mysql/backup:/backup
+      - /data/ZJBrainSciencePlatform/mysql/log:/var/log/mysql
+    restart: always
+
+  cache:
+    image: ${CACHE_IMAGE_TAG}
+    ports:
+      - "8200:6379"
+    restart: always

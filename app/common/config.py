@@ -56,6 +56,9 @@ class Config(BaseSettings):
     def get_algorithm_grpc_address(self):
         return f"{self.ALGORITHM_GRPC_ADDRESS}:{self.ALGORITHM_GRPC_PORT}"
 
+    # 数据库链接心跳检测间隔
+    DATABASE_HEARTBEAT_INTERVAL_SECONDS: float = 3 * 60
+
 
 config = Config()
 print(config.json())
