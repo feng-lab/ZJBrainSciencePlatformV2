@@ -1,0 +1,46 @@
+name: Pytest测试
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: 切换到dev分支
+        uses: actions/checkout@v3
+        with:
+          ref: dev
+
+      - name: 安装Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: poetry
+
+      - name: 安装Poetry
+        uses: Gr1N/setup-poetry@v8
+
+      - name: 安装依赖项
+        run: poetry install --with test
+
+      - name: 安装MySQL
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          host port: 8100
+          mysql version: '8.0'
+          mysql database: zj_brain_science_platform
+          mysql user: zjlab
+          mysql password: zjlab2022
+
+      - name: 安装Redis
+        uses: supercharge/redis-github-action@1.5.0
+        with:
+          redis-version: '7.0'
+          redis-port: 8200
+
+      - name: 运行Pytest
+        run: pytest
