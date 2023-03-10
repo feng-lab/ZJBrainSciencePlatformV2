@@ -27,23 +27,17 @@ jobs:
       - name: 安装依赖项
         run: poetry install --with test
 
-      - name: 安装MySQL
-        uses: mirromutth/mysql-action@v1.1
-        with:
-          host port: 8100
-          mysql version: '8.0'
-          mysql database: zj_brain_science_platform
-          mysql user: zjlab
-          mysql password: zjlab2022
-
-      - name: 安装Redis
-        uses: supercharge/redis-github-action@1.5.0
-        with:
-          redis-version: '7.0'
-          redis-port: 8200
-
       - name: 创建文件夹
-        run: mkdir -p $HOME/log/ZJBrainSciencePlatform/app $HOME/data/ZJBrainSciencePlatform/file
+        run: mkdir -p /data/ZJBrainSciencePlatform/data/file /data/ZJBrainSciencePlatform/log/platform
+
+      - name: 启动database和cache
+        run: bash compose.sh -L up-depends
+
+      - name: 运行alembic
+        run: bash compose.sh -L alembic
 
       - name: 运行Pytest
         run: poetry run pytest
+
+      - name: 停止服务
+        run: bash compose.sh -L down
