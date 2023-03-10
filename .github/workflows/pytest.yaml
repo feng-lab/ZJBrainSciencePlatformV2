@@ -42,5 +42,8 @@ jobs:
           redis-version: '7.0'
           redis-port: 8200
 
+      - name: 创建文件夹
+        run: mkdir -p $HOME/log/ZJBrainSciencePlatform/app $HOME/data/ZJBrainSciencePlatform/file
+
       - name: 运行Pytest
         run: poetry run pytest
