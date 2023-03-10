@@ -1,9 +1,6 @@
 name: Pytest测试
 
-on:
-  push:
-    branches:
-      - dev
+on: push
 
 jobs:
   pytest:
@@ -26,10 +23,8 @@ jobs:
           TZ: Asia/Shanghai
 
     steps:
-      - name: 切换到dev分支
+      - name: 切换到推送的分支
         uses: actions/checkout@v3
-        with:
-          ref: dev
 
       - name: 安装Poetry
         run: pipx install poetry
