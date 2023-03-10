@@ -32,8 +32,8 @@ jobs:
           dirs=("$HOME/log/ZJBrainSciencePlatform/app" "$HOME/data/ZJBrainSciencePlatform/file" /data/ZJBrainSciencePlatform/mysql/data /data/ZJBrainSciencePlatform/mysql/backup /data/ZJBrainSciencePlatform/mysql/log)
           && username="$(id -nu)"
           && userGroup="$(id -ng)"
-          && mkdir -p "${dirs[@]}" 
-          && chown -R "${username}:${userGroup}" "${dirs[@]}"
+          && sudo mkdir -p "${dirs[@]}" 
+          && sudo chown -R "${username}:${userGroup}" "${dirs[@]}"
         shell: bash
 
       - name: 启动database和cache
