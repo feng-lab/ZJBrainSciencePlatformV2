@@ -8,6 +8,27 @@ on:
 jobs:
   pytest:
     runs-on: ubuntu-latest
+    env:
+      DEBUG_MODE: on
+      LOG_ROOT: ~/log
+      FILE_ROOT: ~/file
+
+    services:
+      cache:
+        image: redis:7.0
+        ports:
+          - 8200:6379
+      database:
+        image: zjlabbrainscience/zj-brain-science-platform-database:latest
+        ports:
+          - 8100:3306
+        env:
+          MYSQL_ROOT_PASSWORD: zjlab2022root
+          MYSQL_USER: zjlab
+          MYSQL_PASSWORD: zjlab2022
+          MYSQL_DATABASE: zj_brain_science_platform
+          TZ: Asia/Shanghai
+
     steps:
 
       - name: 切换到dev分支
@@ -28,28 +49,7 @@ jobs:
         run: poetry install --with test
 
       - name: 创建文件夹
-        shell: bash
-        run: |
-          dirs=("$HOME/log/ZJBrainSciencePlatform/app" "$HOME/data/ZJBrainSciencePlatform/file" /data/ZJBrainSciencePlatform/mysql/data /data/ZJBrainSciencePlatform/mysql/backup /data/ZJBrainSciencePlatform/mysql/log)
-          username="$(id -nu)"
-          userGroup="$(id -ng)"
-          sudo mkdir -p "${dirs[@]}" 
-          sudo chown -R "${username}:${userGroup}" "${dirs[@]}"
-
-      - name: 启动database
-        shell: bash
-        run: |
-          export COMPOSE_PROJECT_NAME=platform
-          export IMAGE_TAG=zjlabbrainscience/zj-brain-science-platform-database
-          docker compose --file ./deploy/compose/database.compose.yaml up --detach
-
-      - name: 启动cache
-        shell: bash
-        run: |
-          export COMPOSE_PROJECT_NAME=platform
-          export IMAGE_TAG=redis:7.0
-          docker compose --file ./deploy/compose/cache.compose.yaml up --detach
-
+        run: mkdir -p ~/log ~/file
 
       - name: 运行alembic
         run: poetry run alembic upgrade head
