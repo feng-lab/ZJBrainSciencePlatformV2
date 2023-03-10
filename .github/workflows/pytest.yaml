@@ -29,12 +29,12 @@ jobs:
 
       - name: 创建文件夹
         run: >-
-          sudo mkdir -p 
-          $HOME/log/ZJBrainSciencePlatform/app 
-          $HOME/data/ZJBrainSciencePlatform/file
-          /data/ZJBrainSciencePlatform/mysql/data
-          /data/ZJBrainSciencePlatform/mysql/backup
-          /data/ZJBrainSciencePlatform/mysql/log
+          dirs=("$HOME/log/ZJBrainSciencePlatform/app" "$HOME/data/ZJBrainSciencePlatform/file" /data/ZJBrainSciencePlatform/mysql/data /data/ZJBrainSciencePlatform/mysql/backup /data/ZJBrainSciencePlatform/mysql/log)
+          && username="$(id -un)"
+          && userGroup="$(id -ug)"
+          && mkdir -p "${dirs[@]}" 
+          && chown -R "${username}:${userGroup}" "${dirs[@]}"
+        shell: bash
 
       - name: 启动database和cache
         run: bash compose.sh -L up-depends
