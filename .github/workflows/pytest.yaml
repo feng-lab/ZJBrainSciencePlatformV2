@@ -30,8 +30,8 @@ jobs:
       - name: 创建文件夹
         run: >-
           dirs=("$HOME/log/ZJBrainSciencePlatform/app" "$HOME/data/ZJBrainSciencePlatform/file" /data/ZJBrainSciencePlatform/mysql/data /data/ZJBrainSciencePlatform/mysql/backup /data/ZJBrainSciencePlatform/mysql/log)
-          && username="$(id -un)"
-          && userGroup="$(id -ug)"
+          && username="$(id -nu)"
+          && userGroup="$(id -ng)"
           && mkdir -p "${dirs[@]}" 
           && chown -R "${username}:${userGroup}" "${dirs[@]}"
         shell: bash
