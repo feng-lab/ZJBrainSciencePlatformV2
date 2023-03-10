@@ -8,10 +8,6 @@ on:
 jobs:
   pytest:
     runs-on: ubuntu-latest
-    env:
-      DEBUG_MODE: on
-      LOG_ROOT: ~/log
-      FILE_ROOT: ~/file
 
     services:
       cache:
@@ -30,7 +26,6 @@ jobs:
           TZ: Asia/Shanghai
 
     steps:
-
       - name: 切换到dev分支
         uses: actions/checkout@v3
         with:
@@ -48,8 +43,11 @@ jobs:
       - name: 安装依赖项
         run: poetry install --with test
 
-      - name: 创建文件夹
-        run: mkdir -p ~/log ~/file
+      - name: 创建文件夹并设置环境变量
+        shell: bash
+        run: |
+          export DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file"
+          mkdir -p "${HOME}/log" "${HOME}/file"
 
       - name: 运行alembic
         run: poetry run alembic upgrade head
