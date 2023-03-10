@@ -28,22 +28,31 @@ jobs:
         run: poetry install --with test
 
       - name: 创建文件夹
-        run: >-
-          dirs=("$HOME/log/ZJBrainSciencePlatform/app" "$HOME/data/ZJBrainSciencePlatform/file" /data/ZJBrainSciencePlatform/mysql/data /data/ZJBrainSciencePlatform/mysql/backup /data/ZJBrainSciencePlatform/mysql/log)
-          && username="$(id -nu)"
-          && userGroup="$(id -ng)"
-          && sudo mkdir -p "${dirs[@]}" 
-          && sudo chown -R "${username}:${userGroup}" "${dirs[@]}"
         shell: bash
+        run: |
+          dirs=("$HOME/log/ZJBrainSciencePlatform/app" "$HOME/data/ZJBrainSciencePlatform/file" /data/ZJBrainSciencePlatform/mysql/data /data/ZJBrainSciencePlatform/mysql/backup /data/ZJBrainSciencePlatform/mysql/log)
+          username="$(id -nu)"
+          userGroup="$(id -ng)"
+          sudo mkdir -p "${dirs[@]}" 
+          sudo chown -R "${username}:${userGroup}" "${dirs[@]}"
 
-      - name: 启动database和cache
-        run: bash compose.sh -L up-depends
+      - name: 启动database
+        shell: bash
+        run: |
+          export COMPOSE_PROJECT_NAME=platform
+          export IMAGE_TAG=zjlabbrainscience/zj-brain-science-platform-database
+          docker compose --file ./deploy/compose/database.compose.yaml up --detach
+
+      - name: 启动cache
+        shell: bash
+        run: |
+          export COMPOSE_PROJECT_NAME=platform
+          export IMAGE_TAG=redis:7.0
+          docker compose --file ./deploy/compose/cache.compose.yaml up --detach
+
 
       - name: 运行alembic
-        run: bash compose.sh -L alembic
+        run: poetry run alembic upgrade head
 
       - name: 运行Pytest
         run: poetry run pytest
-
-      - name: 停止服务
-        run: bash compose.sh -L down
