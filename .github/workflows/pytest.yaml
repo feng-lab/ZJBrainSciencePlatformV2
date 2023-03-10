@@ -43,7 +43,7 @@ jobs:
       - name: 安装依赖项
         run: poetry install --with test
 
-      - name: 创建文件夹并设置环境变量
+      - name: 创建文件夹
         run: mkdir -p "${HOME}/log" "${HOME}/file"
 
       - name: 运行alembic
