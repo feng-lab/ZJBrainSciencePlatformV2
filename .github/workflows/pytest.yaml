@@ -28,7 +28,7 @@ jobs:
         run: poetry install --with test
 
       - name: 创建文件夹
-        run: mkdir -p /data/ZJBrainSciencePlatform/data/file /data/ZJBrainSciencePlatform/log/platform
+        run: mkdir -p $HOME/log/ZJBrainSciencePlatform/app $HOME/data/ZJBrainSciencePlatform/file
 
       - name: 启动database和cache
         run: bash compose.sh -L up-depends
