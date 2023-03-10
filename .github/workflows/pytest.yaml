@@ -44,13 +44,10 @@ jobs:
         run: poetry install --with test
 
       - name: 创建文件夹并设置环境变量
-        shell: bash
-        run: |
-          export DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file"
-          mkdir -p "${HOME}/log" "${HOME}/file"
+        run: mkdir -p "${HOME}/log" "${HOME}/file"
 
       - name: 运行alembic
-        run: poetry run alembic upgrade head
+        run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
 
       - name: 运行Pytest
-        run: poetry run pytest
+        run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest
