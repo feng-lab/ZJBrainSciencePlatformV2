@@ -43,4 +43,4 @@ jobs:
           redis-port: 8200
 
       - name: 运行Pytest
-        run: pytest
+        run: poetry run pytest
