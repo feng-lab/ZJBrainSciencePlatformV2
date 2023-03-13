@@ -1,10 +1,10 @@
 import asyncio
+from test import login
 
 import pytest
 
 from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
 from app.main import app
-from test import login
 
 
 @pytest.fixture(scope="session")
