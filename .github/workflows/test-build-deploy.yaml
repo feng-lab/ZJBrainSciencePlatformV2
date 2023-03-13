@@ -3,7 +3,23 @@ name: 测试环境工作流
 on: push
 
 jobs:
+
+  check-skip:
+    runs-on: ubuntu-latest
+    outputs:
+      shouldSkip: ${{ steps.checkSkip.outputs.should_skip }}
+
+    steps:
+      - name: 检查是否要跳过本次Action
+        id: checkSkip
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          skip_after_successful_duplicate: 'true'
+          concurrent_skipping: same_content_newer
+
   pytest:
+    needs: check-skip
+    if: needs.check-skip.outputs.shouldSkip != 'true'
     runs-on: ubuntu-latest
 
     services:
