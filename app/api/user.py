@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.status import HTTP_401_UNAUTHORIZED
 
-from app.common.context import AdministratorContext, AllUserContext
+from app.common.context import AdministratorContext, AllUserContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.user_auth import hash_password, verify_password
 from app.db import cache, common_crud, crud
@@ -70,7 +70,7 @@ def get_users_by_page(
     staff_id: str | None = Query(description="员工号，模糊查询", max_length=255, default=None),
     access_level: int | None = Query(description="权限级别", ge=0, default=None),
     page_param: PageParm = Depends(),
-    ctx: AdministratorContext = Depends(),
+    ctx: ResearcherContext = Depends(),
 ) -> PagedData[UserResponse]:
     paged_data = crud.search_users(ctx.db, username, staff_id, access_level, page_param)
     return paged_data

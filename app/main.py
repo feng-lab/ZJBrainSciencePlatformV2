@@ -77,12 +77,19 @@ app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 
 @app.on_event("startup")
-def startup() -> None:
+def start_log_queue() -> None:
     log_queue_listener.start()
+
+
+@app.on_event("startup")
+def check_database_up_to_date() -> None:
     if not check_database_is_up_to_date():
         app_logger.error("database is not up-to-date, run alembic to upgrade")
         sys.exit(1)
 
+
+@app.on_event("startup")
+def init_db_data():
     db = SessionLocal()
     try:
         create_root_user(db)
@@ -103,7 +110,7 @@ def database_heartbeat() -> None:
 
 
 @app.on_event("shutdown")
-def shutdown() -> None:
+def stop_log_queue() -> None:
     log_queue_listener.stop()
 
 

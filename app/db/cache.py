@@ -13,7 +13,7 @@ def get_redis() -> Redis:
     return Redis(host=config.CACHE_HOST, port=config.CACHE_PORT, decode_responses=True)
 
 
-USER_ACCESS_LEVEL_FORMAT: str = "ual_{}"
+USER_ACCESS_LEVEL_FORMAT: str = "ual:{}"
 
 
 def get_user_access_level(db: Session, cache: Redis, user_id: int) -> int | None:
@@ -31,7 +31,7 @@ def get_user_access_level(db: Session, cache: Redis, user_id: int) -> int | None
 
 def invalidate_user_access_level(cache: Redis, user_id: int) -> None:
     key = USER_ACCESS_LEVEL_FORMAT.format(user_id)
-    result = cache.delete(key) == 1
+    result = cache.delete(key) <= 1
     log_cache(result, f"del user_access_level {{}}, key={key}")
 
 
