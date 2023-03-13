@@ -94,3 +94,6 @@ jobs:
             zjlabbrainscience/zj-brain-science-platform-platform:latest
           cache-from: type=registry,ref=zjlabbrainscience/zj-brain-science-platform-platform:latest
           cache-to: type=inline
+
+    outputs:
+      imageVersion: ${{ steps.generateImageVersion.outputs.imageVersion }}
