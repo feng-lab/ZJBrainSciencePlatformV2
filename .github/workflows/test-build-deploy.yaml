@@ -61,7 +61,14 @@ jobs:
         run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
 
       - name: 运行Pytest
-        run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest
+        run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
+
+      - name: 生成测试结果报告
+        uses: test-summary/action@v2
+        if: always()
+        with:
+          paths: ./pytest_report.xml
+          show: all
 
   build-docker-image:
     needs: pytest
@@ -77,7 +84,7 @@ jobs:
         run: |
           baseImageVersion="$(head -n 1 ./deploy/image-version/base.version)"
           baseImageTag="zjlabbrainscience/zj-brain-science-platform-base:${baseImageVersion}"
-          echo "baseImageTag=${baseImageTag}" | tee -a $GITHUB_OUTPUT
+          echo "baseImageTag=${baseImageTag}" >> $GITHUB_OUTPUT
 
       - name: 生成镜像版本
         id: generateImageVersion
@@ -111,5 +118,8 @@ jobs:
           cache-from: type=registry,ref=zjlabbrainscience/zj-brain-science-platform-platform:latest
           cache-to: type=inline
 
-    outputs:
-      imageVersion: ${{ steps.generateImageVersion.outputs.imageVersion }}
+      - name: 生成镜像结果报告
+        shell: bash
+        run: |
+          echo '# Docker 镜像版本' >> $GITHUB_STEP_SUMMARY
+          echo '`zjlabbrainscience/zj-brain-science-platform-base`: `${{ steps.generateImageVersion.outputs.imageVersion }}`' >> $GITHUB_STEP_SUMMARY
