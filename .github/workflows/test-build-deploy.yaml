@@ -61,7 +61,7 @@ jobs:
         run: |
           baseImageVersion="$(head -n 1 ./deploy/image-version/base.version)"
           baseImageTag="zjlabbrainscience/zj-brain-science-platform-base:${baseImageVersion}"
-          echo "baseImageTag=${baseImageTag}" >> $GITHUB_OUTPUT
+          echo "baseImageTag=${baseImageTag}" | tee -a $GITHUB_OUTPUT
 
       - name: 生成镜像版本
         id: generateImageVersion
@@ -70,7 +70,7 @@ jobs:
           dateTime="$(date +'%Y%m%d-%H%M%S')"
           gitHash="$(git -C "$projectDir" rev-parse --short=8 HEAD)"
           imageVersion="${dateTime}-${gitHash}"
-          echo "imageVersion=${imageVersion}" >> $GITHUB_OUTPUT
+          echo "imageVersion=${imageVersion}" | tee -a $GITHUB_OUTPUT
 
       - name: 设置Docker Buildx
         uses: docker/setup-buildx-action@v2
