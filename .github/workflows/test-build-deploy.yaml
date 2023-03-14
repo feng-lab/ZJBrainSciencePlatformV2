@@ -78,6 +78,11 @@ jobs:
       - name: 切换到推送的分支
         uses: actions/checkout@v3
 
+      - name: 设置时区
+        uses: szenius/set-timezone@v1.1
+        with:
+          timezoneLinux: Asia/Shanghai
+
       - name: 获取base镜像tag
         id: getBaseImageTag
         shell: bash
