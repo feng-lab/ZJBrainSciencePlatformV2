@@ -279,3 +279,16 @@ class HumanSubjectResponse(HumanSubjectUpdate, UserNameStaffId):
 
 class HumanSubjectSearch(PageParm, HumanSubjectSearchable, ExperimentIdSearch):
     pass
+
+
+class TaskSourceFileSearch(PageParm):
+    name: str | None = Field(None, max_length=255)
+    extension: str | None = Field(None, max_length=50)
+    experiment_name: str | None = Field(None, max_length=255)
+
+
+class TaskSourceFileResponse(ModelId):
+    name: str = Field(max_length=255)
+    extension: str = Field(max_length=50)
+    experiment_id: int = Field(ge=0)
+    experiment_name: str = Field(max_length=255)

@@ -14,6 +14,7 @@ from app.model.schema import (
     HumanSubjectResponse,
     ParadigmInDB,
     ParadigmResponse,
+    TaskSourceFileResponse,
     UserInfo,
 )
 
@@ -76,3 +77,16 @@ def file_orm_2_response(file: File) -> FileResponse:
     if file.extension in config.IMAGE_FILE_EXTENSIONS:
         response.url = f"/api/downloadFile/{file.id}"
     return response
+
+
+def file_experiment_orm_2_task_source_response(
+    file_experiment: tuple[File, Experiment]
+) -> TaskSourceFileResponse:
+    file, experiment = file_experiment
+    return TaskSourceFileResponse(
+        id=file.id,
+        name=file.name,
+        extension=file.extension,
+        experiment_id=file.experiment_id,
+        experiment_name=experiment.name,
+    )

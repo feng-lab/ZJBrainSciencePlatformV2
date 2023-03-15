@@ -59,6 +59,9 @@ class Config(BaseSettings):
     # 数据库链接心跳检测间隔
     DATABASE_HEARTBEAT_INTERVAL_SECONDS: float = 3 * 60
 
+    # 目前支持的任务文件格式
+    SUPPORTED_TASK_SOURCE_FILE_TYPES: list[str] = ["bdf", "edf"]
+
 
 config = Config()
 print(config.json())

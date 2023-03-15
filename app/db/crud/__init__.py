@@ -309,13 +309,16 @@ def bulk_list_paradigm_files(db: Session, paradigm_ids: list[int]) -> list[list[
 
 
 def query_paged_data(
-    db: Session, base_stmt: Select, offset: int, limit: int
-) -> tuple[int, Sequence[OrmModel]]:
+    db: Session, base_stmt: Select, offset: int, limit: int, *, scalars: bool = True
+) -> tuple[int, Sequence[Any]]:
     items_stmt = base_stmt.offset(offset).limit(limit)
-    human_subjects = db.execute(items_stmt).scalars().all()
+    result = db.execute(items_stmt)
+    if scalars:
+        result = result.scalars()
+    items = result.all()
     total_stmt = base_stmt.with_only_columns(func.count())
     total = db.execute(total_stmt).scalar()
-    return total, human_subjects
+    return total, items
 
 
 def send_heartbeat(db: Session) -> None:
