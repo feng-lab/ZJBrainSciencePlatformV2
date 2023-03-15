@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.status import HTTP_401_UNAUTHORIZED
 
+import app.db.crud.user as crud
 from app.common.context import AdministratorContext, AllUserContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.user_auth import hash_password, verify_password
-from app.db import cache, common_crud, crud
+from app.db import cache, common_crud
 from app.db.orm import User
 from app.model.request import (
     DeleteModelRequest,

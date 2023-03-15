@@ -11,8 +11,8 @@ from redis import Redis
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_401_UNAUTHORIZED
 
+import app.db.crud.user as crud_user
 from app.common.util import utc_now
-from app.db import crud
 from app.db.cache import get_user_access_level
 from app.model.response import AccessTokenData
 
@@ -80,7 +80,7 @@ def verify_current_user(db: Session, cache: Redis, token: str, api_access_level:
 
 
 def verify_password(db: Session, staff_id: str, password: str) -> int | None:
-    user_auth = crud.get_user_auth_by_staff_id(db, staff_id)
+    user_auth = crud_user.get_user_auth_by_staff_id(db, staff_id)
     if user_auth is not None and crypt_context.verify(password, user_auth.hashed_password):
         return user_auth.id
     return None

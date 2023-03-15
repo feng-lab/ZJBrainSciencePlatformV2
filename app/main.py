@@ -1,5 +1,4 @@
 import logging
-import sys
 from datetime import datetime
 from http import HTTPStatus
 from typing import Callable
@@ -31,10 +30,11 @@ from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener, request_id_ct
 from app.common.schedule import repeat_task
 from app.common.user_auth import AccessLevel, hash_password
 from app.common.util import generate_request_id
-from app.db import SessionLocal, check_database_is_up_to_date, crud
+from app.db import SessionLocal, check_database_is_up_to_date
 from app.db.crud import send_heartbeat
 from app.db.crud.experiment import insert_or_update_experiment
 from app.db.crud.human_subject import get_next_human_subject_index, insert_human_subject_index
+from app.db.crud.user import insert_or_update_user
 from app.db.orm import Experiment
 from app.model.response import CODE_FAIL, CODE_SESSION_TIMEOUT, NoneResponse
 from app.model.schema import UserCreate
@@ -84,8 +84,7 @@ def start_log_queue() -> None:
 @app.on_event("startup")
 def check_database_up_to_date() -> None:
     if not check_database_is_up_to_date():
-        app_logger.error("database is not up-to-date, run alembic to upgrade")
-        sys.exit(1)
+        app_logger.warning("database is not up-to-date, run alembic to upgrade")
 
 
 @app.on_event("startup")
@@ -210,7 +209,7 @@ def create_root_user(db: Session) -> None:
         staff_id=ROOT_USERNAME,
         access_level=AccessLevel.ADMINISTRATOR.value,
     )
-    crud.insert_or_update_user(db, root_user_create)
+    insert_or_update_user(db, root_user_create)
 
 
 def init_default_human_subject_index(db: Session) -> None:
