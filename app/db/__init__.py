@@ -44,7 +44,7 @@ def table_repr(cls: type[OrmModel]) -> type[OrmModel]:
             for field_name in obj.__table__.columns.keys()
         ]
         class_name = obj.__class__.__name__
-        return f"<{class_name}: {','.join(field_strs)}"
+        return f"<{class_name}: {','.join(field_strs)}>"
 
     cls.__repr__ = recursive_repr()(field_repr)
     return cls
