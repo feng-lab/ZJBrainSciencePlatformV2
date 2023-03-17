@@ -10,7 +10,8 @@ from app.db import common_crud
 from app.db.crud import task as crud
 from app.db.orm import Task, TaskStatus, TaskStep, TaskStepType, TaskType
 from app.model import convert
-from app.model.response import PagedData, Response, wrap_api_response
+from app.model.request import DeleteModelRequest
+from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
 from app.model.schema import TaskCreate, TaskSourceFileResponse, TaskSourceFileSearch
 
 router = APIRouter(tags=["task"])
@@ -75,3 +76,17 @@ def create_task(create: TaskCreate, ctx: ResearcherContext = Depends()) -> int:
         raise ServiceError.database_fail("创建任务失败")
 
     return task_id
+
+
+@router.delete("/api/deleteTask", description="删除任务", response_model=NoneResponse)
+@wrap_api_response
+def delete_task(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
+    success = common_crud.bulk_update_rows_as_deleted(
+        ctx.db, TaskStep, where=[TaskStep.task_id == request.id], commit=False
+    )
+    if not success:
+        raise ServiceError.database_fail("删除任务失败")
+
+    success = common_crud.update_row_as_deleted(ctx.db, Task, id=request.id, commit=True)
+    if not success:
+        raise ServiceError.database_fail("删除任务失败")
