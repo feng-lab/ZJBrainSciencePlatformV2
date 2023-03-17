@@ -4,7 +4,7 @@ from sqlalchemy.sql.roles import WhereHavingRole
 from app.common.exception import ServiceError
 from app.db import OrmModel, common_crud
 from app.db.crud import human_subject as crud_human_subject
-from app.db.orm import Device, Experiment, User
+from app.db.orm import Device, Experiment, File, User
 
 
 def check_experiment_exists(db: Session, experiment_id: int) -> None:
@@ -22,6 +22,10 @@ def check_device_exists(db: Session, device_id: int) -> None:
 def check_human_subject_exists(db: Session, user_id: int) -> None:
     if not crud_human_subject.check_human_subject_exists(db, user_id):
         raise ServiceError.not_found("被试者不存在")
+
+
+def check_file_exists(db: Session, file_id: int) -> None:
+    _check_exists(db, File, "文件不存在", id_=file_id)
 
 
 def _check_exists(

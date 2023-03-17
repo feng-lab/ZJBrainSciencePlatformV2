@@ -1,7 +1,10 @@
+import logging
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseSettings
+
+logger = logging.getLogger(__name__)
 
 
 class Config(BaseSettings):
@@ -64,4 +67,4 @@ class Config(BaseSettings):
 
 
 config = Config()
-print(config.json())
+logger.info(config.json())

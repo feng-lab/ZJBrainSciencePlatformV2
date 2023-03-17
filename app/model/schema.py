@@ -2,8 +2,9 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field, validator
 
-from app.db.orm import ABOBloodType, Experiment, Gender, MaritalStatus, Notification
+from app.db.orm import ABOBloodType, Experiment, Gender, MaritalStatus, Notification, TaskStepType
 from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
+from app.model.schema_field import ID, JsonDict, LongVarchar, Text
 
 
 class ModelId(BaseModel):
@@ -292,3 +293,23 @@ class TaskSourceFileResponse(ModelId):
     extension: str = Field(max_length=50)
     experiment_id: int = Field(ge=0)
     experiment_name: str = Field(max_length=255)
+
+
+class TaskBase(BaseModel):
+    name: LongVarchar
+    description: Text
+    source_file: ID
+
+
+class TaskStepCreate(BaseModel):
+    name: LongVarchar
+    step_type: TaskStepType
+    parameters: JsonDict
+
+
+class TaskStepBase(TaskStepCreate):
+    task_id: ID
+
+
+class TaskCreate(TaskBase):
+    steps: list[TaskStepCreate] = Field(default_factory=list)
