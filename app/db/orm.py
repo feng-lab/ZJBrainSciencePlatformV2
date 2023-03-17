@@ -264,9 +264,6 @@ class Task(Base, ModelMixin):
     __tablename__ = "task"
     __table_args__ = {"comment": "任务"}
 
-    experiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("experiment.id"), nullable=False, index=True, comment="实验ID"
-    )
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="任务名")
     description: Mapped[str] = mapped_column(Text, nullable=False, comment="任务描述")
     source_file: Mapped[int] = mapped_column(
