@@ -13,6 +13,7 @@ from app.model import convert
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
 from app.model.schema import TaskCreate, TaskSourceFileResponse, TaskSourceFileSearch
+from app.model.schema_field import JsonDict
 
 router = APIRouter(tags=["task"])
 
@@ -65,7 +66,7 @@ def create_task(create: TaskCreate, ctx: ResearcherContext = Depends()) -> int:
             "task_id": task_id,
             "name": step.name,
             "type": step.step_type,
-            "parameter": json.dumps(step.parameters),
+            "parameter": dump_compact_json(step.parameters),
             "index": i + 1,
             "status": TaskStatus.wait_start,
         }
@@ -76,6 +77,10 @@ def create_task(create: TaskCreate, ctx: ResearcherContext = Depends()) -> int:
         raise ServiceError.database_fail("创建任务失败")
 
     return task_id
+
+
+def dump_compact_json(obj: JsonDict) -> str:
+    return json.dumps(obj, indent=None, separators=(',', ':'))
 
 
 @router.delete("/api/deleteTask", description="删除任务", response_model=NoneResponse)
