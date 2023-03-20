@@ -5,6 +5,7 @@ from sqlalchemy import CursorResult, and_, insert, or_, select, update
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session, joinedload, load_only, raiseload, subqueryload
 
+from app.db.crud import load_user_info
 from app.db.orm import Experiment, ExperimentAssistant, User
 from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 from app.model.schema import ExperimentSearch
@@ -57,17 +58,13 @@ def insert_or_update_experiment(db: Session, id_: int, row: dict[str, Any]) -> N
             db.rollback()
 
 
-def load_user_info_option(strategy, relation_column):
-    return strategy(relation_column).load_only(User.id, User.username, User.staff_id)
-
-
 def get_experiment_by_id(db: Session, experiment_id: int) -> Experiment | None:
     stmt = (
         select(Experiment)
         .where(Experiment.id == experiment_id, Experiment.is_deleted == False)
         .options(
-            load_user_info_option(joinedload, Experiment.main_operator_obj),
-            load_user_info_option(subqueryload, Experiment.assistants),
+            load_user_info(joinedload(Experiment.main_operator_obj)),
+            load_user_info(subqueryload(Experiment.assistants)),
         )
     )
     experiment = db.execute(stmt).scalar()

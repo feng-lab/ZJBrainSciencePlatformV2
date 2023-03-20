@@ -1,9 +1,10 @@
+import json
 from typing import Any, Callable, Iterable, TypeVar
 
 from app.common.config import config
 from app.db import OrmModel
 from app.db.crud.device import SearchDeviceRow
-from app.db.orm import Device, Experiment, File, HumanSubject, Paradigm
+from app.db.orm import Device, Experiment, File, HumanSubject, Paradigm, Task, TaskStep, User
 from app.model.schema import (
     DeviceInfo,
     DeviceInfoWithIndex,
@@ -14,7 +15,9 @@ from app.model.schema import (
     HumanSubjectResponse,
     ParadigmInDB,
     ParadigmResponse,
+    TaskInfo,
     TaskSourceFileResponse,
+    TaskStepInfo,
     UserInfo,
 )
 
@@ -89,4 +92,37 @@ def file_experiment_orm_2_task_source_response(
         extension=file.extension,
         experiment_id=file.experiment_id,
         experiment_name=experiment.name,
+    )
+
+
+def user_orm_2_info(user: User) -> UserInfo:
+    return UserInfo(id=user.id, username=user.username, staff_id=user.staff_id)
+
+
+def task_step_orm_2_info(task_step: TaskStep) -> TaskStepInfo:
+    return TaskStepInfo(
+        task_id=task_step.task_id,
+        name=task_step.name,
+        step_type=task_step.type,
+        parameters=json.loads(task_step.parameter),
+        index=task_step.index,
+        status=task_step.status,
+        start_at=task_step.start_at,
+        end_at=task_step.end_at,
+    )
+
+
+def task_orm_2_info(task: Task) -> TaskInfo:
+    steps = map_list(task_step_orm_2_info, task.steps)
+    steps.sort(key=lambda step_info: step_info.index)
+    return TaskInfo(
+        name=task.name,
+        description=task.description,
+        source_file=task.source_file,
+        type=task.type,
+        status=task.status,
+        start_at=task.start_at,
+        end_at=task.end_at,
+        creator=user_orm_2_info(task.creator_obj),
+        steps=steps,
     )

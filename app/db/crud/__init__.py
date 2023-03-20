@@ -9,7 +9,6 @@ from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 
 from app.common.util import Model, T, now
 from app.db import OrmModel
-from app.db.crud.experiment import load_user_info_option
 from app.db.orm import Experiment, File, Notification, Paradigm, User
 from app.model.response import PagedData
 from app.model.schema import NotificationInDB, NotificationResponse, PageParm
@@ -232,8 +231,12 @@ def list_unread_notifications(
     return list(unread_notification_ids)
 
 
+def load_user_info(load):
+    return load.load_only(User.id, User.username, User.staff_id)
+
+
 def load_paradigm_creator_option():
-    return load_user_info_option(joinedload, Paradigm.creator_obj)
+    return load_user_info(joinedload(Paradigm.creator_obj))
 
 
 def load_paradigm_files_option():

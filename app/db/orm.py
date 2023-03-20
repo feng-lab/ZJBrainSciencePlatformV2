@@ -277,6 +277,10 @@ class Task(Base, ModelMixin):
         Integer, ForeignKey("user.id"), nullable=False, comment="任务创建者ID"
     )
 
+    steps: Mapped[list["TaskStep"]] = relationship("TaskStep")
+    creator_obj: Mapped[User] = relationship("User")
+    source_file_obj: Mapped[File] = relationship("File")
+
 
 class TaskStepType(StrEnum):
     preprocess = "preprocess"
@@ -289,12 +293,12 @@ class TaskStep(Base, ModelMixin):
     __table_args__ = {"comment": "任务步骤"}
 
     task_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("task.id"), nullable=False, index=True, comment="任务ID"
+        Integer, ForeignKey("task.id"), nullable=False, comment="任务ID"
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="步骤名字")
     type: Mapped[TaskStepType] = mapped_column(Enum(TaskStepType), nullable=False, comment="任务步骤类型")
     parameter: Mapped[str] = mapped_column(Text, nullable=False, comment="步骤参数JSON")
-    index: Mapped[Integer] = mapped_column(Integer, nullable=False, comment="任务中的步骤顺序")
+    index: Mapped[int] = mapped_column(Integer, nullable=False, comment="任务中的步骤顺序")
     status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus), nullable=False, comment="步骤状态")
     start_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="步骤开始执行的时间")
     end_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="步骤结束时间")

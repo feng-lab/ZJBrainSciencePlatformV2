@@ -1,19 +1,19 @@
 import json
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.api import check_file_exists
 from app.common.config import config
-from app.common.context import ResearcherContext
+from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.db import common_crud
 from app.db.crud import task as crud
 from app.db.orm import Task, TaskStatus, TaskStep, TaskStepType, TaskType
 from app.model import convert
+from app.model.field import JsonDict
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
-from app.model.schema import TaskCreate, TaskSourceFileResponse, TaskSourceFileSearch
-from app.model.schema_field import JsonDict
+from app.model.schema import TaskCreate, TaskInfo, TaskSourceFileResponse, TaskSourceFileSearch
 
 router = APIRouter(tags=["task"])
 
@@ -80,7 +80,7 @@ def create_task(create: TaskCreate, ctx: ResearcherContext = Depends()) -> int:
 
 
 def dump_compact_json(obj: JsonDict) -> str:
-    return json.dumps(obj, indent=None, separators=(',', ':'))
+    return json.dumps(obj, indent=None, separators=(",", ":"))
 
 
 @router.delete("/api/deleteTask", description="删除任务", response_model=NoneResponse)
@@ -95,3 +95,14 @@ def delete_task(request: DeleteModelRequest, ctx: ResearcherContext = Depends())
     success = common_crud.update_row_as_deleted(ctx.db, Task, id=request.id, commit=True)
     if not success:
         raise ServiceError.database_fail("删除任务失败")
+
+
+@router.get("/api/getTaskInfo", description="获取任务详情", response_model=Response[TaskInfo])
+@wrap_api_response
+def get_task_info(task_id: int = Query(ge=0), ctx: HumanSubjectContext = Depends()) -> TaskInfo:
+    orm_task = crud.get_task_info_by_id(ctx.db, task_id)
+    if orm_task is None:
+        raise ServiceError.not_found("任务不存在")
+
+    task_info = convert.task_orm_2_info(orm_task)
+    return task_info
