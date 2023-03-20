@@ -19,7 +19,6 @@ DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, "app.generated.eeg_pb2", globals())
 if _descriptor._USE_C_DESCRIPTORS == False:
-
     DESCRIPTOR._options = None
     _DISPLAYEEGREQUEST._serialized_start = 28
     _DISPLAYEEGREQUEST._serialized_end = 156
