@@ -12,8 +12,15 @@ from app.db.orm import Task, TaskStatus, TaskStep, TaskStepType, TaskType
 from app.model import convert
 from app.model.field import JsonDict
 from app.model.request import DeleteModelRequest
-from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
-from app.model.schema import TaskCreate, TaskInfo, TaskSourceFileResponse, TaskSourceFileSearch
+from app.model.response import NoneResponse, Page, Response, wrap_api_response
+from app.model.schema import (
+    TaskBaseInfo,
+    TaskCreate,
+    TaskInfo,
+    TaskSearch,
+    TaskSourceFileResponse,
+    TaskSourceFileSearch,
+)
 
 router = APIRouter(tags=["task"])
 
@@ -106,3 +113,15 @@ def get_task_info(task_id: int = Query(ge=0), ctx: HumanSubjectContext = Depends
 
     task_info = convert.task_orm_2_info(orm_task)
     return task_info
+
+
+@router.get(
+    "/api/getTasksByPage", description="分页查找任务", response_model=Response[Page[TaskBaseInfo]]
+)
+@wrap_api_response
+def get_tasks_by_page(
+    search: TaskSearch = Depends(), ctx: HumanSubjectContext = Depends()
+) -> Page[TaskBaseInfo]:
+    total, orm_tasks = crud.search_task(ctx.db, search)
+    task_base_infos = convert.map_list(convert.task_orm_2_base_info, orm_tasks)
+    return Page(total=total, items=task_base_infos)

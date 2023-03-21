@@ -15,6 +15,7 @@ from app.model.schema import (
     HumanSubjectResponse,
     ParadigmInDB,
     ParadigmResponse,
+    TaskBaseInfo,
     TaskInfo,
     TaskSourceFileResponse,
     TaskStepInfo,
@@ -125,4 +126,17 @@ def task_orm_2_info(task: Task) -> TaskInfo:
         end_at=task.end_at,
         creator=user_orm_2_info(task.creator_obj),
         steps=steps,
+    )
+
+
+def task_orm_2_base_info(task: Task) -> TaskBaseInfo:
+    return TaskBaseInfo(
+        name=task.name,
+        description=task.description,
+        source_file=task.source_file,
+        type=task.type,
+        status=task.status,
+        start_at=task.start_at,
+        end_at=task.end_at,
+        creator=user_orm_2_info(task.creator_obj),
     )

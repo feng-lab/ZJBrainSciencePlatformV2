@@ -331,10 +331,22 @@ class TaskStepInfo(TaskStepBase):
     end_at: datetime | None
 
 
-class TaskInfo(TaskBase):
+class TaskBaseInfo(TaskBase):
     type: TaskType
     status: TaskStatus
     start_at: datetime | None
     end_at: datetime | None
     creator: UserInfo
+
+
+class TaskInfo(TaskBaseInfo):
     steps: list[TaskStepInfo]
+
+
+class TaskSearch(PageParm):
+    name: LongVarchar | None
+    type: TaskType | None
+    source_file: int | None
+    status: TaskStatus | None
+    start_at: date | None
+    creator: int | None

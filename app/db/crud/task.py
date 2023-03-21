@@ -1,11 +1,11 @@
 from typing import Sequence
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session, load_only, joinedload, immediateload
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, immediateload, joinedload, load_only, noload
 
 from app.db.crud import load_user_info, query_paged_data
 from app.db.orm import Experiment, File, Task, TaskStep
-from app.model.schema import TaskSourceFileSearch
+from app.model.schema import TaskSearch, TaskSourceFileSearch
 
 
 def search_source_files(
@@ -42,3 +42,25 @@ def get_task_info_by_id(db: Session, task_id: int) -> Task | None:
     )
     task = db.execute(stmt).scalar()
     return task
+
+
+def search_task(db: Session, search: TaskSearch) -> tuple[int, Sequence[Task]]:
+    base_stmt = select(Task).options(
+        load_user_info(joinedload(Task.creator_obj)), noload(Task.steps)
+    )
+    if not search.include_deleted:
+        base_stmt = base_stmt.where(Task.is_deleted == False)
+    if search.name:
+        base_stmt = base_stmt.where(Task.name.icontains(search.name))
+    if search.type is not None:
+        base_stmt = base_stmt.where(Task.type == search.type)
+    if search.source_file is not None:
+        base_stmt = base_stmt.where(Task.source_file == search.source_file)
+    if search.status is not None:
+        base_stmt = base_stmt.where(Task.status == search.status)
+    if search.start_at is not None:
+        base_stmt = base_stmt.where(func.date(Task.start_at) == search.start_at)
+    if search.creator is not None:
+        base_stmt = base_stmt.where(Task.creator == search.creator)
+
+    return query_paged_data(db, base_stmt, search.offset, search.limit)
