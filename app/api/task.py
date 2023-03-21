@@ -2,7 +2,7 @@ import json
 
 from fastapi import APIRouter, Depends, Query
 
-from app.api import check_file_exists
+from app.api import check_file_exists, check_task_exists
 from app.common.config import config
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
@@ -20,6 +20,7 @@ from app.model.schema import (
     TaskSearch,
     TaskSourceFileResponse,
     TaskSourceFileSearch,
+    TaskStepInfo,
 )
 
 router = APIRouter(tags=["task"])
@@ -125,3 +126,17 @@ def get_tasks_by_page(
     total, orm_tasks = crud.search_task(ctx.db, search)
     task_base_infos = convert.map_list(convert.task_orm_2_base_info, orm_tasks)
     return Page(total=total, items=task_base_infos)
+
+
+@router.get(
+    "/api/getTaskStepsInfo", description="获取任务步骤详情", response_model=Response[list[TaskStepInfo]]
+)
+@wrap_api_response
+def get_task_steps_info(
+    task_id: int = Query(ge=0), ctx: HumanSubjectContext = Depends()
+) -> list[TaskStepInfo]:
+    check_task_exists(ctx.db, task_id)
+
+    orm_task_steps = crud.get_steps_by_task_id(ctx.db, task_id)
+    task_step_infos = convert.map_list(convert.task_step_orm_2_info, orm_task_steps)
+    return task_step_infos

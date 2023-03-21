@@ -64,3 +64,14 @@ def search_task(db: Session, search: TaskSearch) -> tuple[int, Sequence[Task]]:
         base_stmt = base_stmt.where(Task.creator == search.creator)
 
     return query_paged_data(db, base_stmt, search.offset, search.limit)
+
+
+def get_steps_by_task_id(db: Session, task_id: int) -> Sequence[TaskStep]:
+    stmt = (
+        select(TaskStep)
+        .join(Task.steps)
+        .where(TaskStep.task_id == task_id, Task.is_deleted == False, TaskStep.is_deleted == False)
+        .order_by(TaskStep.index.asc())
+    )
+    task_steps = db.execute(stmt).scalars().all()
+    return task_steps
