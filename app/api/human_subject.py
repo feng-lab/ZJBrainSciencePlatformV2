@@ -12,7 +12,7 @@ from app.model.request import DeleteHumanSubjectRequest, UpdateExperimentHumanSu
 from app.model.response import (
     CreateHumanSubjectResponse,
     NoneResponse,
-    PagedData,
+    Page,
     Response,
     wrap_api_response,
 )
@@ -93,17 +93,17 @@ def get_human_subject_info(
 @router.get(
     "/api/getHumanSubjectsByPage",
     description="分页获取人类被试者详情",
-    response_model=Response[PagedData[HumanSubjectResponse]],
+    response_model=Response[Page[HumanSubjectResponse]],
 )
 @wrap_api_response
 def get_human_subjects_by_page(
     search: HumanSubjectSearch = Depends(), ctx: HumanSubjectContext = Depends()
-) -> PagedData[HumanSubjectResponse]:
+) -> Page[HumanSubjectResponse]:
     total, human_subjects = crud.search_human_subjects(ctx.db, search)
     human_subjects_responses = convert.map_list(
         convert.human_subject_orm_2_response, human_subjects
     )
-    return PagedData(total=total, items=human_subjects_responses)
+    return Page(total=total, items=human_subjects_responses)
 
 
 @router.post("/api/updateHumanSubject", description="更新人类被试者", response_model=NoneResponse)

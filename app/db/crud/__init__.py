@@ -10,7 +10,7 @@ from sqlalchemy.sql.roles import OrderByRole, WhereHavingRole
 from app.common.util import Model, T, now
 from app.db import OrmModel
 from app.db.orm import Experiment, File, Notification, Paradigm, User
-from app.model.response import PagedData
+from app.model.response import Page
 from app.model.schema import NotificationInDB, NotificationResponse, PageParm
 
 logger = logging.getLogger(__name__)
@@ -102,13 +102,13 @@ class SearchModel:
             map_model = default_map_model
         return [map_model(row) for row in rows]
 
-    def paged_data(self, target_model: type[Model]) -> PagedData[Model]:
+    def paged_data(self, target_model: type[Model]) -> Page[Model]:
         total = self.total_count()
         if total < 1:
             items = []
         else:
             items = self.items(target_model)
-        return PagedData(total=total, items=items)
+        return Page(total=total, items=items)
 
 
 def get_model(
@@ -189,7 +189,7 @@ def search_notifications(
     create_time_start: datetime | None,
     create_time_end: datetime | None,
     page_param: PageParm,
-) -> PagedData[NotificationResponse]:
+) -> Page[NotificationResponse]:
     return (
         build_search_notification(db)
         .page_param(page_param)

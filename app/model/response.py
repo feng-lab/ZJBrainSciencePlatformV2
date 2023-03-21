@@ -9,7 +9,7 @@ from pydantic.generics import GenericModel
 from starlette.responses import JSONResponse
 
 from app.common.log import request_id_ctxvar
-from app.common.util import AnotherModel, Model
+from app.common.util import Model
 
 # 请求成功的code
 CODE_SUCCESS: int = 0
@@ -74,22 +74,9 @@ class LoginResponse(BaseModel):
     token_type: str
 
 
-class PagedData(GenericModel, Generic[Model]):
+class Page(GenericModel, Generic[Model]):
     total: int
     items: list[Model]
-
-    def map_items(
-        self,
-        target_model: type[AnotherModel] | None = None,
-        func: Callable[[Model], AnotherModel] | None = None,
-    ) -> None:
-        def default_map_func(item: Model) -> AnotherModel:
-            return target_model(**item.dict())
-
-        if func is None:
-            func = default_map_func
-        for i, item in enumerate(self.items):
-            self.items[i] = func(item)
 
 
 class AccessTokenData(BaseModel):

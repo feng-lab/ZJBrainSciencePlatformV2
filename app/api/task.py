@@ -21,12 +21,12 @@ router = APIRouter(tags=["task"])
 @router.get(
     "/api/getSourceFilesToCreateTask",
     description="获取创建任务时可用的文件列表",
-    response_model=Response[PagedData[TaskSourceFileResponse]],
+    response_model=Response[Page[TaskSourceFileResponse]],
 )
 @wrap_api_response
 def get_source_files_to_create_task(
     search: TaskSourceFileSearch = Depends(), ctx: ResearcherContext = Depends()
-) -> PagedData[TaskSourceFileResponse]:
+) -> Page[TaskSourceFileResponse]:
     if search.extension:
         lower_extension = search.extension.lower()
         if lower_extension not in config.SUPPORTED_TASK_SOURCE_FILE_TYPES:
@@ -35,7 +35,7 @@ def get_source_files_to_create_task(
 
     total, file_experiments = crud.search_source_files(ctx.db, search)
     items = convert.map_list(convert.file_experiment_orm_2_task_source_response, file_experiments)
-    return PagedData(total=total, items=items)
+    return Page(total=total, items=items)
 
 
 @router.post("/api/createTask", description="创建任务", response_model=Response[int])

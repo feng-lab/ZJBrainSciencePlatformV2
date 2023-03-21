@@ -12,7 +12,7 @@ from app.model.request import (
     UpdatePasswordRequest,
     UpdateUserAccessLevelRequest,
 )
-from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
+from app.model.response import NoneResponse, Page, Response, wrap_api_response
 from app.model.schema import CreateUserRequest, PageParm, UserResponse
 
 router = APIRouter(tags=["user"])
@@ -63,7 +63,7 @@ def get_user_info(
 
 
 @router.get(
-    "/api/getUsersByPage", description="获取用户列表", response_model=Response[PagedData[UserResponse]]
+    "/api/getUsersByPage", description="获取用户列表", response_model=Response[Page[UserResponse]]
 )
 @wrap_api_response
 def get_users_by_page(
@@ -72,7 +72,7 @@ def get_users_by_page(
     access_level: int | None = Query(description="权限级别", ge=0, default=None),
     page_param: PageParm = Depends(),
     ctx: ResearcherContext = Depends(),
-) -> PagedData[UserResponse]:
+) -> Page[UserResponse]:
     paged_data = crud.search_users(ctx.db, username, staff_id, access_level, page_param)
     return paged_data
 

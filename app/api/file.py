@@ -16,7 +16,7 @@ from app.db.crud import file as crud
 from app.db.orm import File
 from app.model import convert
 from app.model.request import DeleteModelRequest
-from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
+from app.model.response import NoneResponse, Page, Response, wrap_api_response
 from app.model.schema import FileResponse, FileSearch
 
 logger = logging.getLogger(__name__)
@@ -75,10 +75,10 @@ def get_file_types(
 @wrap_api_response
 def get_files_by_page(
     search: FileSearch = Depends(), ctx: HumanSubjectContext = Depends()
-) -> PagedData[FileResponse]:
+) -> Page[FileResponse]:
     total, files = crud.search_files(ctx.db, search)
     file_responses = convert.map_list(convert.file_orm_2_response, files)
-    return PagedData(total=total, items=file_responses)
+    return Page(total=total, items=file_responses)
 
 
 @router.get("/api/downloadFile/{file_id}", description="下载文件")

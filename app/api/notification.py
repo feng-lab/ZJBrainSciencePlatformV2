@@ -8,7 +8,7 @@ from app.common.exception import ServiceError
 from app.db import common_crud, crud
 from app.db.orm import Notification
 from app.model.request import MarkNotificationsAsReadRequest
-from app.model.response import PagedData, Response, wrap_api_response
+from app.model.response import Page, Response, wrap_api_response
 from app.model.schema import NotificationBase, NotificationCreate, NotificationResponse, PageParm
 
 router = APIRouter(tags=["notification"])
@@ -52,7 +52,7 @@ def get_recent_unread_notifications(
 @router.get(
     "/api/getNotificationsByPage",
     description="分页获取所有通知",
-    response_model=Response[PagedData[NotificationResponse]],
+    response_model=Response[Page[NotificationResponse]],
 )
 @wrap_api_response
 def get_notifications_by_page(
@@ -63,7 +63,7 @@ def get_notifications_by_page(
     create_time_end: datetime | None = Query(description="筛选通知发送时间的结束时间", default=None),
     page_param: PageParm = Depends(),
     ctx: HumanSubjectContext = Depends(),
-) -> PagedData[NotificationResponse]:
+) -> Page[NotificationResponse]:
     paged_data = crud.search_notifications(
         ctx.db,
         ctx.user_id,

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.crud import SearchModel, insert_model, update_model
 from app.db.orm import User
-from app.model.response import PagedData
+from app.model.response import Page
 from app.model.schema import PageParm, UserAuth, UserCreate, UserResponse
 
 
@@ -13,7 +13,7 @@ def search_users(
     staff_id: str | None,
     access_level: int | None,
     page_param: PageParm,
-) -> PagedData[UserResponse]:
+) -> Page[UserResponse]:
     return (
         SearchModel(db, User)
         .where_contains(User.username, username)
