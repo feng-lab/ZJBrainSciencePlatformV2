@@ -279,7 +279,6 @@ class Task(Base, ModelMixin):
 
     steps: Mapped[list["TaskStep"]] = relationship("TaskStep")
     creator_obj: Mapped[User] = relationship("User")
-    source_file_obj: Mapped[File] = relationship("File")
 
 
 class TaskStepType(StrEnum):
@@ -302,3 +301,7 @@ class TaskStep(Base, ModelMixin):
     status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus), nullable=False, comment="步骤状态")
     start_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="步骤开始执行的时间")
     end_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="步骤结束时间")
+    result_file_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("file.id"), nullable=True, comment="结果文件ID"
+    )
+    error_msg: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="错误信息")
