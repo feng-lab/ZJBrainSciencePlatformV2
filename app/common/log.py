@@ -24,8 +24,7 @@ if config.DEBUG_MODE:
     )
 ACCESS_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(request_id)s|%(message)s"
 
-REQUEST_ID_KEY = "request-id"
-request_id_ctxvar = ContextVar(REQUEST_ID_KEY, default="")
+request_id_ctxvar = ContextVar("request-id", default="")
 
 
 def current_time_tuple(_second, _what):

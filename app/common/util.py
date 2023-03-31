@@ -5,10 +5,9 @@ import threading
 import time
 from datetime import datetime, timezone, tzinfo
 from pathlib import Path
-from typing import Sequence, TypeVar
+from typing import TypeVar
 
 from dateutil import tz
-from google.protobuf.message import Message as GrpcMessage
 from pydantic import BaseModel
 
 from app.common.config import config
@@ -27,21 +26,6 @@ for sys_path in {Path(path).absolute() for path in sys.path}:
             break
     else:
         SYS_PATHS.append(sys_path)
-
-
-def serialize_protobuf(model):
-    if model is None:
-        return None
-    if isinstance(model, str):
-        return model
-    if isinstance(model, Sequence):
-        return [serialize_protobuf(item) for item in model]
-    if isinstance(model, GrpcMessage):
-        return {
-            field.name: serialize_protobuf(getattr(model, field.name))
-            for field in model.DESCRIPTOR.fields
-        }
-    return model
 
 
 @functools.lru_cache(maxsize=None)

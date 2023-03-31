@@ -77,10 +77,6 @@ class UpdateParadigmFilesRequest(BaseModel):
 
 
 class DisplayEEGRequest(BaseModel):
-    class FileType(StrEnum):
-        EDF = "edf"
-        BDF = "bdf"
-
     file_id: int = Field(ge=0)
     window: int = Field(ge=0)
     page_index: int = Field(ge=0)

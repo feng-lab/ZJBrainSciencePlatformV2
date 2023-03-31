@@ -41,11 +41,8 @@ class Config(BaseSettings):
     # 获取最近消息的数量
     GET_RECENT_NOTIFICATIONS_COUNT: int = 10
 
-    # 算法GRPC服务的地址
-    ALGORITHM_GRPC_ADDRESS: str = "localhost"
-
-    # 算法GRPC服务的端口
-    ALGORITHM_GRPC_PORT: int = 12345
+    # 算法服务地址
+    ALGORITHM_HOST: str = "localhost:12345"
 
     # Redis缓存地址
     CACHE_HOST: str = "localhost"
@@ -56,14 +53,14 @@ class Config(BaseSettings):
     # Redis缓存默认失效时间，默认一天
     CACHE_EXPIRE_SECONDS: int = 24 * 60 * 60
 
-    def get_algorithm_grpc_address(self):
-        return f"{self.ALGORITHM_GRPC_ADDRESS}:{self.ALGORITHM_GRPC_PORT}"
-
     # 数据库链接心跳检测间隔
     DATABASE_HEARTBEAT_INTERVAL_SECONDS: float = 3 * 60
 
     # 目前支持的任务文件格式
     SUPPORTED_TASK_SOURCE_FILE_TYPES: list[str] = ["bdf", "edf"]
+
+    # 传递RequestID的header键
+    REQUEST_ID_HEADER_KEY: str = "X-Request-ID"
 
 
 config = Config()

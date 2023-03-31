@@ -21,6 +21,8 @@ CODE_SESSION_TIMEOUT: int = 2
 CODE_DATABASE_FAIL: int = 3
 # 要获取的对象不存在
 CODE_NOT_FOUND: int = 4
+# 远程服务失败
+CODE_REMOTE_SERVICE_ERROR: int = 5
 
 MESSAGE_SUCCESS: str = "success"
 
