@@ -7,7 +7,14 @@ from pydantic import BaseModel
 from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.log import request_id_ctxvar
-from app.external.model import DisplayEEGRequest, DisplayEEGResponse, Response, ResponseCode
+from app.external.model import (
+    DisplayEEGRequest,
+    DisplayEEGResponse,
+    GetEEGChannelsRequest,
+    GetEEGChannelsResponse,
+    Response,
+    ResponseCode,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -37,3 +44,7 @@ def do_rpc(api: str, request: Req, response_model: type[Resp]) -> Resp:
 
 def display_eeg(request: DisplayEEGRequest) -> DisplayEEGResponse:
     return do_rpc("/eeg/display", request, DisplayEEGResponse)
+
+
+def get_eeg_channels(request: GetEEGChannelsRequest) -> GetEEGChannelsResponse:
+    return do_rpc("/eeg/getChannels", request, GetEEGChannelsResponse)

@@ -52,3 +52,11 @@ class DisplayEEGResponse(BaseModel):
     x_data: list[float]
     stimulation: list[int]
     datasets: list[Dataset]
+
+
+class GetEEGChannelsRequest(BaseModel):
+    file_info: FileInfo
+
+
+class GetEEGChannelsResponse(BaseModel):
+    channels: list[str]

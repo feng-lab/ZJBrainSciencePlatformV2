@@ -13,8 +13,7 @@ class ID(int):
 
     @staticmethod
     def _validate(value):
-        if not isinstance(value, int):
-            raise TypeError("not integer")
+        value = int(value)
         if value < 0:
             raise ValueError("negative ID")
         return ID(value)
