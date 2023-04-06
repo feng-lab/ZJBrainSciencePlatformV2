@@ -17,7 +17,6 @@ class ResponseCode(IntEnum):
 class Response(GenericModel, Generic[Data]):
     code: ResponseCode
     message: str
-    request_id: str | None
     data: Data
 
 
@@ -25,6 +24,7 @@ class FileType(StrEnum):
     EDF = "edf"
     BDF = "bdf"
     FIF = "fif"
+    NEV = "nev"
 
 
 class FileInfo(BaseModel):
@@ -45,8 +45,6 @@ class DisplayEEGResponse(BaseModel):
         name: str
         data: list[float]
         unit: str
-        type: str
-        x_label: bool
         value_decimals: int
 
     x_data: list[float]
