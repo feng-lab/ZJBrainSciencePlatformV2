@@ -19,6 +19,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.execute("UPDATE experiment SET type = 'SSVEP' WHERE type = 'other'")
     op.alter_column(
         "experiment",
         "type",
