@@ -121,12 +121,12 @@ class ExperimentBase(BaseModel):
     is_shared: bool | None
 
 
-class CreateExperimentRequest(ExperimentBase):
+class ExperimentTagsMixin(BaseModel):
+    tags: list[str]
+
+
+class CreateExperimentRequest(ExperimentBase, ExperimentTagsMixin):
     assistants: list[int] = Field(default_factory=list)
-
-
-class ExperimentCreate(ExperimentBase):
-    pass
 
 
 class ExperimentInDB(ExperimentBase, BaseModelInDB):
@@ -154,7 +154,7 @@ class ExperimentSimpleResponse(ExperimentBase, ModelId):
         orm_mode = True
 
 
-class ExperimentResponse(ExperimentSimpleResponse):
+class ExperimentResponse(ExperimentSimpleResponse, ExperimentTagsMixin):
     main_operator: UserInfo
     assistants: list[UserInfo]
 

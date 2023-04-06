@@ -4,7 +4,7 @@ from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.db import common_crud
 from app.db.crud import experiment as crud
-from app.db.orm import Experiment, ExperimentAssistant, User
+from app.db.orm import Experiment, ExperimentAssistant, ExperimentTag, User
 from app.model import convert
 from app.model.request import (
     DeleteModelRequest,
@@ -38,10 +38,7 @@ def create_experiment(request: CreateExperimentRequest, ctx: ResearcherContext =
         raise ServiceError.invalid_request("用户不存在")
 
     experiment_id = common_crud.insert_row(
-        ctx.db,
-        Experiment,
-        request.dict(exclude={"assistants"}),
-        commit=(len(request.assistants) < 1),
+        ctx.db, Experiment, request.dict(exclude={"assistants"}), commit=False
     )
     if experiment_id is None:
         raise database_error
@@ -52,11 +49,18 @@ def create_experiment(request: CreateExperimentRequest, ctx: ResearcherContext =
             for assistant_id in set(request.assistants)
         ]
         all_inserted = common_crud.bulk_insert_rows(
-            ctx.db, ExperimentAssistant, assistants, commit=True
+            ctx.db, ExperimentAssistant, assistants, commit=False
         )
         if not all_inserted:
             raise database_error
 
+    if len(request.tags) > 0:
+        tags = [{"experiment_id": experiment_id, "tag": tag} for tag in set(request.tags)]
+        all_inserted = common_crud.bulk_insert_rows(ctx.db, ExperimentTag, tags, commit=False)
+        if not all_inserted:
+            raise database_error
+
+    ctx.db.commit()
     return experiment_id
 
 
@@ -106,18 +110,32 @@ def get_experiment_assistants(
 def update_experiment(request: UpdateExperimentRequest, ctx: ResearcherContext = Depends()):
     update_dict = {
         field_name: field_value
-        for field_name, field_value in request.dict(exclude={"id"}).items()
+        for field_name, field_value in request.dict(exclude={"id", "tags"}).items()
         if field_value is not None
     }
-    success = common_crud.update_row(ctx.db, Experiment, update_dict, id=request.id, commit=True)
+    success = common_crud.update_row(ctx.db, Experiment, update_dict, id=request.id, commit=False)
     if not success:
         raise ServiceError.database_fail("更新实验失败")
+
+    if request.tags is not None and len(request.tags) > 0:
+        success = crud.update_experiment_tags(ctx.db, request.id, set(request.tags))
+        if not success:
+            raise ServiceError.database_fail("更新实验失败")
+
+    ctx.db.commit()
 
 
 @router.delete("/api/deleteExperiment", description="删除实验", response_model=NoneResponse)
 @wrap_api_response
 def delete_experiment(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
-    common_crud.update_row_as_deleted(ctx.db, Experiment, id=request.id, commit=True)
+    delete_experiment_success = common_crud.update_row_as_deleted(
+        ctx.db, Experiment, id=request.id, commit=False
+    )
+    delete_tags_success = common_crud.bulk_delete_rows(
+        ctx.db, ExperimentTag, [ExperimentTag.experiment_id == request.id], commit=False
+    )
+    if delete_experiment_success and delete_tags_success:
+        ctx.db.commit()
 
 
 @router.post("/api/addExperimentAssistants", description="添加实验助手", response_model=NoneResponse)

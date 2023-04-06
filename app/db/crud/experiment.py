@@ -3,10 +3,11 @@ from typing import Any, Sequence
 
 from sqlalchemy import CursorResult, and_, insert, or_, select, update
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy.orm import Session, joinedload, load_only, raiseload, subqueryload
+from sqlalchemy.orm import Session, immediateload, joinedload, load_only, raiseload, subqueryload
 
+from app.db import common_crud
 from app.db.crud import load_user_info
-from app.db.orm import Experiment, ExperimentAssistant, User
+from app.db.orm import Experiment, ExperimentAssistant, ExperimentTag, User
 from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 from app.model.schema import ExperimentSearch
 
@@ -65,6 +66,7 @@ def get_experiment_by_id(db: Session, experiment_id: int) -> Experiment | None:
         .options(
             load_user_info(joinedload(Experiment.main_operator_obj)),
             load_user_info(subqueryload(Experiment.assistants)),
+            immediateload(Experiment.tags),
         )
     )
     experiment = db.execute(stmt).scalar()
@@ -115,3 +117,24 @@ def search_experiment_assistants(
     )
     assistants = db.execute(stmt).scalars().all()
     return assistants
+
+
+def update_experiment_tags(db: Session, experiment_id: int, new_tags: set[str]) -> bool:
+    old_tags = set(
+        db.execute(select(ExperimentTag.tag).where(ExperimentTag.experiment_id == experiment_id))
+        .scalars()
+        .all()
+    )
+    delete_success = common_crud.bulk_delete_rows(
+        db,
+        ExperimentTag,
+        [ExperimentTag.experiment_id == experiment_id, ExperimentTag.tag.in_(old_tags - new_tags)],
+        commit=False,
+    )
+    insert_success = common_crud.bulk_insert_rows(
+        db,
+        ExperimentTag,
+        [{"experiment_id": experiment_id, "tag": tag} for tag in new_tags - old_tags],
+        commit=False,
+    )
+    return delete_success and insert_success

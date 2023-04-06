@@ -102,6 +102,16 @@ class ExperimentDevice(Base):
     index: Mapped[int] = mapped_column(Integer, nullable=False, comment="实验内序号")
 
 
+class ExperimentTag(Base):
+    __tablename__ = "experiment_tag"
+    __table_args__ = {"comment": "实验标签"}
+
+    experiment_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("experiment.id"), nullable=False, primary_key=True, comment="实验ID"
+    )
+    tag: Mapped[str] = mapped_column(String(50), nullable=False, primary_key=True, comment="标签")
+
+
 @table_repr
 class Experiment(Base, ModelMixin):
     __tablename__ = "experiment"
@@ -140,6 +150,7 @@ class Experiment(Base, ModelMixin):
     human_subjects: Mapped[list["HumanSubject"]] = relationship(
         "HumanSubject", secondary=ExperimentHumanSubject.__table__
     )
+    tags: Mapped[list[ExperimentTag]] = relationship("ExperimentTag")
 
 
 @table_repr

@@ -38,6 +38,7 @@ class GetExperimentsByPageSortOrder(StrEnum):
 class UpdateExperimentRequest(BaseModel):
     id: int = Field(ge=0)
     name: str | None = Field(max_length=255)
+    description: str | None
     type: Experiment.Type | None
     location: str | None = Field(max_length=255)
     start_at: datetime | None
@@ -51,6 +52,7 @@ class UpdateExperimentRequest(BaseModel):
     session_num: int | None = Field(ge=0)
     trail_num: int | None = Field(ge=0)
     is_shared: bool | None
+    tags: list[str] | None
 
 
 class UpdateExperimentAssistantsRequest(BaseModel):

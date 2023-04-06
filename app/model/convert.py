@@ -8,7 +8,6 @@ from app.db.orm import Device, Experiment, File, HumanSubject, Paradigm, Task, T
 from app.model.schema import (
     DeviceInfo,
     DeviceInfoWithIndex,
-    ExperimentInDB,
     ExperimentResponse,
     ExperimentSimpleResponse,
     FileResponse,
@@ -33,15 +32,20 @@ def map_list(function: Callable[[A], B], items: Iterable[A] | None) -> list[B]:
 
 
 # noinspection PyTypeChecker
-def orm_2_dict(orm: OrmModel) -> dict[str, Any]:
-    return {column.name: getattr(orm, column.name) for column in orm.__table__.columns}
+def orm_2_dict(orm: OrmModel, exclude: set[str] | None = None) -> dict[str, Any]:
+    return {
+        column.name: getattr(orm, column.name)
+        for column in orm.__table__.columns
+        if exclude is None or column.name not in exclude
+    }
 
 
 def experiment_orm_2_response(experiment: Experiment) -> ExperimentResponse:
     return ExperimentResponse(
-        main_operator=UserInfo.from_orm(experiment.main_operator_obj),
-        assistants=map_list(UserInfo.from_orm, experiment.assistants),
-        **ExperimentInDB.from_orm(experiment).dict(exclude={"main_operator"}),
+        main_operator=user_orm_2_info(experiment.main_operator_obj),
+        assistants=map_list(user_orm_2_info, experiment.assistants),
+        tags=map_list(lambda tag: tag.tag, experiment.tags),
+        **orm_2_dict(experiment, exclude={"main_operator"}),
     )
 
 
