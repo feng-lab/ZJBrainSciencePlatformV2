@@ -108,6 +108,7 @@ class Experiment(Base, ModelMixin):
     __table_args__ = {"comment": "实验"}
 
     class Type(StrEnum):
+        other = "other"
         SSVEP = "SSVEP"
         MI = "MI"
         neuron = "neuron"

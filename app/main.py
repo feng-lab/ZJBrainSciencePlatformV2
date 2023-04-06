@@ -196,7 +196,7 @@ def create_default_experiment(db: Session) -> None:
     default_experiment = {
         "name": "DEFAULT",
         "description": "Default experiment for files without experiment",
-        "type": Experiment.Type.SSVEP,
+        "type": Experiment.Type.other,
         "location": "Nowhere",
         "start_at": datetime(year=2023, month=1, day=1, hour=0, minute=0, second=0),
         "end_at": datetime(year=2023, month=1, day=1, hour=0, minute=0, second=0),
