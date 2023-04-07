@@ -79,10 +79,14 @@ def search_experiments(db: Session, search: ExperimentSearch) -> Sequence[Experi
         .where(Experiment.id != 0)
         .offset(search.offset)
         .limit(search.limit)
-        .options(raiseload(Experiment.main_operator_obj), raiseload(Experiment.assistants))
+        .options(raiseload("*"))
     )
-    if search.search:
-        stmt = stmt.where(Experiment.name.icontains(search.search))
+    if search.name:
+        stmt = stmt.where(Experiment.name.icontains(search.name))
+    if search.type:
+        stmt = stmt.where(Experiment.type.icontains(search.type))
+    if search.tag:
+        stmt = stmt.join(Experiment.tags).where(ExperimentTag.tag.icontains(search.tag))
     if not search.include_deleted:
         stmt = stmt.where(Experiment.is_deleted == False)
     order_by_column = SEARCH_EXPERIMENT_SORT_BY_COLUMN[search.sort_by]

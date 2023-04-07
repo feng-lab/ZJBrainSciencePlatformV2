@@ -144,7 +144,9 @@ class UserInfo(BaseModel):
 
 
 class ExperimentSearch(PageParm):
-    search: str = ""
+    name: str | None
+    type: str | None
+    tag: str | None
     sort_by: GetExperimentsByPageSortBy = GetExperimentsByPageSortBy.START_TIME
     sort_order: GetExperimentsByPageSortOrder = GetExperimentsByPageSortOrder.DESC
 
