@@ -57,6 +57,8 @@ def search_human_subjects(
         base_stmt = base_stmt.join(
             Experiment.human_subjects.and_(Experiment.is_deleted == False)
         ).where(Experiment.id == search.experiment_id)
+    if search.name:
+        base_stmt = base_stmt.where(HumanSubject.name.icontains(search.name))
     if search.gender is not None:
         base_stmt = base_stmt.where(HumanSubject.gender == search.gender)
     if search.abo_blood_type is not None:

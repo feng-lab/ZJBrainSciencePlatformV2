@@ -12,7 +12,7 @@ from app.db.orm import (
     TaskStepType,
     TaskType,
 )
-from app.model.field import ID, JsonDict, LongVarchar, Text
+from app.model.field import ID, JsonDict, LongVarchar, ShortVarchar, Text
 from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 
 
@@ -259,6 +259,7 @@ class UpdateDeviceRequest(DeviceBase, ModelId):
 
 
 class HumanSubjectSearchable(BaseModel):
+    name: ShortVarchar | None
     gender: Gender | None
     abo_blood_type: ABOBloodType | None
     marital_status: MaritalStatus | None

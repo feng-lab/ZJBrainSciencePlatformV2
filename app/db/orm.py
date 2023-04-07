@@ -230,6 +230,7 @@ class HumanSubject(Base, ModelMixin):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.id"), nullable=False, unique=True, index=True, comment="用户ID"
     )
+    name: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="姓名")
     gender: Mapped[Gender | None] = mapped_column(Enum(Gender), nullable=True, comment="性别")
     birthdate: Mapped[date | None] = mapped_column(Date, nullable=True, comment="出生日期")
     death_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="死亡日期")
