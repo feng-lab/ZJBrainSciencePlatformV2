@@ -149,14 +149,12 @@ class ExperimentSearch(PageParm):
 
 
 class ExperimentSimpleResponse(ExperimentBase, ModelId):
-    class Config:
-        orm_mode = True
+    tags: list[str]
 
 
 class ExperimentResponse(ExperimentSimpleResponse):
     main_operator: UserInfo
     assistants: list[UserInfo]
-    tags: list[str]
 
 
 class ExperimentAssistantBase(BaseModel):

@@ -50,7 +50,9 @@ def experiment_orm_2_response(experiment: Experiment) -> ExperimentResponse:
 
 
 def experiment_orm_2_simple_response(experiment: Experiment) -> ExperimentSimpleResponse:
-    return ExperimentSimpleResponse.from_orm(experiment)
+    return ExperimentSimpleResponse(
+        tags=map_list(lambda tag: tag.tag, experiment.tags), **orm_2_dict(experiment)
+    )
 
 
 def paradigm_orm_2_response(paradigm: Paradigm) -> ParadigmResponse:

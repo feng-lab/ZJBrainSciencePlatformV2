@@ -79,7 +79,7 @@ def search_experiments(db: Session, search: ExperimentSearch) -> Sequence[Experi
         .where(Experiment.id != 0)
         .offset(search.offset)
         .limit(search.limit)
-        .options(raiseload("*"))
+        .options(immediateload(Experiment.tags), raiseload("*"))
     )
     if search.name:
         stmt = stmt.where(Experiment.name.icontains(search.name))
