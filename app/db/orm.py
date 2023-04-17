@@ -175,6 +175,41 @@ class File(Base, ModelMixin):
 
 
 @table_repr
+class StorageFile(Base, ModelMixin):
+    __tablename__ = "storage_file"
+    __table_args__ = {"comment": "实际文件"}
+
+    virtual_file_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("virtual_file.id"), nullable=False, index=True, comment="虚拟文件ID"
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False, comment="文件名")
+    size: Mapped[float] = mapped_column(Float, nullable=False, comment="文件大小")
+    storage_path: Mapped[str] = mapped_column(String(255), nullable=False, comment="文件系统存储路径")
+
+
+@table_repr
+class VirtualFile(Base, ModelMixin):
+    __tablename__ = "virtual_file"
+    __table_args__ = {"comment": "虚拟文件"}
+
+    experiment_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("experiment.id"), nullable=False, index=True, comment="实验ID"
+    )
+    paradigm_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("paradigm.id"),
+        nullable=True,
+        index=True,
+        comment="范式ID，null表示不属于范式而属于实验",
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False, comment="文件名")
+    file_type: Mapped[str] = mapped_column(String(50), nullable=False, comment="文件类型")
+    is_original: Mapped[bool] = mapped_column(Boolean, nullable=False, comment="是否是设备产生的原始文件")
+
+    storage_files: Mapped[list[StorageFile]] = relationship("StorageFile")
+
+
+@table_repr
 class Paradigm(Base, ModelMixin):
     __tablename__ = "paradigm"
     __table_args__ = {"comment": "实验范式"}
