@@ -4,7 +4,17 @@ from typing import Any, Callable, Iterable, TypeVar
 from app.common.config import config
 from app.db import OrmModel
 from app.db.crud.device import SearchDeviceRow
-from app.db.orm import Device, Experiment, File, HumanSubject, Paradigm, Task, TaskStep, User
+from app.db.orm import (
+    Device,
+    Experiment,
+    File,
+    HumanSubject,
+    Paradigm,
+    Task,
+    TaskStep,
+    User,
+    VirtualFile,
+)
 from app.model.schema import (
     DeviceInfo,
     DeviceInfoWithIndex,
@@ -82,10 +92,10 @@ def human_subject_orm_2_response(human_subject: HumanSubject) -> HumanSubjectRes
     )
 
 
-def file_orm_2_response(file: File) -> FileResponse:
-    response = FileResponse.from_orm(file)
-    if file.extension in config.IMAGE_FILE_EXTENSIONS:
-        response.url = f"/api/downloadFile/{file.id}"
+def virtual_file_orm_2_response(virtual_file: VirtualFile) -> FileResponse:
+    response = FileResponse.from_orm(virtual_file)
+    if virtual_file.file_type in config.IMAGE_FILE_EXTENSIONS:
+        response.url = f"/api/downloadFile/{virtual_file.id}"
     return response
 
 
@@ -96,7 +106,7 @@ def file_experiment_orm_2_task_source_response(
     return TaskSourceFileResponse(
         id=file.id,
         name=file.name,
-        extension=file.extension,
+        file_type=file.extension,
         experiment_id=file.experiment_id,
         experiment_name=experiment.name,
     )

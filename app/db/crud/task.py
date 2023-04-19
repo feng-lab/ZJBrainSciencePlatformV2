@@ -22,8 +22,8 @@ def search_source_files(
     )
     if search.name:
         base_stmt = base_stmt.where(File.name.icontains(search.name))
-    if search.extension:
-        base_stmt = base_stmt.where(File.extension == search.extension)
+    if search.file_type:
+        base_stmt = base_stmt.where(File.extension == search.file_type)
     if search.experiment_name:
         base_stmt = base_stmt.where(Experiment.name.icontains(search.experiment_name))
     if not search.include_deleted:

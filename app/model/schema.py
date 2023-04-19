@@ -174,7 +174,7 @@ class FileBase(BaseModel):
     experiment_id: int = Field(ge=0)
     paradigm_id: int | None = Field(ge=0)
     name: str = Field(max_length=255)
-    extension: str = Field(max_length=50)
+    file_type: str = Field(max_length=50)
     size: float
     is_original: bool
 
@@ -188,7 +188,7 @@ class FileSearch(PageParm, ExperimentIdSearch):
     file_type: str = Field("", max_length=255)
 
 
-class FileResponse(FileBase, BaseModelInDB):
+class FileResponse(FileBase, ModelId):
     url: str | None
 
     class Config:
@@ -292,13 +292,13 @@ class HumanSubjectSearch(PageParm, HumanSubjectSearchable, ExperimentIdSearch):
 
 class TaskSourceFileSearch(PageParm):
     name: str | None = Field(None, max_length=255)
-    extension: str | None = Field(None, max_length=50)
+    file_type: str | None = Field(None, max_length=50)
     experiment_name: str | None = Field(None, max_length=255)
 
 
 class TaskSourceFileResponse(ModelId):
     name: str = Field(max_length=255)
-    extension: str = Field(max_length=50)
+    file_type: str = Field(max_length=50)
     experiment_id: int = Field(ge=0)
     experiment_name: str = Field(max_length=255)
 

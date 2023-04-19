@@ -35,11 +35,11 @@ router = APIRouter(tags=["task"])
 def get_source_files_to_create_task(
     search: TaskSourceFileSearch = Depends(), ctx: ResearcherContext = Depends()
 ) -> Page[TaskSourceFileResponse]:
-    if search.extension:
-        lower_extension = search.extension.lower()
+    if search.file_type:
+        lower_extension = search.file_type.lower()
         if lower_extension not in config.SUPPORTED_TASK_SOURCE_FILE_TYPES:
-            raise ServiceError.invalid_request(f"{search.extension}不是支持的文件类型")
-        search.extension = lower_extension
+            raise ServiceError.invalid_request(f"{search.file_type}不是支持的文件类型")
+        search.file_type = lower_extension
 
     total, file_experiments = crud.search_source_files(ctx.db, search)
     items = convert.map_list(convert.file_experiment_orm_2_task_source_response, file_experiments)
