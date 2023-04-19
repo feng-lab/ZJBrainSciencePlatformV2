@@ -2,7 +2,7 @@
 
 Revision ID: 5a840b6cfdfb
 Revises: 01b5380e17fc
-Create Date: 2023-04-17 09:23:23.020492
+Create Date: 2023-04-18 10:12:02.771024
 
 """
 import sqlalchemy as sa
@@ -24,6 +24,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=255), nullable=False, comment="文件名"),
         sa.Column("file_type", sa.String(length=50), nullable=False, comment="文件类型"),
         sa.Column("is_original", sa.Boolean(), nullable=False, comment="是否是设备产生的原始文件"),
+        sa.Column("size", sa.Float(), nullable=False, comment="所有相关文件的大小之和"),
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
         sa.Column(
             "gmt_create",
@@ -95,8 +96,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_storage_file_virtual_file_id"), table_name="storage_file")
     op.drop_table("storage_file")
-    op.drop_index(op.f("ix_virtual_file_paradigm_id"), table_name="virtual_file")
-    op.drop_index(op.f("ix_virtual_file_experiment_id"), table_name="virtual_file")
     op.drop_table("virtual_file")

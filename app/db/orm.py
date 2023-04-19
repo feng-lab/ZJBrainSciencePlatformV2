@@ -205,6 +205,7 @@ class VirtualFile(Base, ModelMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="文件名")
     file_type: Mapped[str] = mapped_column(String(50), nullable=False, comment="文件类型")
     is_original: Mapped[bool] = mapped_column(Boolean, nullable=False, comment="是否是设备产生的原始文件")
+    size: Mapped[float] = mapped_column(Float, nullable=False, comment="显示给用户看的文件大小")
 
     storage_files: Mapped[list[StorageFile]] = relationship("StorageFile")
 
