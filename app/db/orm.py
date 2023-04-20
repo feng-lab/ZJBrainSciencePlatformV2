@@ -151,6 +151,14 @@ class Experiment(Base, ModelMixin):
         "HumanSubject", secondary=ExperimentHumanSubject.__table__
     )
     tags: Mapped[list[ExperimentTag]] = relationship("ExperimentTag")
+    virtual_files: Mapped[list["VirtualFile"]] = relationship("VirtualFile")
+    paradigms: Mapped[list["Paradigm"]] = relationship("Paradigm", viewonly=True)
+    exists_paradigms: Mapped[list["Paradigm"]] = relationship(
+        "Paradigm",
+        viewonly=True,
+        primaryjoin="and_(Experiment.id == Paradigm.experiment_id, Paradigm.is_deleted == False, "
+                    "Experiment.is_deleted == False)",
+    )
 
 
 @table_repr
@@ -207,7 +215,13 @@ class VirtualFile(Base, ModelMixin):
     is_original: Mapped[bool] = mapped_column(Boolean, nullable=False, comment="是否是设备产生的原始文件")
     size: Mapped[float] = mapped_column(Float, nullable=False, comment="显示给用户看的文件大小")
 
-    storage_files: Mapped[list[StorageFile]] = relationship("StorageFile")
+    storage_files: Mapped[list[StorageFile]] = relationship(StorageFile, viewonly=True)
+    exist_storage_files: Mapped[list[StorageFile]] = relationship(
+        StorageFile,
+        primaryjoin="and_(VirtualFile.id == StorageFile.virtual_file_id, StorageFile.is_deleted == False, "
+                    "VirtualFile.is_deleted == False)",
+        viewonly=True,
+    )
 
 
 @table_repr
@@ -223,7 +237,13 @@ class Paradigm(Base, ModelMixin):
     )
     description: Mapped[str | None] = mapped_column(Text(), nullable=False, comment="描述文字")
 
-    files: Mapped[list[File]] = relationship("File")
+    virtual_files: Mapped[list[VirtualFile]] = relationship(VirtualFile, viewonly=True)
+    exist_virtual_files: Mapped[list[VirtualFile]] = relationship(
+        VirtualFile,
+        viewonly=True,
+        primaryjoin="and_(Paradigm.id == VirtualFile.paradigm_id, VirtualFile.is_deleted == False, "
+                    "Paradigm.is_deleted == False)",
+    )
     creator_obj: Mapped[User] = relationship("User")
 
 

@@ -68,7 +68,7 @@ def experiment_orm_2_simple_response(experiment: Experiment) -> ExperimentSimple
 def paradigm_orm_2_response(paradigm: Paradigm) -> ParadigmResponse:
     return ParadigmResponse(
         creator=UserInfo.from_orm(paradigm.creator_obj),
-        images=map_list(lambda orm_file: orm_file.id, paradigm.files),
+        images=map_list(lambda orm_file: orm_file.id, paradigm.exist_virtual_files),
         **ParadigmInDB.from_orm(paradigm).dict(exclude={"creator"}),
     )
 

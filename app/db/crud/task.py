@@ -3,7 +3,8 @@ from typing import Sequence
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, immediateload, joinedload, load_only, noload
 
-from app.db.crud import load_user_info, query_paged_data
+from app.db.crud import query_paged_data
+from app.db.crud.user import load_user_info
 from app.db.orm import Experiment, File, Task, TaskStep
 from app.model.schema import TaskSearch, TaskSourceFileSearch
 

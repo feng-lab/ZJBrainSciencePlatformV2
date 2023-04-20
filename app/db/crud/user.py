@@ -1,7 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.crud import SearchModel, insert_model, update_model
+from app.common.exception import ServiceError
+from app.db import common_crud
+from app.db.crud import SearchModel
 from app.db.orm import User
 from app.model.response import Page
 from app.model.schema import PageParm, UserAuth, UserCreate, UserResponse
@@ -40,14 +42,24 @@ def get_user_auth_by_staff_id(db: Session, staff_id: str) -> UserAuth | None:
 
 
 def insert_or_update_user(db: Session, user: UserCreate) -> None:
-    user_id = db.execute(select(User.id).where(User.username == user.username)).scalar()
+    user_id = db.execute(
+        select(User.id).where(User.username == user.username, User.staff_id == user.staff_id)
+    ).scalar()
     if user_id is None:
-        insert_model(db, User, user)
+        if common_crud.insert_row(db, User, user.dict(), commit=True, return_id=False) is None:
+            raise ServiceError.database_fail("插入root用户失败")
     else:
-        update_model(db, User, user_id, **user.dict(), is_deleted=False)
+        if not common_crud.update_row(
+            db, User, user.dict() | {"is_deleted": False}, id=user_id, commit=True
+        ):
+            raise ServiceError.database_fail("更新root用户失败")
 
 
 def get_user_staff_id(db: Session, user_id: int) -> str | None:
     return db.execute(
         select(User.staff_id).where(User.id == user_id, User.is_deleted == False)
     ).scalar()
+
+
+def load_user_info(load):
+    return load.load_only(User.id, User.username, User.staff_id)

@@ -6,7 +6,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session, immediateload, joinedload, load_only, raiseload, subqueryload
 
 from app.db import common_crud
-from app.db.crud import load_user_info
+from app.db.crud.user import load_user_info
 from app.db.orm import Experiment, ExperimentAssistant, ExperimentTag, User
 from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 from app.model.schema import ExperimentSearch

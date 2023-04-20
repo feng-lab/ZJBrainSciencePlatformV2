@@ -2,10 +2,11 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
 
+import app.db.crud.notification as crud
 from app.common.config import config
 from app.common.context import HumanSubjectContext
 from app.common.exception import ServiceError
-from app.db import common_crud, crud
+from app.db import common_crud
 from app.db.orm import Notification
 from app.model.request import MarkNotificationsAsReadRequest
 from app.model.response import Page, Response, wrap_api_response

@@ -172,19 +172,12 @@ def download_file(
 @wrap_api_response
 def delete_file(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
     file_paths = crud.get_db_storage_paths(ctx.db, request.id)
-
-    delete_virtual_file_success = common_crud.update_row_as_deleted(
-        ctx.db, VirtualFile, id=request.id, commit=False
-    )
-    delete_storage_files_success = common_crud.update_row_as_deleted(
-        ctx.db, StorageFile, where=[StorageFile.virtual_file_id == request.id], commit=False
-    )
-    if delete_virtual_file_success and delete_storage_files_success:
-        ctx.db.commit()
-    else:
-        ctx.db.rollback()
+    if not common_crud.update_row_as_deleted(ctx.db, VirtualFile, id=request.id, commit=False):
         raise ServiceError.database_fail("删除文件失败")
-
+    if not common_crud.update_row_as_deleted(
+        ctx.db, StorageFile, where=[StorageFile.virtual_file_id == request.id], commit=True
+    ):
+        raise ServiceError.database_fail("删除文件失败")
     for file_path in file_paths:
         delete_os_file(config.FILE_ROOT / file_path)
 

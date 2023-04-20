@@ -47,12 +47,10 @@ def search_files(db: Session, search: FileSearch) -> tuple[int, Sequence[Virtual
 def get_file_download_info(db: Session, virtual_file_id: int) -> tuple[str | None, str | None]:
     stmt = (
         select(StorageFile.name, StorageFile.storage_path)
-        .join(VirtualFile.storage_files)
+        .join(VirtualFile.exist_storage_files)
         .where(
             VirtualFile.id == virtual_file_id,
             StorageFile.name == VirtualFile.name,
-            VirtualFile.is_deleted == False,
-            StorageFile.is_deleted == False,
         )
     )
     storage_file = db.execute(stmt).one_or_none()
@@ -64,12 +62,41 @@ def get_file_download_info(db: Session, virtual_file_id: int) -> tuple[str | Non
 def get_db_storage_paths(db: Session, virtual_file_id: int) -> Sequence[str]:
     stmt = (
         select(StorageFile.storage_path)
-        .join(VirtualFile.storage_files)
+        .join(VirtualFile.exist_storage_files)
         .where(
             VirtualFile.id == virtual_file_id,
-            VirtualFile.is_deleted == False,
-            StorageFile.is_deleted == False,
         )
     )
-    storage_file_paths = db.execute(stmt).scalars().all()
-    return storage_file_paths
+    return db.execute(stmt).scalars().all()
+
+
+def bulk_get_db_storage_paths(db: Session, virtual_file_ids: list[int]) -> Sequence[str]:
+    stmt = (
+        select(StorageFile.storage_path)
+        .join(VirtualFile.exist_storage_files)
+        .where(VirtualFile.id.in_(virtual_file_ids))
+    )
+    return db.execute(stmt).scalars().all()
+
+
+# def get_algorithm_file_info(db: Session, virtual_file_id: int) -> rpc_model.FileInfo | None:
+#     stmt = (
+#         select(VirtualFile)
+#         .join(VirtualFile.exist_storage_files)
+#         .where(VirtualFile.id == virtual_file_id)
+#         .options(
+#             immediateload(VirtualFile.exist_storage_files).load_only(StorageFile.storage_path),
+#             load_only(VirtualFile.id, VirtualFile.file_type)
+#         )
+#     )
+#     virtual_file : VirtualFile = db.execute(stmt).scalar()
+#     if virtual_file is None:
+#         return None
+#     match virtual_file.file_type:
+#         case "bdf":
+#             file_type=rpc_model.FileType.BDF
+#         case "edf":
+#             file_type =rpc_model.FileType.EDF
+#         case "fif":
+#             file_type = rpc_model.FileType.FIF
+#         case
