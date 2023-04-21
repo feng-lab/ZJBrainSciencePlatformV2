@@ -30,9 +30,7 @@ def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
     stmt = (
         select(VirtualFile.id)
         .join(Paradigm.exist_virtual_files)
-        .where(
-            VirtualFile.paradigm_id == paradigm_id,
-        )
+        .where(VirtualFile.paradigm_id == paradigm_id)
     )
     result = db.execute(stmt).scalars().all()
     return list(result)

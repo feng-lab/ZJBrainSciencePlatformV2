@@ -39,7 +39,7 @@ def upload_file(
         ctx.db, file, experiment_id, is_original
     )
     if file_type == "zip" and is_nev_zip_file(os_storage_path):
-        extract_nev_zip_file(ctx.db, os_storage_path, experiment_id, virtual_file_id)
+        handle_nev_zip_file(ctx.db, os_storage_path, experiment_id, virtual_file_id)
     return virtual_file_id
 
 
@@ -104,9 +104,15 @@ def is_nev_zip_file(path: Path) -> bool:
         return True
 
 
-def extract_nev_zip_file(
+def handle_nev_zip_file(
     db: Session, zip_file_path: Path, experiment_id: int, virtual_file_id: int
 ) -> None:
+    # 更新file_type
+    if not common_crud.update_row(
+        db, VirtualFile, {"file_type": "nev"}, id=virtual_file_id, commit=False
+    ):
+        raise ServiceError.database_fail("上传文件失败")
+
     # 创建文件夹
     nev_dir = config.FILE_ROOT / str(experiment_id) / str(virtual_file_id)
     nev_dir.mkdir()

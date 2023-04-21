@@ -107,7 +107,7 @@ def update_paradigm(request: UpdateParadigmRequest, ctx: ResearcherContext = Dep
             VirtualFile,
             [VirtualFile.is_deleted == False, VirtualFile.id.in_(add_files)],
             {"paradigm_id": request.id},
-            commit=False
+            commit=False,
         )
     if len(delete_files) > 0:
         for db_storage_path in file_crud.bulk_get_db_storage_paths(ctx.db, delete_files):

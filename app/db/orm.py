@@ -157,7 +157,7 @@ class Experiment(Base, ModelMixin):
         "Paradigm",
         viewonly=True,
         primaryjoin="and_(Experiment.id == Paradigm.experiment_id, Paradigm.is_deleted == False, "
-                    "Experiment.is_deleted == False)",
+        "Experiment.is_deleted == False)",
     )
 
 
@@ -219,7 +219,7 @@ class VirtualFile(Base, ModelMixin):
     exist_storage_files: Mapped[list[StorageFile]] = relationship(
         StorageFile,
         primaryjoin="and_(VirtualFile.id == StorageFile.virtual_file_id, StorageFile.is_deleted == False, "
-                    "VirtualFile.is_deleted == False)",
+        "VirtualFile.is_deleted == False)",
         viewonly=True,
     )
 
@@ -242,7 +242,7 @@ class Paradigm(Base, ModelMixin):
         VirtualFile,
         viewonly=True,
         primaryjoin="and_(Paradigm.id == VirtualFile.paradigm_id, VirtualFile.is_deleted == False, "
-                    "Paradigm.is_deleted == False)",
+        "Paradigm.is_deleted == False)",
     )
     creator_obj: Mapped[User] = relationship("User")
 

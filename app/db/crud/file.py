@@ -2,8 +2,10 @@ import logging
 from typing import Sequence
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session, immediateload
+from sqlalchemy.orm import Session, immediateload, load_only
 
+import app.external.model as rpc_model
+from app.common.config import config
 from app.db.crud import query_paged_data
 from app.db.orm import StorageFile, VirtualFile
 from app.model.schema import FileSearch
@@ -48,10 +50,7 @@ def get_file_download_info(db: Session, virtual_file_id: int) -> tuple[str | Non
     stmt = (
         select(StorageFile.name, StorageFile.storage_path)
         .join(VirtualFile.exist_storage_files)
-        .where(
-            VirtualFile.id == virtual_file_id,
-            StorageFile.name == VirtualFile.name,
-        )
+        .where(VirtualFile.id == virtual_file_id, StorageFile.name == VirtualFile.name)
     )
     storage_file = db.execute(stmt).one_or_none()
     if storage_file is None:
@@ -63,9 +62,7 @@ def get_db_storage_paths(db: Session, virtual_file_id: int) -> Sequence[str]:
     stmt = (
         select(StorageFile.storage_path)
         .join(VirtualFile.exist_storage_files)
-        .where(
-            VirtualFile.id == virtual_file_id,
-        )
+        .where(VirtualFile.id == virtual_file_id)
     )
     return db.execute(stmt).scalars().all()
 
@@ -79,24 +76,32 @@ def bulk_get_db_storage_paths(db: Session, virtual_file_ids: list[int]) -> Seque
     return db.execute(stmt).scalars().all()
 
 
-# def get_algorithm_file_info(db: Session, virtual_file_id: int) -> rpc_model.FileInfo | None:
-#     stmt = (
-#         select(VirtualFile)
-#         .join(VirtualFile.exist_storage_files)
-#         .where(VirtualFile.id == virtual_file_id)
-#         .options(
-#             immediateload(VirtualFile.exist_storage_files).load_only(StorageFile.storage_path),
-#             load_only(VirtualFile.id, VirtualFile.file_type)
-#         )
-#     )
-#     virtual_file : VirtualFile = db.execute(stmt).scalar()
-#     if virtual_file is None:
-#         return None
-#     match virtual_file.file_type:
-#         case "bdf":
-#             file_type=rpc_model.FileType.BDF
-#         case "edf":
-#             file_type =rpc_model.FileType.EDF
-#         case "fif":
-#             file_type = rpc_model.FileType.FIF
-#         case
+def get_algorithm_file_info(db: Session, virtual_file_id: int) -> rpc_model.FileInfo | None:
+    stmt = (
+        select(VirtualFile)
+        .join(VirtualFile.exist_storage_files)
+        .where(VirtualFile.id == virtual_file_id)
+        .options(
+            immediateload(VirtualFile.exist_storage_files).load_only(StorageFile.storage_path),
+            load_only(VirtualFile.id, VirtualFile.file_type),
+        )
+    )
+    virtual_file: VirtualFile = db.execute(stmt).scalar()
+
+    if virtual_file is None:
+        return None
+    if not rpc_model.FileType.is_valid_file_type(virtual_file.file_type):
+        return None
+    file_type = rpc_model.FileType(virtual_file.file_type)
+    if file_type == rpc_model.FileType.NEV:
+        for storage_file in virtual_file.storage_files:
+            if not storage_file.storage_path.endswith(".zip"):
+                storage_path = storage_file.storage_path
+                break
+        else:
+            return None
+    else:
+        storage_path = virtual_file.storage_files[0].storage_path
+    return rpc_model.FileInfo(
+        id=virtual_file_id, path=str(config.FILE_ROOT / storage_path), type=file_type
+    )

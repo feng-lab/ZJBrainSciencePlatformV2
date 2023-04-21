@@ -20,11 +20,21 @@ class Response(GenericModel, Generic[Data]):
     data: Data
 
 
+NoneResponse = Response[type(None)]
+
+
 class FileType(StrEnum):
     EDF = "edf"
     BDF = "bdf"
     FIF = "fif"
     NEV = "nev"
+
+    @staticmethod
+    def is_valid_file_type(file_type: str) -> bool:
+        for ft in FileType:
+            if file_type == ft:
+                return True
+        return False
 
 
 class FileInfo(BaseModel):
