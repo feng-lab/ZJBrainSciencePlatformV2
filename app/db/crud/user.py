@@ -46,7 +46,7 @@ def insert_or_update_user(db: Session, user: UserCreate) -> None:
         select(User.id).where(User.username == user.username, User.staff_id == user.staff_id)
     ).scalar()
     if user_id is None:
-        if common_crud.insert_row(db, User, user.dict(), commit=True, return_id=False) is None:
+        if common_crud.insert_row(db, User, user.dict(), commit=True) is None:
             raise ServiceError.database_fail("插入root用户失败")
     else:
         if not common_crud.update_row(
