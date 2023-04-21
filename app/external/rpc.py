@@ -12,6 +12,7 @@ from app.external.model import (
     DisplayEEGResponse,
     GetEEGChannelsRequest,
     GetEEGChannelsResponse,
+    NoneResponse,
     Response,
     ResponseCode,
 )
@@ -29,16 +30,15 @@ def do_rpc(api: str, request: Req, response_model: type[Resp]) -> Resp:
     http_response = requests.post(rpc_url, data=request.json(), headers=headers)
 
     if http_response.status_code != requests.codes.ok:
-        logger.error(
-            f"remote service error, status_code={http_response.status_code}, content={http_response.content}"
-        )
-        raise ServiceError.remote_service_error("远程服务错误")
-    response = Response[response_model].parse_obj(http_response.json())
+        response_type = NoneResponse
+    else:
+        response_type = Response[response_model]
+    response = response_type.parse_obj(http_response.json())
     if response.code != ResponseCode.SUCCESS:
         logger.error(
             f"remote service returns error, code={response.code}, message={response.message}"
         )
-        raise ServiceError.remote_service_error("远程服务错误")
+        raise ServiceError.remote_service_error(f"远程服务错误: {response.message}")
     return response.data
 
 
