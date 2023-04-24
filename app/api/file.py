@@ -91,7 +91,7 @@ def save_file(
 
 
 def is_nev_zip_file(path: Path) -> bool:
-    nev_extensions = {"nev", "ccf", "ns1", "ns2", "ns3", "ns4", "ns5", "ns6", "ns7", "ns8", "ns9"}
+    nev_extensions = {"nev", "ccf", "sif", "ns1", "ns2", "ns3", "ns4", "ns5", "ns6", "ns7"}
     with ZipFile(path, mode="r") as zip_file:
         extensions = set()
         for filename in zip_file.namelist():

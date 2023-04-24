@@ -8,10 +8,12 @@ from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.log import request_id_ctxvar
 from app.external.model import (
+    DisplayDataResponse,
     DisplayEEGRequest,
-    DisplayEEGResponse,
-    GetEEGChannelsRequest,
+    DisplayNeuralSpikeRequest,
     GetEEGChannelsResponse,
+    GetFileInfoRequest,
+    NeuralSpikeFileInfo,
     NoneResponse,
     Response,
     ResponseCode,
@@ -42,9 +44,17 @@ def do_rpc(api: str, request: Req, response_model: type[Resp]) -> Resp:
     return response.data
 
 
-def display_eeg(request: DisplayEEGRequest) -> DisplayEEGResponse:
-    return do_rpc("/eeg/display", request, DisplayEEGResponse)
+def display_eeg(request: DisplayEEGRequest) -> DisplayDataResponse:
+    return do_rpc("/display/eeg", request, DisplayDataResponse)
 
 
-def get_eeg_channels(request: GetEEGChannelsRequest) -> GetEEGChannelsResponse:
-    return do_rpc("/eeg/getChannels", request, GetEEGChannelsResponse)
+def display_neural_spike(request: DisplayNeuralSpikeRequest) -> DisplayDataResponse:
+    return do_rpc("/display/neural-spike", request, DisplayDataResponse)
+
+
+def get_eeg_channels(request: GetFileInfoRequest) -> GetEEGChannelsResponse:
+    return do_rpc("/info/eeg/channels", request, GetEEGChannelsResponse)
+
+
+def get_neural_spike_info(request: GetFileInfoRequest) -> NeuralSpikeFileInfo:
+    return do_rpc("/info/neural-spike", request, NeuralSpikeFileInfo)

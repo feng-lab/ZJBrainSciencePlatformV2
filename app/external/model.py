@@ -43,14 +43,24 @@ class FileInfo(BaseModel):
     type: FileType
 
 
-class DisplayEEGRequest(BaseModel):
+class BaseDisplayDataRequest(BaseModel):
     file_info: FileInfo
     window: int = Field(ge=0)
     page_index: int = Field(ge=0)
+
+
+class DisplayEEGRequest(BaseDisplayDataRequest):
     channels: list[str]
 
 
-class DisplayEEGResponse(BaseModel):
+class DisplayNeuralSpikeRequest(BaseDisplayDataRequest):
+    block_index: int = Field(0, ge=0)
+    segment_index: int = Field(0, ge=0)
+    analog_signal_index: int = Field(0, ge=0)
+    channel_indexes: list[int] | None = None
+
+
+class DisplayDataResponse(BaseModel):
     class Dataset(BaseModel):
         name: str
         data: list[float]
@@ -62,9 +72,35 @@ class DisplayEEGResponse(BaseModel):
     datasets: list[Dataset]
 
 
+class GetFileInfoRequest(BaseModel):
+    file_info: FileInfo
+
+
 class GetEEGChannelsRequest(BaseModel):
     file_info: FileInfo
 
 
 class GetEEGChannelsResponse(BaseModel):
     channels: list[str]
+
+
+class AnalogSignalInfo(BaseModel):
+    analog_signal_index: int
+    start_time: int
+    end_time: int
+    sampling_rate: float
+    channel_count: int
+
+
+class SegmentInfo(BaseModel):
+    segment_index: int
+    analog_signals: list[AnalogSignalInfo]
+
+
+class BlockInfo(BaseModel):
+    block_index: int
+    segments: list[SegmentInfo]
+
+
+class NeuralSpikeFileInfo(BaseModel):
+    blocks: list[BlockInfo]

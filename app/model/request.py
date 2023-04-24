@@ -4,6 +4,7 @@ from enum import StrEnum
 from pydantic import BaseModel, Field, validator
 
 from app.db.orm import Experiment
+from app.model.field import ID
 
 
 class DeleteModelRequest(BaseModel):
@@ -78,11 +79,21 @@ class UpdateParadigmFilesRequest(BaseModel):
     file_ids: list[int] = Field(min_items=1)
 
 
-class DisplayEEGRequest(BaseModel):
-    file_id: int = Field(ge=0)
+class BaseDisplayDataRequest(BaseModel):
+    file_id: ID
     window: int = Field(ge=0)
     page_index: int = Field(ge=0)
+
+
+class DisplayEEGRequest(BaseDisplayDataRequest):
     channels: list[str]
+
+
+class DisplayNeuralSpikeRequest(BaseDisplayDataRequest):
+    block_index: int = Field(0, ge=0)
+    segment_index: int = Field(0, ge=0)
+    analog_signal_index: int = Field(0, ge=0)
+    channel_indexes: list[int] | None = None
 
 
 def validate_ids(field_name: str):
