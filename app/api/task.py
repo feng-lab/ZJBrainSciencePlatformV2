@@ -2,7 +2,7 @@ import json
 
 from fastapi import APIRouter, Depends, Query
 
-from app.api import check_file_exists, check_task_exists
+from app.api import check_task_exists, check_virtual_file_exists
 from app.common.config import config
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
@@ -49,7 +49,7 @@ def get_source_files_to_create_task(
 @router.post("/api/createTask", description="创建任务", response_model=Response[int])
 @wrap_api_response
 def create_task(create: TaskCreate, ctx: ResearcherContext = Depends()) -> int:
-    check_file_exists(ctx.db, create.source_file)
+    check_virtual_file_exists(ctx.db, create.source_file)
 
     if all(step.step_type is TaskStepType.preprocess for step in create.steps):
         task_type = TaskType.preprocess

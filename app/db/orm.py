@@ -162,27 +162,6 @@ class Experiment(Base, ModelMixin):
 
 
 @table_repr
-class File(Base, ModelMixin):
-    __tablename__ = "file"
-    __table_args__ = {"comment": "文件"}
-
-    experiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("experiment.id"), nullable=False, index=True, comment="实验ID"
-    )
-    paradigm_id: Mapped[int | None] = mapped_column(
-        Integer,
-        ForeignKey("paradigm.id"),
-        nullable=True,
-        index=True,
-        comment="范式ID，null表示不属于范式而属于实验",
-    )
-    name: Mapped[str] = mapped_column(String(255), nullable=False, comment="逻辑路径")
-    extension: Mapped[str] = mapped_column(String(50), nullable=False, comment="文件扩展名")
-    size: Mapped[float] = mapped_column(Float, nullable=False, comment="同一实验下的文件序号")
-    is_original: Mapped[bool] = mapped_column(Boolean, nullable=False, comment="是否是设备产生的原始文件")
-
-
-@table_repr
 class StorageFile(Base, ModelMixin):
     __tablename__ = "storage_file"
     __table_args__ = {"comment": "实际文件"}
@@ -336,7 +315,7 @@ class Task(Base, ModelMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="任务名")
     description: Mapped[str] = mapped_column(Text, nullable=False, comment="任务描述")
     source_file: Mapped[int] = mapped_column(
-        Integer, ForeignKey("file.id"), nullable=False, comment="任务分析的文件ID"
+        Integer, ForeignKey("virtual_file.id"), nullable=False, comment="任务分析的文件ID"
     )
     type: Mapped[TaskType] = mapped_column(Enum(TaskType), nullable=False, comment="任务类型")
     start_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="任务开始执行的时间")
@@ -371,6 +350,6 @@ class TaskStep(Base, ModelMixin):
     start_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="步骤开始执行的时间")
     end_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="步骤结束时间")
     result_file_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("file.id"), nullable=True, comment="结果文件ID"
+        Integer, ForeignKey("virtual_file.id"), nullable=True, comment="结果文件ID"
     )
     error_msg: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="错误信息")

@@ -5,30 +5,32 @@ from sqlalchemy.orm import Session, immediateload, joinedload, load_only, noload
 
 from app.db.crud import query_paged_data
 from app.db.crud.user import load_user_info
-from app.db.orm import Experiment, File, Task, TaskStep
+from app.db.orm import Experiment, Task, TaskStep, VirtualFile
 from app.model.schema import TaskSearch, TaskSourceFileSearch
 
 
 def search_source_files(
     db: Session, search: TaskSourceFileSearch
-) -> tuple[int, Sequence[tuple[File, Experiment]]]:
+) -> tuple[int, Sequence[tuple[VirtualFile, Experiment]]]:
     base_stmt = (
-        select(File, Experiment)
-        .select_from(File)
-        .join(Experiment, Experiment.id == File.experiment_id)
+        select(VirtualFile, Experiment)
+        .select_from(VirtualFile)
+        .join(Experiment, Experiment.id == VirtualFile.experiment_id)
         .options(
-            load_only(File.id, File.name, File.extension, File.experiment_id),
+            load_only(
+                VirtualFile.id, VirtualFile.name, VirtualFile.file_type, VirtualFile.experiment_id
+            ),
             load_only(Experiment.name),
         )
     )
     if search.name:
-        base_stmt = base_stmt.where(File.name.icontains(search.name))
+        base_stmt = base_stmt.where(VirtualFile.name.icontains(search.name))
     if search.file_type:
-        base_stmt = base_stmt.where(File.extension == search.file_type)
+        base_stmt = base_stmt.where(VirtualFile.file_type == search.file_type)
     if search.experiment_name:
         base_stmt = base_stmt.where(Experiment.name.icontains(search.experiment_name))
     if not search.include_deleted:
-        base_stmt = base_stmt.where(Experiment.is_deleted == False, File.is_deleted == False)
+        base_stmt = base_stmt.where(Experiment.is_deleted == False, VirtualFile.is_deleted == False)
     return query_paged_data(db, base_stmt, search.offset, search.limit, scalars=False)
 
 

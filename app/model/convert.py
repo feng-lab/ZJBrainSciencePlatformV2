@@ -4,17 +4,7 @@ from typing import Any, Callable, Iterable, TypeVar
 from app.common.config import config
 from app.db import OrmModel
 from app.db.crud.device import SearchDeviceRow
-from app.db.orm import (
-    Device,
-    Experiment,
-    File,
-    HumanSubject,
-    Paradigm,
-    Task,
-    TaskStep,
-    User,
-    VirtualFile,
-)
+from app.db.orm import Device, Experiment, HumanSubject, Paradigm, Task, TaskStep, User, VirtualFile
 from app.model.schema import (
     DeviceInfo,
     DeviceInfoWithIndex,
@@ -100,13 +90,13 @@ def virtual_file_orm_2_response(virtual_file: VirtualFile) -> FileResponse:
 
 
 def file_experiment_orm_2_task_source_response(
-    file_experiment: tuple[File, Experiment]
+    file_experiment: tuple[VirtualFile, Experiment]
 ) -> TaskSourceFileResponse:
     file, experiment = file_experiment
     return TaskSourceFileResponse(
         id=file.id,
         name=file.name,
-        file_type=file.extension,
+        file_type=file.file_type,
         experiment_id=file.experiment_id,
         experiment_name=experiment.name,
     )
