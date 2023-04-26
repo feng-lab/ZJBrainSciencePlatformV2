@@ -94,69 +94,87 @@ def upgrade() -> None:
         op.f("ix_storage_file_virtual_file_id"), "storage_file", ["virtual_file_id"], unique=False
     )
 
+    op.execute("BEGIN;")
     op.execute(
-        """
-BEGIN;
-INSERT INTO virtual_file (id, gmt_create, gmt_modified, is_deleted, experiment_id, paradigm_id, name, file_type,
-                          is_original, size)
-SELECT id,
-       gmt_create,
-       gmt_modified,
-       is_deleted,
-       experiment_id,
-       paradigm_id,
-       name,
-       extension,
-       is_original,
-       size
-FROM file
-WHERE is_deleted = FALSE;
-INSERT INTO storage_file (gmt_create, gmt_modified, is_deleted, virtual_file_id, name, size, storage_path)
-SELECT gmt_create,
-       gmt_modified,
-       is_deleted,
-       id,
-       name,
-       size,
-       concat(experiment_id, '/', if(extension = '', id, concat(id, '.', extension))) AS storage_path
-FROM file
-WHERE is_deleted = FALSE;
-COMMIT;
-    """
+        """ INSERT INTO virtual_file (
+                id, 
+                gmt_create, 
+                gmt_modified, 
+                is_deleted, 
+                experiment_id, 
+                paradigm_id, 
+                name, 
+                file_type, 
+                is_original, 
+                size) 
+            SELECT 
+                id,
+                gmt_create,
+                gmt_modified,
+                is_deleted,
+                experiment_id,
+                paradigm_id,
+                name,
+                extension,
+                is_original,
+                size
+            FROM file
+            WHERE is_deleted = FALSE;"""
     )
+    op.execute(
+        """ INSERT INTO storage_file (
+                gmt_create, 
+                gmt_modified, 
+                is_deleted, 
+                virtual_file_id, 
+                name, 
+                size, 
+                storage_path)
+            SELECT 
+                gmt_create, 
+                gmt_modified, 
+                is_deleted, 
+                id, 
+                name, 
+                size, 
+                CONCAT(experiment_id, '/', IF(extension = '', id, CONCAT(id, '.', extension))) AS storage_path
+        FROM file
+        WHERE is_deleted = FALSE;"""
+    )
+    op.execute("COMMIT;")
 
 
 def downgrade() -> None:
+    op.execute("BEGIN;")
     op.execute(
-        """
-BEGIN;
-INSERT INTO file(id,
-                 experiment_id,
-                 paradigm_id,
-                 name,
-                 extension,
-                 size,
-                 is_original,
-                 gmt_create,
-                 gmt_modified,
-                 is_deleted)
-SELECT virtual_file.id,
-       virtual_file.experiment_id,
-       virtual_file.paradigm_id,
-       virtual_file.name,
-       virtual_file.file_type,
-       virtual_file.size,
-       virtual_file.is_original,
-       virtual_file.gmt_create,
-       virtual_file.gmt_modified,
-       FALSE
-FROM virtual_file
-         INNER JOIN storage_file ON virtual_file.id = storage_file.virtual_file_id
-WHERE virtual_file.is_deleted = FALSE
-  AND storage_file.is_deleted = FALSE
-  AND storage_file.name = virtual_file.name;
-COMMIT;
-    """
+        """ INSERT INTO file (
+                id,
+                experiment_id,
+                paradigm_id,
+                name,
+                extension,
+                size,
+                is_original,
+                gmt_create,
+                gmt_modified,
+                is_deleted)
+            SELECT 
+                virtual_file.id,
+                virtual_file.experiment_id,
+                virtual_file.paradigm_id,
+                virtual_file.name,
+                virtual_file.file_type,
+                virtual_file.size,
+                virtual_file.is_original,
+                virtual_file.gmt_create,
+                virtual_file.gmt_modified,
+                FALSE
+            FROM virtual_file INNER JOIN storage_file ON virtual_file.id = storage_file.virtual_file_id
+            WHERE 
+                virtual_file.is_deleted = FALSE
+                AND storage_file.is_deleted = FALSE
+                AND storage_file.name = virtual_file.name;"""
     )
+    op.execute("COMMIT;")
     op.drop_table("storage_file")
     op.drop_table("virtual_file")
