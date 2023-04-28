@@ -39,7 +39,7 @@ def search_files(db: Session, search: FileSearch) -> tuple[int, Sequence[Virtual
     if search.name:
         base_stmt = base_stmt.where(VirtualFile.name.icontains(search.name))
     if search.file_type:
-        base_stmt = base_stmt.where(VirtualFile.extension.icontains(search.file_type))
+        base_stmt = base_stmt.where(VirtualFile.file_type.icontains(search.file_type))
     if not search.include_deleted:
         base_stmt = base_stmt.where(VirtualFile.is_deleted == False)
 
