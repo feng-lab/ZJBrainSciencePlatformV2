@@ -1,3 +1,4 @@
+import contextlib
 from reprlib import recursive_repr
 from typing import TypeVar
 
@@ -26,6 +27,9 @@ def get_db_session():
         yield db_session
     finally:
         db_session.close()
+
+
+new_db_session = contextlib.contextmanager(get_db_session)
 
 
 def check_database_is_up_to_date() -> bool:

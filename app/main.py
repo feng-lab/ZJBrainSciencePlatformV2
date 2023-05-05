@@ -31,7 +31,7 @@ from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener, request_id_ct
 from app.common.schedule import repeat_task
 from app.common.user_auth import AccessLevel, hash_password
 from app.common.util import generate_request_id
-from app.db import SessionLocal, check_database_is_up_to_date
+from app.db import check_database_is_up_to_date, new_db_session
 from app.db.crud import send_heartbeat
 from app.db.crud.experiment import insert_or_update_experiment
 from app.db.crud.human_subject import get_next_human_subject_index, insert_human_subject_index
@@ -92,23 +92,17 @@ def check_database_up_to_date() -> None:
 
 @app.on_event("startup")
 def init_db_data():
-    db = SessionLocal()
-    try:
+    with new_db_session() as db:
         create_root_user(db)
         create_default_experiment(db)
         init_default_human_subject_index(db)
-    finally:
-        db.close()
 
 
 @app.on_event("startup")
 @repeat_task(config.DATABASE_HEARTBEAT_INTERVAL_SECONDS)
 def database_heartbeat() -> None:
-    db = SessionLocal()
-    try:
+    with new_db_session() as db:
         send_heartbeat(db)
-    finally:
-        db.close()
 
 
 @app.on_event("shutdown")
