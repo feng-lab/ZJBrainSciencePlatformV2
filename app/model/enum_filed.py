@@ -2,8 +2,8 @@ from enum import StrEnum
 
 
 class MessageLocale(StrEnum):
-    ZH_CN = "zh_CN"
-    EN_US = "en_US"
+    zh_CN = "zh_CN"
+    en_US = "en_US"
 
 
 class TaskStepType(StrEnum):
