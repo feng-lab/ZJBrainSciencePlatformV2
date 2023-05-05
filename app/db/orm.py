@@ -10,7 +10,6 @@ from app.model.enum_filed import (
     ExperimentType,
     Gender,
     MaritalStatus,
-    MessageLocale,
     NotificationStatus,
     NotificationType,
     TaskStatus,
@@ -321,17 +320,3 @@ class TaskStep(Base, ModelMixin):
         Integer, ForeignKey("virtual_file.id"), nullable=True, comment="结果文件ID"
     )
     error_msg: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="错误信息")
-
-
-@table_repr
-class MessageLocalization(Base, ModelMixin):
-    __tablename__ = "message_localization"
-    __table_args__ = {"comment": "本地化消息"}
-
-    message_id: Mapped[str] = mapped_column(
-        String(50), nullable=False, unique=True, index=True, comment="消息模板ID"
-    )
-    locale: Mapped[MessageLocale] = mapped_column(
-        Enum(MessageLocale), nullable=False, comment="消息语言"
-    )
-    template: Mapped[str] = mapped_column(String(255), nullable=False, comment="消息模板内容")
