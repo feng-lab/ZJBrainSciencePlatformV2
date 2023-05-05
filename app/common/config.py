@@ -62,6 +62,11 @@ class Config(BaseSettings):
     # 传递RequestID的header键
     REQUEST_ID_HEADER_KEY: str = "X-Request-ID"
 
+    # message_localization.yaml路径
+    MESSAGE_LOCALIZATION_YAML_PATH: Path = (
+        Path(__file__).parent.parent.parent / "config" / "message_localization.yaml"
+    )
+
 
 config = Config()
 logger.info(config.json())

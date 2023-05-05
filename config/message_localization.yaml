@@ -1,0 +1,8 @@
+- message_id: remote service error
+  zh_CN: '远程服务错误: {}'
+  en_US: 'Remote service error: {}'
+
+- message_id: user not exist
+  zh_CN: 用户不存在
+  en_US: User doesn't exist
+

@@ -28,3 +28,5 @@ def load_message_localization_config(path: Path) -> MessageLocalizationConfig:
 msg_l12n_config: MessageLocalizationConfig = load_message_localization_config(
     config.MESSAGE_LOCALIZATION_YAML_PATH
 )
+
+print(msg_l12n_config)
