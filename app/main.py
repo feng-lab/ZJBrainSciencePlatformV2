@@ -36,7 +36,7 @@ from app.db.crud import send_heartbeat
 from app.db.crud.experiment import insert_or_update_experiment
 from app.db.crud.human_subject import get_next_human_subject_index, insert_human_subject_index
 from app.db.crud.user import insert_or_update_user
-from app.db.orm import Experiment
+from app.model.enum_filed import ExperimentType
 from app.model.response import CODE_FAIL, CODE_SESSION_TIMEOUT, NoneResponse
 from app.model.schema import UserCreate
 
@@ -196,7 +196,7 @@ def create_default_experiment(db: Session) -> None:
     default_experiment = {
         "name": "DEFAULT",
         "description": "Default experiment for files without experiment",
-        "type": Experiment.Type.other,
+        "type": ExperimentType.other,
         "location": "Nowhere",
         "start_at": datetime(year=2023, month=1, day=1, hour=0, minute=0, second=0),
         "end_at": datetime(year=2023, month=1, day=1, hour=0, minute=0, second=0),

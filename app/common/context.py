@@ -24,19 +24,19 @@ class NotLogonContext(Context):
 
 class AllUserContext(Context):
     def __init__(self, db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)):
-        super().__init__(db, token, AccessLevel.MINIMUM.value)
+        super().__init__(db, token, AccessLevel.MINIMUM)
 
 
 class HumanSubjectContext(Context):
     def __init__(self, db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)):
-        super().__init__(db, token, AccessLevel.HUMAN_SUBJECT.value)
+        super().__init__(db, token, AccessLevel.HUMAN_SUBJECT)
 
 
 class ResearcherContext(Context):
     def __init__(self, db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)):
-        super().__init__(db, token, AccessLevel.RESEARCHER.value)
+        super().__init__(db, token, AccessLevel.RESEARCHER)
 
 
 class AdministratorContext(Context):
     def __init__(self, db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)):
-        super().__init__(db, token, AccessLevel.ADMINISTRATOR.value)
+        super().__init__(db, token, AccessLevel.ADMINISTRATOR)

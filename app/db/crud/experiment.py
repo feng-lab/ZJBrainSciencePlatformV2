@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, immediateload, joinedload, load_only, raisel
 from app.db import common_crud
 from app.db.crud.user import load_user_info
 from app.db.orm import Experiment, ExperimentAssistant, ExperimentTag, User
-from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
+from app.model.enum_filed import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 from app.model.schema import ExperimentSearch
 
 logger = logging.getLogger(__name__)

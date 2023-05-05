@@ -2,18 +2,20 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field, validator
 
-from app.db.orm import (
+from app.model.enum_filed import (
     ABOBloodType,
-    Experiment,
+    ExperimentType,
     Gender,
+    GetExperimentsByPageSortBy,
+    GetExperimentsByPageSortOrder,
     MaritalStatus,
-    Notification,
+    NotificationStatus,
+    NotificationType,
     TaskStatus,
     TaskStepType,
     TaskType,
 )
 from app.model.field import ID, JsonDict, LongVarchar, ShortVarchar, Text
-from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 
 
 class ModelId(BaseModel):
@@ -78,14 +80,14 @@ class UserResponse(UserBase, UserSessionMixin, BaseModelInDB):
 
 
 class NotificationBase(BaseModel):
-    type: Notification.Type
+    type: NotificationType
     receiver: int = Field(ge=0)
     content: str
 
 
 class NotificationCreate(NotificationBase):
     creator: int = Field(ge=0)
-    status: Notification.Status
+    status: NotificationStatus
 
 
 class NotificationInDB(NotificationCreate, BaseModelInDB):
@@ -106,7 +108,7 @@ class TaskStepStatusNotification(BaseModel):
 class ExperimentBase(BaseModel):
     name: str = Field(max_length=255)
     description: str
-    type: Experiment.Type
+    type: ExperimentType
     location: str = Field(max_length=255)
     start_at: datetime
     end_at: datetime

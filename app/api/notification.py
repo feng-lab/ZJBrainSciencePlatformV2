@@ -8,6 +8,7 @@ from app.common.context import HumanSubjectContext
 from app.common.exception import ServiceError
 from app.db import common_crud
 from app.db.orm import Notification
+from app.model.enum_filed import NotificationStatus, NotificationType
 from app.model.request import MarkNotificationsAsReadRequest
 from app.model.response import Page, Response, wrap_api_response
 from app.model.schema import NotificationBase, NotificationCreate, NotificationResponse, PageParm
@@ -19,7 +20,7 @@ router = APIRouter(tags=["notification"])
 @wrap_api_response
 def send_notification(request: NotificationBase, ctx: HumanSubjectContext = Depends()) -> int:
     notification_create = NotificationCreate(
-        **request.dict(), creator=ctx.user_id, status=Notification.Status.unread
+        **request.dict(), creator=ctx.user_id, status=NotificationStatus.unread
     )
     notification_id = common_crud.insert_row(
         ctx.db, Notification, notification_create.dict(), commit=True
@@ -47,7 +48,7 @@ def get_recent_unread_notifications(
     ctx: HumanSubjectContext = Depends(),
 ) -> list[NotificationResponse]:
     page_param = PageParm(offset=0, limit=count, include_deleted=False)
-    return crud.list_notifications(ctx.db, ctx.user_id, Notification.Status.unread, page_param)
+    return crud.list_notifications(ctx.db, ctx.user_id, NotificationStatus.unread, page_param)
 
 
 @router.get(
@@ -57,9 +58,9 @@ def get_recent_unread_notifications(
 )
 @wrap_api_response
 def get_notifications_by_page(
-    notification_type: Notification.Type
+    notification_type: NotificationType
     | None = Query(alias="type", description="通知类型", default=None),
-    status: Notification.Status | None = Query(description="通知状态", default=None),
+    status: NotificationStatus | None = Query(description="通知状态", default=None),
     create_time_start: datetime | None = Query(description="筛选通知发送时间的开始时间", default=None),
     create_time_end: datetime | None = Query(description="筛选通知发送时间的结束时间", default=None),
     page_param: PageParm = Depends(),
@@ -88,12 +89,12 @@ def mark_notifications_as_read(
     where = [
         Notification.receiver == ctx.user_id,
         Notification.is_deleted == False,
-        Notification.status == Notification.Status.unread,
+        Notification.status == NotificationStatus.unread,
     ]
     if not request.is_all:
         where.append(Notification.id.in_(notification_ids))
     success = common_crud.bulk_update_rows(
-        ctx.db, Notification, where, {"status": Notification.Status.read}, commit=True
+        ctx.db, Notification, where, {"status": NotificationStatus.read}, commit=True
     )
     if not success:
         raise ServiceError.database_fail("批量已读失败")

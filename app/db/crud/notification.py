@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.crud import SearchModel
 from app.db.orm import Notification, User
+from app.model.enum_filed import NotificationStatus, NotificationType
 from app.model.response import Page
 from app.model.schema import NotificationInDB, NotificationResponse, PageParm
 
@@ -13,7 +14,7 @@ def get_notification_unread_count(db: Session, user_id: int) -> int:
     # noinspection PyTypeChecker
     stmt = select(func.count(Notification.id)).where(
         Notification.receiver == user_id,
-        Notification.status == Notification.Status.unread,
+        Notification.status == NotificationStatus.unread,
         Notification.is_deleted == False,
     )
     return db.execute(stmt).scalar()
@@ -35,8 +36,8 @@ def build_search_notification(db: Session) -> SearchModel:
 def search_notifications(
     db: Session,
     user_id: int,
-    notification_type: Notification.Type | None,
-    status: Notification.Status | None,
+    notification_type: NotificationType | None,
+    status: NotificationStatus | None,
     create_time_start: datetime | None,
     create_time_end: datetime | None,
     page_param: PageParm,
@@ -55,7 +56,7 @@ def search_notifications(
 
 
 def list_notifications(
-    db: Session, user_id: int, status: Notification.Status | None, page_param: PageParm
+    db: Session, user_id: int, status: NotificationStatus | None, page_param: PageParm
 ) -> list[NotificationResponse]:
     return (
         build_search_notification(db)
@@ -74,7 +75,7 @@ def list_unread_notifications(
     stmt = select(Notification.id).where(
         Notification.receiver == user_id,
         Notification.is_deleted == False,
-        Notification.status == Notification.Status.unread,
+        Notification.status == NotificationStatus.unread,
     )
     if not is_all:
         stmt = stmt.where(Notification.id.in_(msg_ids))

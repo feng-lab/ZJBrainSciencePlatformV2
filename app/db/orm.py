@@ -1,11 +1,22 @@
 from datetime import date, datetime
-from enum import StrEnum
 
 from sqlalchemy import Boolean, Date, DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
 from app.db import Base, table_repr
+from app.model.enum_filed import (
+    ABOBloodType,
+    ExperimentType,
+    Gender,
+    MaritalStatus,
+    MessageLocale,
+    NotificationStatus,
+    NotificationType,
+    TaskStatus,
+    TaskStepType,
+    TaskType,
+)
 
 
 class ModelMixin:
@@ -45,24 +56,21 @@ class Notification(Base, ModelMixin):
     __tablename__ = "notification"
     __table_args__ = {"comment": "通知"}
 
-    class Status(StrEnum):
-        unread = "unread"
-        read = "read"
-
-    class Type(StrEnum):
-        task_step_status = "task_step_status"
-
     gmt_create: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, index=True, server_default=func.now(), comment="创建时间"
     )
-    type: Mapped[Type] = mapped_column(Enum(Type), nullable=False, comment="消息类型")
+    type: Mapped[NotificationType] = mapped_column(
+        Enum(NotificationType), nullable=False, comment="消息类型"
+    )
     creator: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.id"), nullable=False, comment="消息发送者ID"
     )
     receiver: Mapped[int] = mapped_column(
         Integer, ForeignKey("user.id"), nullable=False, index=True, comment="消息接收者ID"
     )
-    status: Mapped[Status] = mapped_column(Enum(Status), nullable=False, comment="消息状态")
+    status: Mapped[NotificationStatus] = mapped_column(
+        Enum(NotificationStatus), nullable=False, comment="消息状态"
+    )
     content: Mapped[str] = mapped_column(Text, nullable=False, comment="消息内容")
 
 
@@ -117,14 +125,10 @@ class Experiment(Base, ModelMixin):
     __tablename__ = "experiment"
     __table_args__ = {"comment": "实验"}
 
-    class Type(StrEnum):
-        other = "other"
-        SSVEP = "SSVEP"
-        MI = "MI"
-        neuron = "neuron"
-
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="实验名称")
-    type: Mapped[Type] = mapped_column(Enum(Type), nullable=False, comment="实验类型")
+    type: Mapped[ExperimentType] = mapped_column(
+        Enum(ExperimentType), nullable=False, comment="实验类型"
+    )
     description: Mapped[str] = mapped_column(Text, nullable=False, comment="实验描述")
     location: Mapped[str] = mapped_column(String(255), nullable=False, comment="实验地点")
     start_at: Mapped[datetime] = mapped_column(
@@ -240,23 +244,6 @@ class Device(Base, ModelMixin):
     )
 
 
-class Gender(StrEnum):
-    male = "male"
-    female = "female"
-
-
-class MaritalStatus(StrEnum):
-    unmarried = "unmarried"
-    married = "married"
-
-
-class ABOBloodType(StrEnum):
-    A = "A"
-    B = "B"
-    AB = "AB"
-    O = "O"
-
-
 @table_repr
 class HumanSubject(Base, ModelMixin):
     __tablename__ = "human_subject"
@@ -293,20 +280,6 @@ class HumanSubjectIndex(Base):
     index: Mapped[int] = mapped_column(Integer, primary_key=True, comment="下一个被试者的序号")
 
 
-class TaskStatus(StrEnum):
-    wait_start = "wait_start"
-    running = "running"
-    done = "done"
-    error = "error"
-    cancelled = "cancelled"
-
-
-class TaskType(StrEnum):
-    preprocess = "preprocess"
-    analysis = "analysis"
-    preprocess_analysis = "preprocess_analysis"
-
-
 @table_repr
 class Task(Base, ModelMixin):
     __tablename__ = "task"
@@ -327,11 +300,6 @@ class Task(Base, ModelMixin):
 
     steps: Mapped[list["TaskStep"]] = relationship("TaskStep")
     creator_obj: Mapped[User] = relationship("User")
-
-
-class TaskStepType(StrEnum):
-    preprocess = "preprocess"
-    analysis = "analysis"
 
 
 @table_repr

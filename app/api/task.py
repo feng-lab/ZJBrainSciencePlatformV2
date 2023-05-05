@@ -8,8 +8,9 @@ from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.db import common_crud
 from app.db.crud import task as crud
-from app.db.orm import Task, TaskStatus, TaskStep, TaskStepType, TaskType
+from app.db.orm import Task, TaskStep
 from app.model import convert
+from app.model.enum_filed import TaskStatus, TaskStepType, TaskType
 from app.model.field import JsonDict
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response, wrap_api_response

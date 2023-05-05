@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from enum import Enum
+from enum import IntEnum
 from typing import NoReturn
 
 from fastapi import HTTPException
@@ -26,7 +26,7 @@ ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 
-class AccessLevel(Enum):
+class AccessLevel(IntEnum):
     MINIMUM = 0
     HUMAN_SUBJECT = 10
     RESEARCHER = 100

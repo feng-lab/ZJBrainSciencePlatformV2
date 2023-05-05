@@ -1,9 +1,8 @@
 from datetime import datetime
-from enum import StrEnum
 
 from pydantic import BaseModel, Field, validator
 
-from app.db.orm import Experiment
+from app.model.enum_filed import ExperimentType
 from app.model.field import ID
 
 
@@ -26,21 +25,11 @@ class MarkNotificationsAsReadRequest(BaseModel):
     notification_ids: list[int] = Field(description="通知ID，可以有多个", default_factory=list)
 
 
-class GetExperimentsByPageSortBy(StrEnum):
-    START_TIME = "start_time"
-    TYPE = "type"
-
-
-class GetExperimentsByPageSortOrder(StrEnum):
-    ASC = "asc"
-    DESC = "desc"
-
-
 class UpdateExperimentRequest(BaseModel):
     id: int = Field(ge=0)
     name: str | None = Field(max_length=255)
     description: str | None
-    type: Experiment.Type | None
+    type: ExperimentType | None
     location: str | None = Field(max_length=255)
     start_at: datetime | None
     end_at: datetime | None
