@@ -1,10 +1,16 @@
+from enum import StrEnum
 from pathlib import Path
-from typing import TypeAlias
+from typing import Any, TypeAlias
 
 import yaml
 
 from app.common.config import config
-from app.model.enum_filed import MessageLocale
+
+
+class MessageLocale(StrEnum):
+    zh_CN = "zh_CN"
+    en_US = "en_US"
+
 
 MessageTemplateKey: TypeAlias = tuple[str, MessageLocale]
 MessageLocalizationConfig: TypeAlias = dict[MessageTemplateKey, str]
@@ -29,4 +35,7 @@ msg_l12n_config: MessageLocalizationConfig = load_message_localization_config(
     config.MESSAGE_LOCALIZATION_YAML_PATH
 )
 
-print(msg_l12n_config)
+
+def translate_message(message_id: str, locale: MessageLocale, *format_args: Any) -> str:
+    template = msg_l12n_config[message_id, locale]
+    return template.format(*format_args)

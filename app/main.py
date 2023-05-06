@@ -1,19 +1,22 @@
 import logging
 from datetime import datetime
-from http import HTTPStatus
-from typing import Callable
+from typing import Any, Callable
 from urllib.parse import parse_qsl, urlencode
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from jose import ExpiredSignatureError
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import RedirectResponse
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
+from starlette.status import (
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 
+from app.api import ApiJsonResponse, api_translate_message, locale_ctxvar
 from app.api.algorithm import router as algorithm_router
 from app.api.auth import router as auth_router
 from app.api.device import router as device_router
@@ -28,6 +31,7 @@ from app.api.user import router as user_router
 from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener, request_id_ctxvar
+from app.common.message_location import MessageLocale
 from app.common.schedule import repeat_task
 from app.common.user_auth import AccessLevel, hash_password
 from app.common.util import generate_request_id
@@ -37,7 +41,7 @@ from app.db.crud.experiment import insert_or_update_experiment
 from app.db.crud.human_subject import get_next_human_subject_index, insert_human_subject_index
 from app.db.crud.user import insert_or_update_user
 from app.model.enum_filed import ExperimentType
-from app.model.response import CODE_FAIL, CODE_SESSION_TIMEOUT, NoneResponse
+from app.model.response import NoneResponse, ResponseCode
 from app.model.schema import UserCreate
 
 app_logger = logging.getLogger(__name__)
@@ -144,37 +148,48 @@ async def filter_blank_query_params(request: Request, call_next: Callable):
     return await call_next(request)
 
 
-@app.exception_handler(HTTPException)
-def handle_http_exception(_request: Request, e: HTTPException):
-    return JSONResponse(
-        status_code=e.status_code,
-        content=NoneResponse(code=CODE_FAIL, message=e.detail, data=None).dict(),
-    )
+@app.middleware("http")
+async def get_content_language(request: Request, call_next: Callable):
+    locale = request.headers.get("Content-Language", MessageLocale.zh_CN)
+    if not any(locale == supported_locale for supported_locale in MessageLocale):
+        locale = MessageLocale.zh_CN
+    locale_ctxvar.set(locale)
+    return await call_next(request)
 
 
 @app.exception_handler(ServiceError)
 def handle_service_error(_request: Request, e: ServiceError):
-    return JSONResponse(
-        status_code=e.status_code,
-        content=NoneResponse(code=e.code, message=e.message, data=None).dict(),
-    )
+    return exception_response(e.status_code, e.code, e.message_id, *e.format_args)
 
 
 @app.exception_handler(RequestValidationError)
 def handle_http_exception(_request: Request, e: RequestValidationError):
-    return JSONResponse(
-        status_code=HTTP_400_BAD_REQUEST,
-        content=NoneResponse(code=CODE_FAIL, message=repr(e), data=None).dict(),
+    return exception_response(
+        HTTP_400_BAD_REQUEST, ResponseCode.PARAMS_ERROR, "params error", repr(e)
     )
 
 
 @app.exception_handler(ExpiredSignatureError)
 def handle_expired_token_exception(_request: Request, _e: ExpiredSignatureError):
-    return JSONResponse(
-        status_code=HTTP_401_UNAUTHORIZED,
-        content=NoneResponse(
-            code=CODE_SESSION_TIMEOUT, message="session timeout", data=None
-        ).dict(),
+    return exception_response(
+        HTTP_401_UNAUTHORIZED, ResponseCode.SESSION_TIMEOUT, "session timeout"
+    )
+
+
+@app.exception_handler(Exception)
+def handle_unexpected_exception(_request: Request, e: Exception):
+    return exception_response(
+        HTTP_500_INTERNAL_SERVER_ERROR, ResponseCode.SERVER_ERROR, "inner server error", str(e)
+    )
+
+
+def exception_response(
+    status_code: int, response_code: int, message_id: str, *format_args: Any
+) -> ApiJsonResponse:
+    message = api_translate_message(message_id, *format_args)
+    return ApiJsonResponse(
+        status_code=status_code,
+        content=NoneResponse(code=response_code, message=message, data=None).dict(),
     )
 
 
@@ -183,7 +198,7 @@ def index():
     if config.DEBUG_MODE:
         return RedirectResponse(url="/docs")
     else:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
+        raise ServiceError.page_not_found("/")
 
 
 def create_default_experiment(db: Session) -> None:

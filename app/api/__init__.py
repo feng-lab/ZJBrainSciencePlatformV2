@@ -1,10 +1,62 @@
+import functools
+import json
+from contextvars import ContextVar
+from datetime import date, datetime
+from json import JSONEncoder
+from typing import Any, Callable
+
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.roles import WhereHavingRole
+from starlette.responses import JSONResponse
 
 from app.common.exception import ServiceError
+from app.common.message_location import MessageLocale, translate_message
 from app.db import OrmModel, common_crud
 from app.db.crud import human_subject as crud_human_subject
 from app.db.orm import Device, Experiment, Task, User, VirtualFile
+from app.model.response import Response
+
+locale_ctxvar = ContextVar("locale", default=MessageLocale.zh_CN)
+
+
+def api_translate_message(message_id: str, *format_args: Any) -> str:
+    locale = locale_ctxvar.get()
+    return translate_message(message_id, locale, *format_args)
+
+
+class ApiJsonEncoder(JSONEncoder):
+    def default(self, o: Any) -> Any:
+        match o:
+            case datetime():
+                return o.strftime("%Y-%m-%d %H:%M:%S")
+            case date():
+                return o.strftime("%Y-%m-%d")
+            case _:
+                return super().default(o)
+
+
+class ApiJsonResponse(JSONResponse):
+    def render(self, content: Any) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=None,
+            separators=(",", ":"),
+            cls=ApiJsonEncoder,
+        ).encode("UTF-8")
+
+
+def wrap_api_response(func: Callable[..., Any]):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs) -> ApiJsonResponse:
+        response_data = func(*args, **kwargs)
+        success_message = api_translate_message("success")
+        response = Response(data=response_data, message=success_message)
+        json_response = ApiJsonResponse(response.dict())
+        return json_response
+
+    return wrapper
 
 
 def check_experiment_exists(db: Session, experiment_id: int) -> None:

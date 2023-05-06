@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 
 import app.db.crud.notification as crud
+from app.api import wrap_api_response
 from app.common.config import config
 from app.common.context import HumanSubjectContext
 from app.common.exception import ServiceError
@@ -10,7 +11,7 @@ from app.db import common_crud
 from app.db.orm import Notification
 from app.model.enum_filed import NotificationStatus, NotificationType
 from app.model.request import MarkNotificationsAsReadRequest
-from app.model.response import Page, Response, wrap_api_response
+from app.model.response import Page, Response
 from app.model.schema import NotificationBase, NotificationCreate, NotificationResponse, PageParm
 
 router = APIRouter(tags=["notification"])

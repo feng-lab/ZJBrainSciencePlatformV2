@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from starlette.status import HTTP_401_UNAUTHORIZED
+from fastapi import APIRouter, Depends, Query
 
 import app.db.crud.user as crud
+from app.api import wrap_api_response
 from app.common.context import AdministratorContext, AllUserContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.user_auth import hash_password, verify_password
@@ -12,7 +12,7 @@ from app.model.request import (
     UpdatePasswordRequest,
     UpdateUserAccessLevelRequest,
 )
-from app.model.response import NoneResponse, Page, Response, wrap_api_response
+from app.model.response import NoneResponse, Page, Response
 from app.model.schema import CreateUserRequest, PageParm, UserResponse
 
 router = APIRouter(tags=["user"])
@@ -101,7 +101,7 @@ def update_password(request: UpdatePasswordRequest, ctx: AllUserContext = Depend
     staff_id = crud.get_user_staff_id(ctx.db, ctx.user_id)
     user_id = verify_password(ctx.db, staff_id, request.old_password)
     if user_id is None or user_id != ctx.user_id:
-        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="原密码错误")
+        raise ServiceError.wrong_password()
     hashed_new_password = hash_password(request.new_password)
     success = common_crud.update_row(
         ctx.db, User, {"hashed_password": hashed_new_password}, id=user_id, commit=True

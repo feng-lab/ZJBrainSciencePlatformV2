@@ -11,6 +11,7 @@ from fastapi import Form, Query, UploadFile
 from fastapi.responses import FileResponse as FastApiFileResponse
 from sqlalchemy.orm import Session
 
+from app.api import wrap_api_response
 from app.common.config import config
 from app.common.context import HumanSubjectContext, NotLogonContext, ResearcherContext
 from app.common.exception import ServiceError
@@ -19,7 +20,7 @@ from app.db.crud import file as crud
 from app.db.orm import StorageFile, VirtualFile
 from app.model import convert
 from app.model.request import DeleteModelRequest
-from app.model.response import NoneResponse, Page, Response, wrap_api_response
+from app.model.response import NoneResponse, Page, Response
 from app.model.schema import FileResponse, FileSearch
 
 logger = logging.getLogger(__name__)

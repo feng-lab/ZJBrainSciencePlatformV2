@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 
 import app.db.crud.file as file_crud
 import app.external.model as rpc_model
+from app.api import wrap_api_response
 from app.common.context import ResearcherContext
 from app.common.exception import ServiceError
 from app.external import rpc
 from app.model.field import ID
 from app.model.request import DisplayEEGRequest, DisplayNeuralSpikeRequest
-from app.model.response import Response, wrap_api_response
+from app.model.response import Response
 
 router = APIRouter(tags=["algorithm"])
 

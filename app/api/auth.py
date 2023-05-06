@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from app.api import wrap_api_response
 from app.common.config import config
 from app.common.context import AllUserContext
 from app.common.exception import ServiceError
@@ -14,7 +15,7 @@ from app.common.user_auth import (
 from app.common.util import now
 from app.db import common_crud, get_db_session
 from app.db.orm import User
-from app.model.response import LoginResponse, NoneResponse, wrap_api_response
+from app.model.response import LoginResponse, NoneResponse
 
 router = APIRouter(tags=["auth"])
 

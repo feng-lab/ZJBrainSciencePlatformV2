@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 import app.db.crud.file as file_crud
 import app.db.crud.paradigm as crud
+from app.api import wrap_api_response
 from app.api.file import delete_os_file
 from app.common.config import config
 from app.common.context import HumanSubjectContext, ResearcherContext
@@ -13,7 +14,7 @@ from app.db import common_crud
 from app.db.orm import Experiment, Paradigm, StorageFile, VirtualFile
 from app.model import convert
 from app.model.request import DeleteModelRequest, UpdateParadigmRequest
-from app.model.response import NoneResponse, Response, wrap_api_response
+from app.model.response import NoneResponse, Response
 from app.model.schema import CreateParadigmRequest, PageParm, ParadigmResponse
 
 router = APIRouter(tags=["paradigm"])

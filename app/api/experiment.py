@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
+from app.api import wrap_api_response
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.db import common_crud
@@ -11,7 +12,7 @@ from app.model.request import (
     UpdateExperimentAssistantsRequest,
     UpdateExperimentRequest,
 )
-from app.model.response import NoneResponse, Response, wrap_api_response
+from app.model.response import NoneResponse, Response
 from app.model.schema import (
     CreateExperimentRequest,
     ExperimentResponse,

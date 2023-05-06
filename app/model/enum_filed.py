@@ -1,11 +1,6 @@
 from enum import StrEnum
 
 
-class MessageLocale(StrEnum):
-    zh_CN = "zh_CN"
-    en_US = "en_US"
-
-
 class TaskStepType(StrEnum):
     preprocess = "preprocess"
     analysis = "analysis"

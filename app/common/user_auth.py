@@ -3,15 +3,14 @@ from datetime import timedelta
 from enum import IntEnum
 from typing import NoReturn
 
-from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 from redis import Redis
 from sqlalchemy.orm import Session
-from starlette.status import HTTP_401_UNAUTHORIZED
 
 import app.db.crud.user as crud_user
+from app.common.exception import ServiceError
 from app.common.util import utc_now
 from app.db.cache import get_user_access_level
 from app.model.response import AccessTokenData
@@ -47,9 +46,7 @@ def hash_password(password: str) -> str:
 
 def raise_unauthorized_exception(**data) -> NoReturn:
     logger.error(f"unauthorized user, {data=}")
-    raise HTTPException(
-        status_code=HTTP_401_UNAUTHORIZED, detail="用户名或密码错误", headers={"WWW-Authenticate": "Bearer"}
-    )
+    raise ServiceError.wrong_password()
 
 
 def verify_current_user(db: Session, cache: Redis, token: str, api_access_level: int) -> int:
@@ -65,7 +62,7 @@ def verify_current_user(db: Session, cache: Redis, token: str, api_access_level:
             raise_unauthorized_exception(user_id={user_id})
         if user_access_level < api_access_level:
             logger.error(f"unauthorized api invocation, {user_id=}")
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="用户没有调用本API的权限")
+            raise ServiceError.no_enough_access_level()
         return user_id
     except ExpiredSignatureError as e:
         # token过期
