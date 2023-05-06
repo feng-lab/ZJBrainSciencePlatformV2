@@ -2,13 +2,13 @@ ALTER TABLE task
     DROP FOREIGN KEY task_ibfk_2;
 
 ALTER TABLE task
-    ADD CONSTRAINT task_source_file FOREIGN KEY (source_file) REFERENCES virtual_file (id);
+    ADD CONSTRAINT task_ibfk_2 FOREIGN KEY (source_file) REFERENCES virtual_file (id);
 
 ALTER TABLE task_step
-    DROP FOREIGN KEY task_step_result_file_id_fk;
+    DROP FOREIGN KEY task_step_ibfk_2;
 
 ALTER TABLE task_step
-    ADD CONSTRAINT task_step_result_file_id FOREIGN KEY (result_file_id) REFERENCES virtual_file (id);
+    ADD CONSTRAINT task_step_ibfk_2 FOREIGN KEY (result_file_id) REFERENCES virtual_file (id);
 
 DROP TABLE file;
 

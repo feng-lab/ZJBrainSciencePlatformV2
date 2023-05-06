@@ -6,9 +6,8 @@ Create Date: 2023-04-25 15:46:32.442415
 
 """
 import sqlalchemy as sa
-from sqlalchemy.dialects import mysql
-
 from alembic import op
+from sqlalchemy.dialects import mysql
 
 revision = "2f68cf9ba0a2"
 down_revision = "5a840b6cfdfb"
@@ -18,10 +17,10 @@ depends_on = None
 
 def upgrade() -> None:
     op.drop_constraint("task_ibfk_2", "task", type_="foreignkey")
-    op.create_foreign_key("task_source_file", "task", "virtual_file", ["source_file"], ["id"])
-    op.drop_constraint("task_step_result_file_id_fk", "task_step", type_="foreignkey")
+    op.create_foreign_key("task_ibfk_2", "task", "virtual_file", ["source_file"], ["id"])
+    op.drop_constraint("task_step_ibfk_2", "task_step", type_="foreignkey")
     op.create_foreign_key(
-        "task_step_result_file_id", "task_step", "virtual_file", ["result_file_id"], ["id"]
+        "task_step_ibfk_2", "task_step", "virtual_file", ["result_file_id"], ["id"]
     )
     op.drop_table("file")
 
@@ -79,9 +78,9 @@ def downgrade() -> None:
     )
     op.create_index("ix_file_paradigm_id", "file", ["paradigm_id"], unique=False)
     op.create_index("ix_file_experiment_id", "file", ["experiment_id"], unique=False)
-    op.drop_constraint("task_step_result_file_id", "task_step", type_="foreignkey")
+    op.drop_constraint("task_step_ibfk_2", "task_step", type_="foreignkey")
     op.create_foreign_key(
-        "task_step_result_file_id_fk", "task_step", "file", ["result_file_id"], ["id"]
+        "task_step_result_file_id", "task_step", "file", ["result_file_id"], ["id"]
     )
-    op.drop_constraint("task_source_file", "task", type_="foreignkey")
+    op.drop_constraint("task_ibfk_2", "task", type_="foreignkey")
     op.create_foreign_key("task_ibfk_2", "task", "file", ["source_file"], ["id"])
