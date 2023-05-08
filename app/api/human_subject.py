@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from app.api import check_experiment_exists, check_human_subject_exists, wrap_api_response
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.common.user_auth import AccessLevel, hash_password
 from app.db import common_crud
 from app.db.crud import human_subject as crud
@@ -80,7 +81,7 @@ def get_human_subject_info(
 ) -> HumanSubjectResponse:
     orm_human_subject = crud.get_human_subject(ctx.db, user_id)
     if orm_human_subject is None:
-        raise ServiceError.not_found("未找到人类被试者")
+        raise ServiceError.not_found(Entity.human_subject)
     return convert.human_subject_orm_2_response(orm_human_subject)
 
 

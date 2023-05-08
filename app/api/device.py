@@ -6,6 +6,7 @@ import app.db.crud.device as crud
 from app.api import check_device_exists, check_experiment_exists, wrap_api_response
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.db import common_crud
 from app.db.orm import Device, ExperimentDevice
 from app.model import convert
@@ -95,7 +96,7 @@ def get_device_info(
 ) -> DeviceInfo:
     orm_device = common_crud.get_row_by_id(ctx.db, Device, device_id)
     if orm_device is None:
-        raise ServiceError.not_found("未找到设备")
+        raise ServiceError.not_found(Entity.device)
     device_info = convert.device_orm_2_info(orm_device)
     return device_info
 

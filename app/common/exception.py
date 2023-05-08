@@ -8,6 +8,7 @@ from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
+from app.common.localization import Entity, translate_entity
 from app.model.response import (
     CODE_DATABASE_FAIL,
     CODE_FAIL,
@@ -42,15 +43,13 @@ class ServiceError(Exception):
         return ServiceError(status_code=HTTP_400_BAD_REQUEST, code=CODE_FAIL, message=message)
 
     @staticmethod
-    def not_found(message: str):
-        return ServiceError(status_code=HTTP_200_OK, code=CODE_NOT_FOUND, message=message)
-
-    @staticmethod
-    def remote_service_error(message: str):
+    def not_found(entity: Entity):
+        entity_value = translate_entity(entity)
         return ServiceError(
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-            code=CODE_REMOTE_SERVICE_ERROR,
-            message=message,
+            status_code=HTTP_200_OK,
+            code=ResponseCode.PARAMS_ERROR,
+            message_id="not found",
+            format_args=(entity_value,),
         )
 
     @staticmethod
@@ -101,4 +100,13 @@ class ServiceError(Exception):
             status_code=HTTP_401_UNAUTHORIZED,
             code=ResponseCode.UNAUTHORIZED,
             message_id="session timeout",
+        )
+
+    @staticmethod
+    def remote_service_error(message: str):
+        return ServiceError(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            code=CODE_REMOTE_SERVICE_ERROR,
+            message_id="remote service error",
+            format_args=(message,),
         )

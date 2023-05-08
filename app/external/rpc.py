@@ -40,7 +40,7 @@ def do_rpc(api: str, request: Req, response_model: type[Resp]) -> Resp:
         logger.error(
             f"remote service returns error, code={response.code}, message={response.message}"
         )
-        raise ServiceError.remote_service_error(f"远程服务错误: {response.message}")
+        raise ServiceError.remote_service_error(response.message)
     return response.data
 
 

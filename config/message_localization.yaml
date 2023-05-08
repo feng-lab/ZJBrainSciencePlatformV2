@@ -13,9 +13,9 @@
   zh_CN: '没有该页面: {}'
   en_US: 'page not found: {}'
 
-- message_id: user not exist
-  zh_CN: 用户不存在
-  en_US: user doesn't exist
+- message_id: not found
+  zh_CN: '{}不存在'
+  en_US: '{} cannot be found'
 
 # 401 错误
 

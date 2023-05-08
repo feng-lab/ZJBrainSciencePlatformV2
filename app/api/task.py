@@ -6,6 +6,7 @@ from app.api import check_task_exists, check_virtual_file_exists, wrap_api_respo
 from app.common.config import config
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.db import common_crud
 from app.db.crud import task as crud
 from app.db.orm import Task, TaskStep
@@ -111,7 +112,7 @@ def delete_task(request: DeleteModelRequest, ctx: ResearcherContext = Depends())
 def get_task_info(task_id: int = Query(ge=0), ctx: HumanSubjectContext = Depends()) -> TaskInfo:
     orm_task = crud.get_task_info_by_id(ctx.db, task_id)
     if orm_task is None:
-        raise ServiceError.not_found("任务不存在")
+        raise ServiceError.not_found(Entity.task)
 
     task_info = convert.task_orm_2_info(orm_task)
     return task_info

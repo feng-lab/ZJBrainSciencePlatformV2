@@ -4,6 +4,7 @@ import app.db.crud.user as crud
 from app.api import wrap_api_response
 from app.common.context import AdministratorContext, AllUserContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.common.user_auth import hash_password, verify_password
 from app.db import cache, common_crud
 from app.db.orm import User
@@ -57,7 +58,7 @@ def get_user_info(
 ) -> UserResponse:
     orm_user = common_crud.get_row_by_id(ctx.db, User, user_id)
     if orm_user is None:
-        raise ServiceError.not_found("未找到用户")
+        raise ServiceError.not_found(Entity.user)
     user = UserResponse.from_orm(orm_user)
     return user
 

@@ -15,6 +15,7 @@ from app.api import wrap_api_response
 from app.common.config import config
 from app.common.context import HumanSubjectContext, NotLogonContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.db import common_crud
 from app.db.crud import file as crud
 from app.db.orm import StorageFile, VirtualFile
@@ -170,7 +171,7 @@ def download_file(
 ) -> FastApiFileResponse:
     filename, db_storage_path = crud.get_file_download_info(ctx.db, file_id)
     if filename is None:
-        raise ServiceError.not_found("未找到文件")
+        raise ServiceError.not_found(Entity.file)
     os_storage_path = config.FILE_ROOT / db_storage_path
     return FastApiFileResponse(path=os_storage_path, filename=filename)
 

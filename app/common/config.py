@@ -67,6 +67,11 @@ class Config(BaseSettings):
         Path(__file__).parent.parent.parent / "config" / "message_localization.yaml"
     )
 
+    # entity_localization.yaml路径
+    ENTITY_LOCALIZATION_YAML_PATH: Path = (
+        Path(__file__).parent.parent.parent / "config" / "entity_localization.yaml"
+    )
+
 
 config = Config()
 logger.info(config.json())

@@ -16,7 +16,7 @@ from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
-from app.api import ApiJsonResponse, api_translate_message, locale_ctxvar
+from app.api import ApiJsonResponse
 from app.api.algorithm import router as algorithm_router
 from app.api.auth import router as auth_router
 from app.api.device import router as device_router
@@ -30,8 +30,8 @@ from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
 from app.api.user import router as user_router
 from app.common.config import config
 from app.common.exception import ServiceError
+from app.common.localization import MessageLocale, locale_ctxvar, translate_message
 from app.common.log import ACCESS_LOGGER_NAME, log_queue_listener, request_id_ctxvar
-from app.common.message_location import MessageLocale
 from app.common.schedule import repeat_task
 from app.common.user_auth import AccessLevel, hash_password
 from app.common.util import generate_request_id
@@ -188,7 +188,7 @@ def handle_unexpected_exception(_request: Request, e: Exception):
 def exception_response(
     status_code: int, response_code: int, message_id: str, *format_args: Any
 ) -> ApiJsonResponse:
-    message = api_translate_message(message_id, *format_args)
+    message = translate_message(message_id, *format_args)
     return ApiJsonResponse(
         status_code=status_code,
         content=NoneResponse(code=response_code, message=message, data=None).dict(),

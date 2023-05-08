@@ -6,6 +6,7 @@ import app.external.model as rpc_model
 from app.api import wrap_api_response
 from app.common.context import ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.external import rpc
 from app.model.field import ID
 from app.model.request import DisplayEEGRequest, DisplayNeuralSpikeRequest
@@ -72,5 +73,5 @@ def get_neural_spike_info(
 def get_file_info(db: Session, file_id: ID) -> rpc_model.FileInfo:
     file_info = file_crud.get_algorithm_file_info(db, file_id)
     if file_info is None:
-        raise ServiceError.not_found("文件不存在")
+        raise ServiceError.not_found(Entity.file)
     return file_info

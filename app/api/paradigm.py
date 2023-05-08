@@ -10,6 +10,7 @@ from app.api.file import delete_os_file
 from app.common.config import config
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.db import common_crud
 from app.db.orm import Experiment, Paradigm, StorageFile, VirtualFile
 from app.model import convert
@@ -29,12 +30,12 @@ def create_paradigm(request: CreateParadigmRequest, ctx: ResearcherContext = Dep
     if deleted_experiments is None:
         raise database_error
     elif len(deleted_experiments) > 0:
-        raise ServiceError.not_found("未找到实验")
+        raise ServiceError.not_found(Entity.experiment)
     deleted_files = common_crud.get_deleted_rows(ctx.db, VirtualFile, request.images)
     if deleted_files is None:
         raise database_error
     elif len(deleted_files) > 0:
-        raise ServiceError.not_found("未找到文件")
+        raise ServiceError.not_found(Entity.file)
 
     paradigm_dict = {
         "experiment_id": request.experiment_id,
@@ -66,7 +67,7 @@ def get_paradigm_info(
 ) -> ParadigmResponse:
     orm_paradigm = crud.get_paradigm_by_id(ctx.db, paradigm_id)
     if orm_paradigm is None:
-        raise ServiceError.not_found("未找到范式")
+        raise ServiceError.not_found(Entity.paradigm)
     paradigm_response = convert.paradigm_orm_2_response(orm_paradigm)
     return paradigm_response
 
