@@ -19,12 +19,17 @@ from app.model.response import (
 
 class ServiceError(Exception):
     def __init__(
-        self, *, status_code: int, code: int, message_id: str, format_args: Sequence[Any] = None
+        self,
+        *,
+        status_code: int,
+        code: int,
+        message_id: str,
+        format_args: Sequence[Any] | None = None,
     ):
         self.status_code: int = status_code
         self.code: int = code
         self.message_id: str = message_id
-        self.format_args: Sequence[Any] = format_args
+        self.format_args: Sequence[Any] = [] if format_args is None else format_args
 
     @staticmethod
     def database_fail(message: str):
@@ -64,6 +69,14 @@ class ServiceError(Exception):
             code=ResponseCode.PARAMS_ERROR,
             message_id="params error",
             format_args=(message,),
+        )
+
+    @staticmethod
+    def not_login() -> "ServiceError":
+        return ServiceError(
+            status_code=HTTP_401_UNAUTHORIZED,
+            code=ResponseCode.UNAUTHORIZED,
+            message_id="not login",
         )
 
     @staticmethod

@@ -102,6 +102,6 @@ def test_update_password(created_user: dict[str, Any], logon_root_headers: dict[
     r = client.post("/api/login", data=login_form)
     assert r.status_code == 401
     ro = NoneResponse(**r.json())
-    assert ro.code == 1
+    assert ro.code == 3
 
     login(created_user["staff_id"], new_password)

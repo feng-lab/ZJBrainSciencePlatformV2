@@ -4,7 +4,7 @@ from typing import Any, Callable
 from urllib.parse import parse_qsl, urlencode
 
 from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import HTTPException, RequestValidationError
 from jose import ExpiredSignatureError
 from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
@@ -60,6 +60,7 @@ app = FastAPI(
         {"name": "algorithm"},
         {"name": "task"},
     ],
+    debug=config.DEBUG_MODE,
 )
 
 app.include_router(auth_router)
@@ -163,7 +164,7 @@ def handle_service_error(_request: Request, e: ServiceError):
 
 
 @app.exception_handler(RequestValidationError)
-def handle_http_exception(_request: Request, e: RequestValidationError):
+def handle_request_validation_error(_request: Request, e: RequestValidationError):
     return exception_response(
         HTTP_400_BAD_REQUEST, ResponseCode.PARAMS_ERROR, "params error", repr(e)
     )
@@ -176,6 +177,7 @@ def handle_expired_token_exception(_request: Request, _e: ExpiredSignatureError)
     )
 
 
+@app.exception_handler(HTTPException)
 @app.exception_handler(Exception)
 def handle_unexpected_exception(_request: Request, e: Exception):
     return exception_response(

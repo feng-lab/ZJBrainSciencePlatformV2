@@ -19,6 +19,10 @@
 
 # 401 错误
 
+- message_id: not login
+  zh_CN: 用户未登录
+  en_US: user doesn't login
+
 - message_id: wrong password
   zh_CN: 密码错误
   en_US: wrong password
