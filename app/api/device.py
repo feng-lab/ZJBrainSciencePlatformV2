@@ -29,7 +29,7 @@ def create_device(request: CreateDeviceRequest, ctx: ResearcherContext = Depends
     device_dict = request.dict()
     device_id = common_crud.insert_row(ctx.db, Device, device_dict, commit=True)
     if device_id is None:
-        raise ServiceError.database_fail("创建设备失败")
+        raise ServiceError.database_fail()
     return device_id
 
 
@@ -40,7 +40,7 @@ def delete_device(request: DeleteDevicesRequest, ctx: ResearcherContext = Depend
         ctx.db, Device, ids=request.device_ids, commit=True
     )
     if not success:
-        raise ServiceError.database_fail("删除设备失败")
+        raise ServiceError.database_fail()
 
 
 @router.post("/api/addDevicesInExperiment", description="将设备添加到实验中", response_model=NoneResponse)
@@ -64,7 +64,7 @@ def add_devices_in_experiment(
         ]
         success = common_crud.bulk_insert_rows(ctx.db, ExperimentDevice, add_devices, commit=True)
         if not success:
-            raise ServiceError.database_fail("添加实验设备失败")
+            raise ServiceError.database_fail()
 
 
 @router.delete(
@@ -86,7 +86,7 @@ def delete_devices_from_experiment(
         commit=True,
     )
     if not success:
-        raise ServiceError.database_fail("从设备中删除设备失败")
+        raise ServiceError.database_fail()
 
 
 @router.get("/api/getDeviceInfo", description="获取设备详情", response_model=Response[DeviceInfo])
@@ -123,4 +123,4 @@ def update_device(request: UpdateDeviceRequest, ctx: ResearcherContext = Depends
     update_dict = request.dict(exclude={"id"})
     success = common_crud.update_row(ctx.db, Device, update_dict, id=request.id, commit=True)
     if not success:
-        raise ServiceError.database_fail("更新设备失败")
+        raise ServiceError.database_fail()

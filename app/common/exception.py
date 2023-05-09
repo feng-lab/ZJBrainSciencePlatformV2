@@ -9,12 +9,7 @@ from starlette.status import (
 )
 
 from app.common.localization import Entity, translate_entity
-from app.model.response import (
-    CODE_DATABASE_FAIL,
-    CODE_NOT_FOUND,
-    CODE_REMOTE_SERVICE_ERROR,
-    ResponseCode,
-)
+from app.model.response import ResponseCode
 
 
 class ServiceError(Exception):
@@ -32,12 +27,6 @@ class ServiceError(Exception):
         self.format_args: Sequence[Any] = [] if format_args is None else format_args
 
     @staticmethod
-    def database_fail(message: str):
-        return ServiceError(
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR, code=CODE_DATABASE_FAIL, message=message
-        )
-
-    @staticmethod
     def not_found(entity: Entity):
         entity_value = translate_entity(entity)
         return ServiceError(
@@ -51,7 +40,7 @@ class ServiceError(Exception):
     def page_not_found(url: str) -> "ServiceError":
         return ServiceError(
             status_code=HTTP_404_NOT_FOUND,
-            code=CODE_NOT_FOUND,
+            code=ResponseCode.PARAMS_ERROR,
             message_id="page not found",
             format_args=(url,),
         )
@@ -110,7 +99,15 @@ class ServiceError(Exception):
     def remote_service_error(message: str) -> "ServiceError":
         return ServiceError(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-            code=CODE_REMOTE_SERVICE_ERROR,
+            code=ResponseCode.SERVER_ERROR,
             message_id="remote service error",
             format_args=(message,),
+        )
+
+    @staticmethod
+    def database_fail():
+        return ServiceError(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            code=ResponseCode.SERVER_ERROR,
+            message_id="database fail",
         )

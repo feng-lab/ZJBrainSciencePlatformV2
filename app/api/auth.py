@@ -33,7 +33,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     # 更新最近登录时间
     success = common_crud.update_row(db, User, {"last_login_time": now()}, id=user_id, commit=True)
     if not success:
-        raise ServiceError.database_fail("登录失败")
+        raise ServiceError.database_fail()
 
     return LoginResponse(access_token=access_token, token_type=TOKEN_TYPE)
 
@@ -45,4 +45,4 @@ def logout(ctx: AllUserContext = Depends()) -> None:
         ctx.db, User, {"last_logout_time": now()}, id=ctx.user_id, commit=True
     )
     if not success:
-        raise ServiceError.database_fail("登出失败")
+        raise ServiceError.database_fail()

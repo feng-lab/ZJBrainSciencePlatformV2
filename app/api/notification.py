@@ -27,7 +27,7 @@ def send_notification(request: NotificationBase, ctx: HumanSubjectContext = Depe
         ctx.db, Notification, notification_create.dict(), commit=True
     )
     if notification_id is None:
-        raise ServiceError.database_fail("发送通知失败")
+        raise ServiceError.database_fail()
     return notification_id
 
 
@@ -98,5 +98,5 @@ def mark_notifications_as_read(
         ctx.db, Notification, where, {"status": NotificationStatus.read}, commit=True
     )
     if not success:
-        raise ServiceError.database_fail("批量已读失败")
+        raise ServiceError.database_fail()
     return crud.list_unread_notifications(ctx.db, ctx.user_id, request.is_all, notification_ids)

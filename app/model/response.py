@@ -8,17 +8,6 @@ from pydantic.generics import GenericModel
 from app.common.log import request_id_ctxvar
 from app.common.util import Model
 
-# 响应失败的code
-CODE_FAIL: int = 1
-# 会话超时的失败code
-CODE_SESSION_TIMEOUT: int = 2
-# 数据库操作失败
-CODE_DATABASE_FAIL: int = 3
-# 要获取的对象不存在
-CODE_NOT_FOUND: int = 4
-# 远程服务失败
-CODE_REMOTE_SERVICE_ERROR: int = 5
-
 Data = TypeVar("Data")
 
 

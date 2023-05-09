@@ -28,13 +28,11 @@ router = APIRouter(tags=["experiment"])
 @router.post("/api/createExperiment", description="创建实验", response_model=Response[int])
 @wrap_api_response
 def create_experiment(request: CreateExperimentRequest, ctx: ResearcherContext = Depends()) -> int:
-    database_error = ServiceError.database_fail("创建实验失败")
-
     experiment_id = common_crud.insert_row(
         ctx.db, Experiment, request.dict(exclude={"assistants", "tags"}), commit=False
     )
     if experiment_id is None:
-        raise database_error
+        raise ServiceError.database_fail()
 
     if len(request.assistants) > 0:
         assistants = [
@@ -45,13 +43,13 @@ def create_experiment(request: CreateExperimentRequest, ctx: ResearcherContext =
             ctx.db, ExperimentAssistant, assistants, commit=False
         )
         if not all_inserted:
-            raise database_error
+            raise ServiceError.database_fail()
 
     if len(request.tags) > 0:
         tags = [{"experiment_id": experiment_id, "tag": tag} for tag in set(request.tags)]
         all_inserted = common_crud.bulk_insert_rows(ctx.db, ExperimentTag, tags, commit=False)
         if not all_inserted:
-            raise database_error
+            raise ServiceError.database_fail()
 
     ctx.db.commit()
     return experiment_id
@@ -108,12 +106,12 @@ def update_experiment(request: UpdateExperimentRequest, ctx: ResearcherContext =
     }
     success = common_crud.update_row(ctx.db, Experiment, update_dict, id=request.id, commit=False)
     if not success:
-        raise ServiceError.database_fail("更新实验失败")
+        raise ServiceError.database_fail()
 
     if request.tags is not None and len(request.tags) > 0:
         success = crud.update_experiment_tags(ctx.db, request.id, set(request.tags))
         if not success:
-            raise ServiceError.database_fail("更新实验失败")
+            raise ServiceError.database_fail()
 
     ctx.db.commit()
 
@@ -147,7 +145,7 @@ def add_experiment_assistants(
     if len(assistants) > 0:
         success = common_crud.bulk_insert_rows(ctx.db, ExperimentAssistant, assistants, commit=True)
         if not success:
-            raise ServiceError.database_fail("添加实验助手失败")
+            raise ServiceError.database_fail()
 
 
 @router.delete("/api/deleteExperimentAssistants", description="删除实验助手", response_model=NoneResponse)
@@ -165,4 +163,4 @@ def delete_experiment_assistants(
         commit=True,
     )
     if not success:
-        raise ServiceError.database_fail("删除实验助手失败")
+        raise ServiceError.database_fail()

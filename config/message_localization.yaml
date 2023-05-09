@@ -41,6 +41,10 @@
 
 # 500 错误
 
+- message_id: database fail
+  zh_CN: 数据库错误
+  en_US: database fail
+
 - message_id: inner server error
   zh_CN: '服务端错误: {}'
   en_US: 'inner server error: {}'

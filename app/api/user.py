@@ -36,7 +36,7 @@ def create_user(request: CreateUserRequest, ctx: AdministratorContext = Depends(
     }
     user_id = common_crud.insert_row(ctx.db, User, user_dict, commit=True)
     if user_id is None:
-        raise ServiceError.database_fail("创建用户失败")
+        raise ServiceError.database_fail()
     return user_id
 
 
@@ -91,7 +91,7 @@ def update_user_access_level(
     if success:
         cache.invalidate_user_access_level(ctx.cache, request.id)
     else:
-        raise ServiceError.database_fail("修改用户权限失败")
+        raise ServiceError.database_fail()
 
 
 @router.post("/api/updatePassword", description="用户修改密码", response_model=NoneResponse)
@@ -106,7 +106,7 @@ def update_password(request: UpdatePasswordRequest, ctx: AllUserContext = Depend
         ctx.db, User, {"hashed_password": hashed_new_password}, id=user_id, commit=True
     )
     if not success:
-        raise ServiceError.database_fail("用户修改密码失败")
+        raise ServiceError.database_fail()
 
 
 @router.delete("/api/deleteUser", description="删除用户", response_model=NoneResponse)
@@ -114,4 +114,4 @@ def update_password(request: UpdatePasswordRequest, ctx: AllUserContext = Depend
 def delete_user(request: DeleteModelRequest, ctx: AdministratorContext = Depends()) -> None:
     success = common_crud.update_row_as_deleted(ctx.db, User, id=request.id, commit=True)
     if not success:
-        raise ServiceError.database_fail("删除用户失败")
+        raise ServiceError.database_fail()

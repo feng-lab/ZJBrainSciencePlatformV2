@@ -69,7 +69,7 @@ def create_task(create: TaskCreate, ctx: ResearcherContext = Depends()) -> int:
     }
     task_id = common_crud.insert_row(ctx.db, Task, task_create_dict, commit=(not create.steps))
     if task_id is None:
-        raise ServiceError.database_fail("创建任务失败")
+        raise ServiceError.database_fail()
 
     step_dicts = [
         {
@@ -84,7 +84,7 @@ def create_task(create: TaskCreate, ctx: ResearcherContext = Depends()) -> int:
     ]
     success = common_crud.bulk_insert_rows(ctx.db, TaskStep, step_dicts, commit=True)
     if not success:
-        raise ServiceError.database_fail("创建任务失败")
+        raise ServiceError.database_fail()
 
     return task_id
 
@@ -100,11 +100,11 @@ def delete_task(request: DeleteModelRequest, ctx: ResearcherContext = Depends())
         ctx.db, TaskStep, where=[TaskStep.task_id == request.id], commit=False
     )
     if not success:
-        raise ServiceError.database_fail("删除任务失败")
+        raise ServiceError.database_fail()
 
     success = common_crud.update_row_as_deleted(ctx.db, Task, id=request.id, commit=True)
     if not success:
-        raise ServiceError.database_fail("删除任务失败")
+        raise ServiceError.database_fail()
 
 
 @router.get("/api/getTaskInfo", description="获取任务详情", response_model=Response[TaskInfo])

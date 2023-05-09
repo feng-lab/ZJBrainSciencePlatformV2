@@ -60,7 +60,7 @@ def save_file(
     }
     virtual_file_id = common_crud.insert_row(db, VirtualFile, virtual_file_dict, commit=False)
     if virtual_file_id is None:
-        raise ServiceError.database_fail("上传文件失败")
+        raise ServiceError.database_fail()
 
     # 插入StorageFile行
     storage_path = f"{experiment_id}/{virtual_file_id}{'.' + file_type if file_type else ''}"
@@ -72,7 +72,7 @@ def save_file(
     }
     storage_file_id = common_crud.insert_row(db, StorageFile, storage_file_dict, commit=False)
     if storage_file_id is None:
-        raise ServiceError.database_fail("上传文件失败")
+        raise ServiceError.database_fail()
 
     # 写入文件
     os_storage_path = config.FILE_ROOT / storage_path
@@ -83,11 +83,11 @@ def save_file(
     if not common_crud.update_row(
         db, VirtualFile, {"size": file_size}, id=virtual_file_id, commit=False
     ):
-        raise ServiceError.database_fail("上传文件失败")
+        raise ServiceError.database_fail()
     if not common_crud.update_row(
         db, StorageFile, {"size": file_size}, id=storage_file_id, commit=True
     ):
-        raise ServiceError.database_fail("上传文件失败")
+        raise ServiceError.database_fail()
 
     return virtual_file_id, file_type, os_storage_path
 
@@ -113,7 +113,7 @@ def handle_nev_zip_file(
     if not common_crud.update_row(
         db, VirtualFile, {"file_type": "nev"}, id=virtual_file_id, commit=False
     ):
-        raise ServiceError.database_fail("上传文件失败")
+        raise ServiceError.database_fail()
 
     # 创建文件夹
     nev_dir = config.FILE_ROOT / str(experiment_id) / str(virtual_file_id)
@@ -141,7 +141,7 @@ def handle_nev_zip_file(
 
     # 插入StorageFile行
     if not common_crud.bulk_insert_rows(db, StorageFile, storage_file_dicts, commit=True):
-        raise ServiceError.database_fail("上传文件失败")
+        raise ServiceError.database_fail()
 
 
 @router.get("/api/getFileTypes", description="获取当前实验已有的文件类型", response_model=Response[list[str]])
@@ -181,11 +181,11 @@ def download_file(
 def delete_file(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
     file_paths = crud.get_db_storage_paths(ctx.db, request.id)
     if not common_crud.update_row_as_deleted(ctx.db, VirtualFile, id=request.id, commit=False):
-        raise ServiceError.database_fail("删除文件失败")
+        raise ServiceError.database_fail()
     if not common_crud.update_row_as_deleted(
         ctx.db, StorageFile, where=[StorageFile.virtual_file_id == request.id], commit=True
     ):
-        raise ServiceError.database_fail("删除文件失败")
+        raise ServiceError.database_fail()
     for file_path in file_paths:
         delete_os_file(config.FILE_ROOT / file_path)
 

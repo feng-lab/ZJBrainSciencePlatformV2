@@ -41,12 +41,12 @@ def create_human_subject(
     }
     user_id = common_crud.insert_row(ctx.db, User, user_dict, commit=True)
     if user_id is None:
-        raise ServiceError.database_fail("创建被试者用户失败")
+        raise ServiceError.database_fail()
 
     human_subject_dict = request.dict() | {"user_id": user_id}
     human_subject_id = common_crud.insert_row(ctx.db, HumanSubject, human_subject_dict, commit=True)
     if human_subject_id is None:
-        raise ServiceError.database_fail("创建人类被试者失败")
+        raise ServiceError.database_fail()
 
     return CreateHumanSubjectResponse(
         user_id=user_id, username=username, staff_id=username, password=password
@@ -62,12 +62,12 @@ def delete_human_subjects(
         ctx.db, HumanSubject, where=[HumanSubject.user_id.in_(request.user_ids)], commit=False
     )
     if not success:
-        raise ServiceError.database_fail("删除人类被试者失败")
+        raise ServiceError.database_fail()
     success = common_crud.bulk_update_rows_as_deleted(
         ctx.db, User, where=[User.id.in_(request.user_ids)], commit=True
     )
     if not success:
-        raise ServiceError.database_fail("删除人类被试者用户失败")
+        raise ServiceError.database_fail()
 
 
 @router.get(
@@ -115,7 +115,7 @@ def update_human_subject(update: HumanSubjectUpdate, ctx: ResearcherContext = De
         commit=True,
     )
     if not success:
-        raise ServiceError.database_fail("更新人类被试者失败")
+        raise ServiceError.database_fail()
 
 
 @router.post(
@@ -138,7 +138,7 @@ def add_human_subjects_in_experiment(
     if not common_crud.bulk_insert_rows(
         ctx.db, ExperimentHumanSubject, add_experiment_human_subjects, commit=True
     ):
-        raise ServiceError.database_fail("向实验中添加人类被试者失败")
+        raise ServiceError.database_fail()
 
 
 @router.delete(
@@ -160,4 +160,4 @@ def delete_human_subjects_from_experiment(
         commit=True,
     )
     if not success:
-        raise ServiceError.database_fail("从实验中删除人类被试者失败")
+        raise ServiceError.database_fail()

@@ -47,12 +47,12 @@ def insert_or_update_user(db: Session, user: UserCreate) -> None:
     ).scalar()
     if user_id is None:
         if common_crud.insert_row(db, User, user.dict(), commit=True) is None:
-            raise ServiceError.database_fail("插入root用户失败")
+            raise ServiceError.database_fail()
     else:
         if not common_crud.update_row(
             db, User, user.dict() | {"is_deleted": False}, id=user_id, commit=True
         ):
-            raise ServiceError.database_fail("更新root用户失败")
+            raise ServiceError.database_fail()
 
 
 def get_user_staff_id(db: Session, user_id: int) -> str | None:
