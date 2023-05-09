@@ -3,9 +3,10 @@ from fastapi import APIRouter, Depends, Query
 from app.api import wrap_api_response
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.db import common_crud
 from app.db.crud import experiment as crud
-from app.db.orm import Experiment, ExperimentAssistant, ExperimentTag, User
+from app.db.orm import Experiment, ExperimentAssistant, ExperimentTag
 from app.model import convert
 from app.model.request import (
     DeleteModelRequest,
@@ -28,15 +29,6 @@ router = APIRouter(tags=["experiment"])
 @wrap_api_response
 def create_experiment(request: CreateExperimentRequest, ctx: ResearcherContext = Depends()) -> int:
     database_error = ServiceError.database_fail("创建实验失败")
-
-    # 检查没有被删除的用户ID
-    deleted_assistants = common_crud.get_deleted_rows(
-        ctx.db, User, [request.main_operator, *request.assistants]
-    )
-    if deleted_assistants is None:
-        raise database_error
-    elif len(deleted_assistants) > 0:
-        raise ServiceError.invalid_request("用户不存在")
 
     experiment_id = common_crud.insert_row(
         ctx.db, Experiment, request.dict(exclude={"assistants", "tags"}), commit=False
@@ -74,7 +66,7 @@ def get_experiment_info(
 ) -> ExperimentResponse:
     orm_experiment = crud.get_experiment_by_id(ctx.db, experiment_id)
     if orm_experiment is None:
-        raise ServiceError.invalid_request("实验不存在")
+        raise ServiceError.not_found(Entity.experiment)
 
     experiment = convert.experiment_orm_2_response(orm_experiment)
     return experiment

@@ -11,7 +11,6 @@ from starlette.status import (
 from app.common.localization import Entity, translate_entity
 from app.model.response import (
     CODE_DATABASE_FAIL,
-    CODE_FAIL,
     CODE_NOT_FOUND,
     CODE_REMOTE_SERVICE_ERROR,
     ResponseCode,
@@ -39,10 +38,6 @@ class ServiceError(Exception):
         )
 
     @staticmethod
-    def invalid_request(message: str):
-        return ServiceError(status_code=HTTP_400_BAD_REQUEST, code=CODE_FAIL, message=message)
-
-    @staticmethod
     def not_found(entity: Entity):
         entity_value = translate_entity(entity)
         return ServiceError(
@@ -59,6 +54,15 @@ class ServiceError(Exception):
             code=CODE_NOT_FOUND,
             message_id="page not found",
             format_args=(url,),
+        )
+
+    @staticmethod
+    def not_supported_file_type(file_type: str) -> "ServiceError":
+        return ServiceError(
+            status_code=HTTP_400_BAD_REQUEST,
+            code=ResponseCode.PARAMS_ERROR,
+            message_id="file type not supported",
+            format_args=(file_type,),
         )
 
     @staticmethod
@@ -103,7 +107,7 @@ class ServiceError(Exception):
         )
 
     @staticmethod
-    def remote_service_error(message: str):
+    def remote_service_error(message: str) -> "ServiceError":
         return ServiceError(
             status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             code=CODE_REMOTE_SERVICE_ERROR,

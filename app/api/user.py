@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 import app.db.crud.user as crud
-from app.api import wrap_api_response
+from app.api import check_user_exists, wrap_api_response
 from app.common.context import AdministratorContext, AllUserContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.localization import Entity
@@ -83,9 +83,7 @@ def get_users_by_page(
 def update_user_access_level(
     request: UpdateUserAccessLevelRequest, ctx: AdministratorContext = Depends()
 ) -> None:
-    user_exists = common_crud.exists_row(ctx.db, User, id_=request.id)
-    if not user_exists:
-        raise ServiceError.invalid_request("用户不存在")
+    check_user_exists(ctx.db, request.id)
 
     success = common_crud.update_row(
         ctx.db, User, {"access_level": request.access_level}, id=request.id, commit=True
