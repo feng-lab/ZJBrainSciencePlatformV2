@@ -64,6 +64,14 @@ class ServiceError(Exception):
         )
 
     @staticmethod
+    def invalid_nev_zip_file() -> "ServiceError":
+        return ServiceError(
+            status_code=HTTP_400_BAD_REQUEST,
+            code=ResponseCode.PARAMS_ERROR,
+            message_id="not valid nev zip file",
+        )
+
+    @staticmethod
     def not_login() -> "ServiceError":
         return ServiceError(
             status_code=HTTP_401_UNAUTHORIZED,

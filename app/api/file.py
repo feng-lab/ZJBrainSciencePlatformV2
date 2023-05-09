@@ -37,17 +37,22 @@ def upload_file(
     file: UploadFile = FastApiFile(),
     ctx: ResearcherContext = Depends(),
 ) -> int:
-    virtual_file_id, file_type, os_storage_path = save_file(
-        ctx.db, file, experiment_id, is_original
-    )
-    if file_type == "zip" and is_nev_zip_file(os_storage_path):
-        handle_nev_zip_file(ctx.db, os_storage_path, experiment_id, virtual_file_id)
+    virtual_file_id, os_storage_path = save_file(ctx.db, file, experiment_id, is_original)
+    if file.filename.endswith(".nev.zip"):
+        if is_nev_zip_file(os_storage_path):
+            handle_nev_zip_file(ctx.db, os_storage_path, experiment_id, virtual_file_id)
+        else:
+            ctx.db.rollback()
+            delete_os_file(os_storage_path)
+            raise ServiceError.invalid_nev_zip_file()
+    else:
+        ctx.db.commit()
     return virtual_file_id
 
 
 def save_file(
     db: Session, file: UploadFile, experiment_id: int, is_original: bool
-) -> tuple[int, str, Path]:
+) -> tuple[int, Path]:
     # 插入VirtualFile行
     name = file.filename
     file_type = get_filename_extension(name)
@@ -85,11 +90,11 @@ def save_file(
     ):
         raise ServiceError.database_fail()
     if not common_crud.update_row(
-        db, StorageFile, {"size": file_size}, id=storage_file_id, commit=True
+        db, StorageFile, {"size": file_size}, id=storage_file_id, commit=False
     ):
         raise ServiceError.database_fail()
 
-    return virtual_file_id, file_type, os_storage_path
+    return virtual_file_id, os_storage_path
 
 
 def is_nev_zip_file(path: Path) -> bool:

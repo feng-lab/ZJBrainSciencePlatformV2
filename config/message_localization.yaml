@@ -39,6 +39,10 @@
   zh_CN: '{}不是支持的文件类型'
   en_US: '{} is not supported file type'
 
+- message_id: not valid nev zip file
+  zh_CN: 上传的 .nev.zip 文件不是正确的 NEV 压缩包，含有其他文件
+  en_US: the upload .nev.zip file is not valid nev file, more files in zip found
+
 # 500 错误
 
 - message_id: database fail
