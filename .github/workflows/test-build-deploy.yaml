@@ -28,7 +28,7 @@ jobs:
         ports:
           - 8200:6379
       database:
-        image: zjlabbrainscience/zj-brain-science-platform-database:latest
+        image: cnife/zj-brain-science-platform-database:latest
         ports:
           - 8100:3306
         env:
