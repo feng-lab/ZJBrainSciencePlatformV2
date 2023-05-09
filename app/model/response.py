@@ -12,10 +12,15 @@ Data = TypeVar("Data")
 
 
 class ResponseCode(IntEnum):
+    # 成功
     SUCCESS = 0
+    # 服务端错误
     SERVER_ERROR = 1
+    # 参数错误
     PARAMS_ERROR = 2
+    # 鉴权错误
     UNAUTHORIZED = 3
+    # 会话过期
     SESSION_TIMEOUT = 4
 
 
