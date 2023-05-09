@@ -1,58 +1,58 @@
 # 成功
 - message_id: success
-  zh_CN: 成功
-  en_US: success
+  zh-CN: 成功
+  en-US: success
 
 # 400 错误
 
 - message_id: params error
-  zh_CN: '参数错误: {}'
-  en_US: 'params error: {}'
+  zh-CN: '参数错误: {}'
+  en-US: 'params error: {}'
 
 - message_id: page not found
-  zh_CN: '没有该页面: {}'
-  en_US: 'page not found: {}'
+  zh-CN: '没有该页面: {}'
+  en-US: 'page not found: {}'
 
 - message_id: not found
-  zh_CN: '{}不存在'
-  en_US: '{} cannot be found'
+  zh-CN: '{}不存在'
+  en-US: '{} cannot be found'
 
 # 401 错误
 
 - message_id: not login
-  zh_CN: 用户未登录
-  en_US: user doesn't login
+  zh-CN: 用户未登录
+  en-US: user doesn't login
 
 - message_id: wrong password
-  zh_CN: 密码错误
-  en_US: wrong password
+  zh-CN: 密码错误
+  en-US: wrong password
 
 - message_id: no enough access level
-  zh_CN: 用户权限不足
-  en_US: user doesn't have enough access level
+  zh-CN: 用户权限不足
+  en-US: user doesn't have enough access level
 
 - message_id: session timeout
-  zh_CN: 会话已过期，请重新登录
-  en_US: session timeout, please login
+  zh-CN: 会话已过期，请重新登录
+  en-US: session timeout, please login
 
 - message_id: file type not supported
-  zh_CN: '{}不是支持的文件类型'
-  en_US: '{} is not supported file type'
+  zh-CN: '{}不是支持的文件类型'
+  en-US: '{} is not supported file type'
 
 - message_id: not valid nev zip file
-  zh_CN: 上传的 .nev.zip 文件不是正确的 NEV 压缩包，含有其他文件
-  en_US: the upload .nev.zip file is not valid nev file, more files in zip found
+  zh-CN: 上传的 .nev.zip 文件不是正确的 NEV 压缩包，含有其他文件
+  en-US: the upload .nev.zip file is not valid nev file, more files in zip found
 
 # 500 错误
 
 - message_id: database fail
-  zh_CN: 数据库错误
-  en_US: database fail
+  zh-CN: 数据库错误
+  en-US: database fail
 
 - message_id: inner server error
-  zh_CN: '服务端错误: {}'
-  en_US: 'inner server error: {}'
+  zh-CN: '服务端错误: {}'
+  en-US: 'inner server error: {}'
 
 - message_id: remote service error
-  zh_CN: '远程服务错误: {}'
-  en_US: 'remote service error: {}'
+  zh-CN: '远程服务错误: {}'
+  en-US: 'remote service error: {}'

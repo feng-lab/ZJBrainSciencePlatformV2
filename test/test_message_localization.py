@@ -8,7 +8,7 @@ from app.model.schema import UserResponse
 
 @pytest.mark.parametrize(
     ["locale", "expect_message"],
-    [("zh_CN", "成功"), ("en_US", "success"), ("invalid language", "成功")],
+    [("zh-CN", "成功"), ("en-US", "success"), ("invalid language", "成功")],
 )
 def test_content_language_header(
     logon_root_headers: dict[str, str], locale: str, expect_message: str
@@ -30,7 +30,7 @@ def test_no_content_language_header(logon_root_headers: dict[str, str]) -> None:
 
 
 @pytest.mark.parametrize(
-    ["locale", "expect_message"], [("zh_CN", "用户不存在"), ("en_US", "user cannot be found")]
+    ["locale", "expect_message"], [("zh-CN", "用户不存在"), ("en-US", "user cannot be found")]
 )
 def test_not_found(logon_root_headers: dict[str, str], locale: str, expect_message: str) -> None:
     headers = logon_root_headers | {"Content-Language": locale}

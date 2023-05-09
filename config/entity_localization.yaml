@@ -1,27 +1,27 @@
 - entity_id: user
-  zh_CN: 用户
-  en_US: user
+  zh-CN: 用户
+  en-US: user
 
 - entity_id: file
-  zh_CN: 文件
-  en_US: file
+  zh-CN: 文件
+  en-US: file
 
 - entity_id: experiment
-  zh_CN: 实验
-  en_US: experiment
+  zh-CN: 实验
+  en-US: experiment
 
 - entity_id: device
-  zh_CN: 设备
-  en_US: device
+  zh-CN: 设备
+  en-US: device
 
 - entity_id: human subject
-  zh_CN: 被试者
-  en_US: human subject
+  zh-CN: 被试者
+  en-US: human subject
 
 - entity_id: task
-  zh_CN: 任务
-  en_US: task
+  zh-CN: 任务
+  en-US: task
 
 - entity_id: paradigm
-  zh_CN: 范式
-  en_US: paradigm
+  zh-CN: 范式
+  en-US: paradigm

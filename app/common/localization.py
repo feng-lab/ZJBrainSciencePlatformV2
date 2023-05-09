@@ -9,8 +9,8 @@ from app.common.config import config
 
 
 class MessageLocale(StrEnum):
-    zh_CN = "zh_CN"
-    en_US = "en_US"
+    zh_CN = "zh-CN"
+    en_US = "en-US"
 
 
 class Entity(StrEnum):
