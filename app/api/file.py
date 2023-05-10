@@ -38,15 +38,8 @@ def upload_file(
     ctx: ResearcherContext = Depends(),
 ) -> int:
     virtual_file_id, os_storage_path = save_file(ctx.db, file, experiment_id, is_original)
-    if file.filename.endswith(".nev.zip"):
-        if is_nev_zip_file(os_storage_path):
-            handle_nev_zip_file(ctx.db, os_storage_path, experiment_id, virtual_file_id)
-        else:
-            ctx.db.rollback()
-            delete_os_file(os_storage_path)
-            raise ServiceError.invalid_nev_zip_file()
-    else:
-        ctx.db.commit()
+    if file.filename.endswith(".nev.zip") and is_nev_zip_file(os_storage_path):
+        handle_nev_zip_file(ctx.db, os_storage_path, experiment_id, virtual_file_id)
     return virtual_file_id
 
 
@@ -90,7 +83,7 @@ def save_file(
     ):
         raise ServiceError.database_fail()
     if not common_crud.update_row(
-        db, StorageFile, {"size": file_size}, id=storage_file_id, commit=False
+        db, StorageFile, {"size": file_size}, id=storage_file_id, commit=True
     ):
         raise ServiceError.database_fail()
 

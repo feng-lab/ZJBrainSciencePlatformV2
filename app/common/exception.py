@@ -64,11 +64,11 @@ class ServiceError(Exception):
         )
 
     @staticmethod
-    def invalid_nev_zip_file() -> "ServiceError":
+    def cannot_display_algorithm_file() -> "ServiceError":
         return ServiceError(
             status_code=HTTP_400_BAD_REQUEST,
             code=ResponseCode.PARAMS_ERROR,
-            message_id="not valid nev zip file",
+            message_id="cannot display algorithm file",
         )
 
     @staticmethod

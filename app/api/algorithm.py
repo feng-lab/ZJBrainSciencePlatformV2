@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import app.db.crud.file as file_crud
 import app.external.model as rpc_model
 from app.api import wrap_api_response
+from app.common.config import config
 from app.common.context import ResearcherContext
 from app.common.exception import ServiceError
 from app.common.localization import Entity
@@ -71,7 +72,19 @@ def get_neural_spike_info(
 
 
 def get_file_info(db: Session, file_id: ID) -> rpc_model.FileInfo:
-    file_info = file_crud.get_algorithm_file_info(db, file_id)
-    if file_info is None:
+    virtual_file = file_crud.get_virtual_file_for_file_info(db, file_id)
+    if virtual_file is None:
         raise ServiceError.not_found(Entity.file)
-    return file_info
+    if not rpc_model.FileType.is_valid_file_type(virtual_file.file_type):
+        raise ServiceError.cannot_display_algorithm_file()
+
+    file_type = rpc_model.FileType(virtual_file.file_type)
+    storage_path = None
+    if file_type is rpc_model.FileType.NEV:
+        for storage_file in virtual_file.storage_files:
+            if not storage_file.storage_path.endswith(".zip"):
+                storage_path = storage_file.storage_path
+                break
+    else:
+        storage_path = virtual_file.storage_files[0].storage_path
+    return rpc_model.FileInfo(id=file_id, path=str(config.FILE_ROOT / storage_path), type=file_type)

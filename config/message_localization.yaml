@@ -39,9 +39,9 @@
   zh-CN: '{}不是支持的文件类型'
   en-US: '{} is not supported file type'
 
-- message_id: not valid nev zip file
-  zh-CN: 上传的 .nev.zip 文件不是正确的 NEV 压缩包，含有其他文件
-  en-US: the upload .nev.zip file is not valid nev file, more files in zip found
+- message_id: cannot display algorithm file
+  zh-CN: 不支持展示该类型文件内容
+  en-US: cannot display content of this type of file
 
 # 500 错误
 

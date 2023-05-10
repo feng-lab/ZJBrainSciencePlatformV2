@@ -60,7 +60,7 @@ DATABASE_URL=
 
 case "$command" in
 up-depends)
-  args=(up -d database cache)
+  args=(up -d --force-recreate database cache)
   ;;
 alembic)
   args=(run --rm platform alembic upgrade head)
