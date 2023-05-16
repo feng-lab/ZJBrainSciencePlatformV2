@@ -79,6 +79,12 @@ class UserResponse(UserBase, UserSessionMixin, BaseModelInDB):
         orm_mode = True
 
 
+class UserSearch(PageParm):
+    username: LongVarchar | None = None
+    staff_id: LongVarchar | None = None
+    access_level: int | None = Field(None, ge=0)
+
+
 class NotificationBase(BaseModel):
     type: NotificationType
     receiver: int = Field(ge=0)
@@ -97,6 +103,13 @@ class NotificationInDB(NotificationCreate, BaseModelInDB):
 
 class NotificationResponse(NotificationInDB):
     creator_name: str
+
+
+class NotificationSearch(PageParm):
+    notification_type: NotificationType | None = None
+    status: NotificationStatus | None = None
+    create_time_start: datetime | None = None
+    create_time_end: datetime | None = None
 
 
 class TaskStepStatusNotification(BaseModel):

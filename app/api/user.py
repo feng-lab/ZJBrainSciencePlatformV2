@@ -8,13 +8,14 @@ from app.common.localization import Entity
 from app.common.user_auth import hash_password, verify_password
 from app.db import cache, common_crud
 from app.db.orm import User
+from app.model import convert
 from app.model.request import (
     DeleteModelRequest,
     UpdatePasswordRequest,
     UpdateUserAccessLevelRequest,
 )
 from app.model.response import NoneResponse, Page, Response
-from app.model.schema import CreateUserRequest, PageParm, UserResponse
+from app.model.schema import CreateUserRequest, UserResponse, UserSearch
 
 router = APIRouter(tags=["user"])
 
@@ -68,14 +69,11 @@ def get_user_info(
 )
 @wrap_api_response
 def get_users_by_page(
-    username: str | None = Query(description="用户名，模糊查询", max_length=255, default=None),
-    staff_id: str | None = Query(description="员工号，模糊查询", max_length=255, default=None),
-    access_level: int | None = Query(description="权限级别", ge=0, default=None),
-    page_param: PageParm = Depends(),
-    ctx: ResearcherContext = Depends(),
+    search: UserSearch = Depends(), ctx: ResearcherContext = Depends()
 ) -> Page[UserResponse]:
-    paged_data = crud.search_users(ctx.db, username, staff_id, access_level, page_param)
-    return paged_data
+    total, orm_users = crud.search_users(ctx.db, search)
+    user_responses = convert.map_list(convert.user_orm_2_response, orm_users)
+    return Page(total=total, items=user_responses)
 
 
 @router.post("/api/updateUserAccessLevel", description="修改用户权限", response_model=NoneResponse)

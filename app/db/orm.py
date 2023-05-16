@@ -72,6 +72,8 @@ class Notification(Base, ModelMixin):
     )
     content: Mapped[str] = mapped_column(Text, nullable=False, comment="消息内容")
 
+    creator_user: Mapped[User] = relationship("User", viewonly=True, foreign_keys=[creator])
+
 
 @table_repr
 class ExperimentAssistant(Base):

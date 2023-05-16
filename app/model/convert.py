@@ -4,7 +4,17 @@ from typing import Any, Callable, Iterable, TypeVar
 from app.common.config import config
 from app.db import OrmModel
 from app.db.crud.device import SearchDeviceRow
-from app.db.orm import Device, Experiment, HumanSubject, Paradigm, Task, TaskStep, User, VirtualFile
+from app.db.orm import (
+    Device,
+    Experiment,
+    HumanSubject,
+    Notification,
+    Paradigm,
+    Task,
+    TaskStep,
+    User,
+    VirtualFile,
+)
 from app.model.schema import (
     DeviceInfo,
     DeviceInfoWithIndex,
@@ -12,6 +22,7 @@ from app.model.schema import (
     ExperimentSimpleResponse,
     FileResponse,
     HumanSubjectResponse,
+    NotificationResponse,
     ParadigmInDB,
     ParadigmResponse,
     TaskBaseInfo,
@@ -19,6 +30,7 @@ from app.model.schema import (
     TaskSourceFileResponse,
     TaskStepInfo,
     UserInfo,
+    UserResponse,
 )
 
 A = TypeVar("A")
@@ -32,11 +44,14 @@ def map_list(function: Callable[[A], B], items: Iterable[A] | None) -> list[B]:
 
 
 # noinspection PyTypeChecker
-def orm_2_dict(orm: OrmModel, exclude: set[str] | None = None) -> dict[str, Any]:
+def orm_2_dict(
+    orm: OrmModel, *, include: set[str] | None = None, exclude: set[str] | None = None
+) -> dict[str, Any]:
     return {
         column.name: getattr(orm, column.name)
         for column in orm.__table__.columns
-        if exclude is None or column.name not in exclude
+        if ((not include) or (column.name in include))
+        and ((not exclude) or (column.name not in exclude))
     }
 
 
@@ -104,6 +119,32 @@ def file_experiment_orm_2_task_source_response(
 
 def user_orm_2_info(user: User) -> UserInfo:
     return UserInfo(id=user.id, username=user.username, staff_id=user.staff_id)
+
+
+def user_orm_2_response(user: User) -> UserResponse:
+    return UserResponse(
+        **orm_2_dict(
+            user,
+            include={
+                "id",
+                "gmt_create",
+                "gmt_modified",
+                "is_deleted",
+                "last_login_time",
+                "last_logout_time",
+                "username",
+                "staff_id",
+                "access_level",
+            },
+        )
+    )
+
+
+def notification_orm_2_response(notification: Notification) -> NotificationResponse:
+    return NotificationResponse(
+        **orm_2_dict(notification, exclude={"creator_user"}),
+        creator_name=notification.creator_user.username,
+    )
 
 
 def task_step_orm_2_info(task_step: TaskStep) -> TaskStepInfo:

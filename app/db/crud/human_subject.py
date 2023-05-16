@@ -6,7 +6,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session, joinedload
 
 from app.db import common_crud
-from app.db.crud import query_paged_data
+from app.db.crud import query_pages
 from app.db.orm import Experiment, ExperimentHumanSubject, HumanSubject, HumanSubjectIndex, User
 from app.model.schema import HumanSubjectSearch
 
@@ -70,7 +70,7 @@ def search_human_subjects(
     if not search.include_deleted:
         base_stmt = base_stmt.where(HumanSubject.is_deleted == False)
 
-    return query_paged_data(db, base_stmt, search.offset, search.limit)
+    return query_pages(db, base_stmt, search.offset, search.limit)
 
 
 def list_experiment_human_subjects(db: Session, experiment_id: int) -> Sequence[int]:

@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, Query
 
 import app.db.crud.notification as crud
@@ -9,10 +7,16 @@ from app.common.context import HumanSubjectContext
 from app.common.exception import ServiceError
 from app.db import common_crud
 from app.db.orm import Notification
-from app.model.enum_filed import NotificationStatus, NotificationType
+from app.model import convert
+from app.model.enum_filed import NotificationStatus
 from app.model.request import MarkNotificationsAsReadRequest
 from app.model.response import Page, Response
-from app.model.schema import NotificationBase, NotificationCreate, NotificationResponse, PageParm
+from app.model.schema import (
+    NotificationBase,
+    NotificationCreate,
+    NotificationResponse,
+    NotificationSearch,
+)
 
 router = APIRouter(tags=["notification"])
 
@@ -48,8 +52,8 @@ def get_recent_unread_notifications(
     count: int = Query(description="数量", default=config.GET_RECENT_NOTIFICATIONS_COUNT, ge=0),
     ctx: HumanSubjectContext = Depends(),
 ) -> list[NotificationResponse]:
-    page_param = PageParm(offset=0, limit=count, include_deleted=False)
-    return crud.list_notifications(ctx.db, ctx.user_id, NotificationStatus.unread, page_param)
+    orm_notifications = crud.list_recent_unread_notifications(ctx.db, ctx.user_id, count)
+    return convert.map_list(convert.notification_orm_2_response, orm_notifications)
 
 
 @router.get(
@@ -59,24 +63,13 @@ def get_recent_unread_notifications(
 )
 @wrap_api_response
 def get_notifications_by_page(
-    notification_type: NotificationType
-    | None = Query(alias="type", description="通知类型", default=None),
-    status: NotificationStatus | None = Query(description="通知状态", default=None),
-    create_time_start: datetime | None = Query(description="筛选通知发送时间的开始时间", default=None),
-    create_time_end: datetime | None = Query(description="筛选通知发送时间的结束时间", default=None),
-    page_param: PageParm = Depends(),
-    ctx: HumanSubjectContext = Depends(),
+    search: NotificationSearch = Depends(), ctx: HumanSubjectContext = Depends()
 ) -> Page[NotificationResponse]:
-    paged_data = crud.search_notifications(
-        ctx.db,
-        ctx.user_id,
-        notification_type,
-        status,
-        create_time_start,
-        create_time_end,
-        page_param,
+    total, orm_notifications = crud.search_notifications(ctx.db, search, ctx.user_id)
+    notification_responses = convert.map_list(
+        convert.notification_orm_2_response, orm_notifications
     )
-    return paged_data
+    return Page(total=total, items=notification_responses)
 
 
 @router.post(
@@ -99,4 +92,4 @@ def mark_notifications_as_read(
     )
     if not success:
         raise ServiceError.database_fail()
-    return crud.list_unread_notifications(ctx.db, ctx.user_id, request.is_all, notification_ids)
+    return crud.list_unread_notification_ids(ctx.db, ctx.user_id, request.is_all, notification_ids)

@@ -1,30 +1,26 @@
+from typing import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.common.exception import ServiceError
 from app.db import common_crud
-from app.db.crud import SearchModel
+from app.db.crud import query_pages
 from app.db.orm import User
-from app.model.response import Page
-from app.model.schema import PageParm, UserAuth, UserCreate, UserResponse
+from app.model.schema import UserAuth, UserCreate, UserSearch
 
 
-def search_users(
-    db: Session,
-    username: str | None,
-    staff_id: str | None,
-    access_level: int | None,
-    page_param: PageParm,
-) -> Page[UserResponse]:
-    return (
-        SearchModel(db, User)
-        .where_contains(User.username, username)
-        .where_contains(User.staff_id, staff_id)
-        .where_eq(User.access_level, access_level)
-        .page_param(page_param)
-        .map_model_with(lambda row: UserResponse.from_orm(row[0]))
-        .paged_data(UserResponse)
-    )
+def search_users(db: Session, search: UserSearch) -> tuple[int, Sequence[User]]:
+    stmt = select(User)
+    if search.username:
+        stmt = stmt.where(User.username.icontains(search.username))
+    if search.staff_id:
+        stmt = stmt.where(User.staff_id.icontains(search.staff_id))
+    if search.access_level:
+        stmt = stmt.where(User.access_level == search.access_level)
+    if not search.include_deleted:
+        stmt = stmt.where(User.is_deleted == False)
+    return query_pages(db, stmt, search.offset, search.limit)
 
 
 def get_user_access_level(db: Session, user_id: int) -> int | None:

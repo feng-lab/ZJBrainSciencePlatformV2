@@ -4,7 +4,7 @@ from typing import Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session, immediateload, load_only
 
-from app.db.crud import query_paged_data
+from app.db.crud import query_pages
 from app.db.orm import StorageFile, VirtualFile
 from app.model.schema import FileSearch
 
@@ -41,7 +41,7 @@ def search_files(db: Session, search: FileSearch) -> tuple[int, Sequence[Virtual
     if not search.include_deleted:
         base_stmt = base_stmt.where(VirtualFile.is_deleted == False)
 
-    return query_paged_data(db, base_stmt, search.offset, search.limit)
+    return query_pages(db, base_stmt, search.offset, search.limit)
 
 
 def get_file_download_info(db: Session, virtual_file_id: int) -> tuple[str | None, str | None]:

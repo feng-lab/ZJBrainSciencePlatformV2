@@ -1,13 +1,12 @@
-from datetime import datetime
+from typing import Sequence
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, immediateload
 
-from app.db.crud import SearchModel
+from app.db.crud import query_pages
 from app.db.orm import Notification, User
-from app.model.enum_filed import NotificationStatus, NotificationType
-from app.model.response import Page
-from app.model.schema import NotificationInDB, NotificationResponse, PageParm
+from app.model.enum_filed import NotificationStatus
+from app.model.schema import NotificationSearch
 
 
 def get_notification_unread_count(db: Session, user_id: int) -> int:
@@ -20,58 +19,45 @@ def get_notification_unread_count(db: Session, user_id: int) -> int:
     return db.execute(stmt).scalar()
 
 
-def build_search_notification(db: Session) -> SearchModel:
-    return (
-        SearchModel(db, Notification)
-        .select(Notification, User.username)
-        .join(User, Notification.receiver == User.id)
-        .map_model_with(
-            lambda row: NotificationResponse(
-                **NotificationInDB.from_orm(row[0]).dict(), creator_name=row[1]
-            )
-        )
-    )
-
-
 def search_notifications(
-    db: Session,
-    user_id: int,
-    notification_type: NotificationType | None,
-    status: NotificationStatus | None,
-    create_time_start: datetime | None,
-    create_time_end: datetime | None,
-    page_param: PageParm,
-) -> Page[NotificationResponse]:
-    return (
-        build_search_notification(db)
-        .page_param(page_param)
-        .where_eq(Notification.receiver, user_id)
-        .where_eq(Notification.type, notification_type)
-        .where_eq(Notification.status, status)
-        .where_ge(Notification.gmt_create, create_time_start)
-        .where_le(Notification.gmt_create, create_time_end)
+    db: Session, search: NotificationSearch, user_id: int
+) -> tuple[int, Sequence[Notification]]:
+    stmt = (
+        select(Notification)
+        .options(immediateload(Notification.creator_user).load_only(User.username))
+        .where(Notification.receiver == user_id)
         .order_by(Notification.gmt_create.desc())
-        .paged_data(NotificationResponse)
     )
+    if search.notification_type:
+        stmt = stmt.where(Notification.type == search.notification_type)
+    if search.status:
+        stmt = stmt.where(Notification.status == search.status)
+    if search.create_time_start:
+        stmt = stmt.where(Notification.gmt_create >= search.create_time_start)
+    if search.create_time_end:
+        stmt = stmt.where(Notification.gmt_create <= search.create_time_end)
+    if not search.include_deleted:
+        stmt = stmt.where(Notification.is_deleted == False)
+    return query_pages(db, stmt, search.offset, search.limit)
 
 
-def list_notifications(
-    db: Session, user_id: int, status: NotificationStatus | None, page_param: PageParm
-) -> list[NotificationResponse]:
-    return (
-        build_search_notification(db)
-        .page_param(page_param)
-        .where_eq(Notification.receiver, user_id)
-        .where_eq(Notification.status, status)
+def list_recent_unread_notifications(
+    db: Session, user_id: int, count: int
+) -> Sequence[Notification]:
+    stmt = (
+        select(Notification)
+        .options(immediateload(Notification.creator_user).load_only(User.username))
+        .where(Notification.receiver == user_id, Notification.status == NotificationStatus.unread)
+        .limit(count)
         .order_by(Notification.gmt_create.desc())
-        .items(NotificationResponse)
     )
+    notifications = db.execute(stmt).scalars().all()
+    return notifications
 
 
-def list_unread_notifications(
+def list_unread_notification_ids(
     db: Session, user_id: int, is_all: bool, msg_ids: list[int]
 ) -> list[int]:
-    # noinspection PyTypeChecker
     stmt = select(Notification.id).where(
         Notification.receiver == user_id,
         Notification.is_deleted == False,

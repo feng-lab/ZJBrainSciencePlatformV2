@@ -3,7 +3,7 @@ from typing import Sequence
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, immediateload, joinedload, load_only, noload
 
-from app.db.crud import query_paged_data
+from app.db.crud import query_pages
 from app.db.crud.user import load_user_info
 from app.db.orm import Experiment, Task, TaskStep, VirtualFile
 from app.model.schema import TaskSearch, TaskSourceFileSearch
@@ -31,7 +31,7 @@ def search_source_files(
         base_stmt = base_stmt.where(Experiment.name.icontains(search.experiment_name))
     if not search.include_deleted:
         base_stmt = base_stmt.where(Experiment.is_deleted == False, VirtualFile.is_deleted == False)
-    return query_paged_data(db, base_stmt, search.offset, search.limit, scalars=False)
+    return query_pages(db, base_stmt, search.offset, search.limit, scalars=False)
 
 
 def get_task_info_by_id(db: Session, task_id: int) -> Task | None:
@@ -66,7 +66,7 @@ def search_task(db: Session, search: TaskSearch) -> tuple[int, Sequence[Task]]:
     if search.creator is not None:
         base_stmt = base_stmt.where(Task.creator == search.creator)
 
-    return query_paged_data(db, base_stmt, search.offset, search.limit)
+    return query_pages(db, base_stmt, search.offset, search.limit)
 
 
 def get_steps_by_task_id(db: Session, task_id: int) -> Sequence[TaskStep]:
