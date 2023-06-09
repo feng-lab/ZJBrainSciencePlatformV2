@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from app.api import wrap_api_response
 from app.common.config import config
 from app.common.context import AllUserContext
 from app.common.exception import ServiceError
@@ -14,7 +15,7 @@ from app.common.user_auth import (
 from app.common.util import now
 from app.db import common_crud, get_db_session
 from app.db.orm import User
-from app.model.response import LoginResponse, NoneResponse, wrap_api_response
+from app.model.response import LoginResponse, NoneResponse
 
 router = APIRouter(tags=["auth"])
 
@@ -32,7 +33,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     # 更新最近登录时间
     success = common_crud.update_row(db, User, {"last_login_time": now()}, id=user_id, commit=True)
     if not success:
-        raise ServiceError.database_fail("登录失败")
+        raise ServiceError.database_fail()
 
     return LoginResponse(access_token=access_token, token_type=TOKEN_TYPE)
 
@@ -44,4 +45,4 @@ def logout(ctx: AllUserContext = Depends()) -> None:
         ctx.db, User, {"last_logout_time": now()}, id=ctx.user_id, commit=True
     )
     if not success:
-        raise ServiceError.database_fail("登出失败")
+        raise ServiceError.database_fail()

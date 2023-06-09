@@ -18,7 +18,7 @@ def test_login_wrong_username_or_password(username: str, password: str):
     r = client.post("/api/login", data=login_form)
     assert r.status_code == 401
     ro = NoneResponse(**r.json())
-    assert ro.code == 1
+    assert ro.code == 3
 
 
 def test_logout(logon_root_headers: dict[str, str]):
@@ -32,4 +32,4 @@ def test_logout_unauthorized():
     r = client.post("/api/logout")
     assert r.status_code == 401
     ro = NoneResponse(**r.json())
-    assert ro.code == 1
+    assert ro.code == 3

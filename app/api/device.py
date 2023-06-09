@@ -3,14 +3,15 @@ import itertools
 from fastapi import APIRouter, Depends, Query
 
 import app.db.crud.device as crud
-from app.api import check_device_exists, check_experiment_exists
+from app.api import check_device_exists, check_experiment_exists, wrap_api_response
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.db import common_crud
 from app.db.orm import Device, ExperimentDevice
 from app.model import convert
 from app.model.request import DeleteDevicesRequest, UpdateDevicesInExperimentRequest
-from app.model.response import NoneResponse, PagedData, Response, wrap_api_response
+from app.model.response import NoneResponse, Page, Response
 from app.model.schema import (
     CreateDeviceRequest,
     DeviceInfo,
@@ -28,7 +29,7 @@ def create_device(request: CreateDeviceRequest, ctx: ResearcherContext = Depends
     device_dict = request.dict()
     device_id = common_crud.insert_row(ctx.db, Device, device_dict, commit=True)
     if device_id is None:
-        raise ServiceError.database_fail("创建设备失败")
+        raise ServiceError.database_fail()
     return device_id
 
 
@@ -39,7 +40,7 @@ def delete_device(request: DeleteDevicesRequest, ctx: ResearcherContext = Depend
         ctx.db, Device, ids=request.device_ids, commit=True
     )
     if not success:
-        raise ServiceError.database_fail("删除设备失败")
+        raise ServiceError.database_fail()
 
 
 @router.post("/api/addDevicesInExperiment", description="将设备添加到实验中", response_model=NoneResponse)
@@ -63,7 +64,7 @@ def add_devices_in_experiment(
         ]
         success = common_crud.bulk_insert_rows(ctx.db, ExperimentDevice, add_devices, commit=True)
         if not success:
-            raise ServiceError.database_fail("添加实验设备失败")
+            raise ServiceError.database_fail()
 
 
 @router.delete(
@@ -85,7 +86,7 @@ def delete_devices_from_experiment(
         commit=True,
     )
     if not success:
-        raise ServiceError.database_fail("从设备中删除设备失败")
+        raise ServiceError.database_fail()
 
 
 @router.get("/api/getDeviceInfo", description="获取设备详情", response_model=Response[DeviceInfo])
@@ -95,7 +96,7 @@ def get_device_info(
 ) -> DeviceInfo:
     orm_device = common_crud.get_row_by_id(ctx.db, Device, device_id)
     if orm_device is None:
-        raise ServiceError.not_found("未找到设备")
+        raise ServiceError.not_found(Entity.device)
     device_info = convert.device_orm_2_info(orm_device)
     return device_info
 
@@ -103,15 +104,15 @@ def get_device_info(
 @router.get(
     "/api/getDevicesByPage",
     description="分页获取设备详情",
-    response_model=Response[PagedData[DeviceInfoWithIndex]],
+    response_model=Response[Page[DeviceInfoWithIndex]],
 )
 @wrap_api_response
 def get_devices_by_page(
     search: DeviceSearch = Depends(), ctx: HumanSubjectContext = Depends()
-) -> PagedData[DeviceInfoWithIndex]:
+) -> Page[DeviceInfoWithIndex]:
     total, orm_devices = crud.search_devices(ctx.db, search)
     device_infos = convert.map_list(convert.device_search_row_2_info_with_index, orm_devices)
-    return PagedData(total=total, items=device_infos)
+    return Page(total=total, items=device_infos)
 
 
 @router.post("/api/updateDevice", description="更新设备", response_model=NoneResponse)
@@ -122,4 +123,4 @@ def update_device(request: UpdateDeviceRequest, ctx: ResearcherContext = Depends
     update_dict = request.dict(exclude={"id"})
     success = common_crud.update_row(ctx.db, Device, update_dict, id=request.id, commit=True)
     if not success:
-        raise ServiceError.database_fail("更新设备失败")
+        raise ServiceError.database_fail()

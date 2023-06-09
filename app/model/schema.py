@@ -2,8 +2,20 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field, validator
 
-from app.db.orm import ABOBloodType, Experiment, Gender, MaritalStatus, Notification
-from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
+from app.model.enum_filed import (
+    ABOBloodType,
+    ExperimentType,
+    Gender,
+    GetExperimentsByPageSortBy,
+    GetExperimentsByPageSortOrder,
+    MaritalStatus,
+    NotificationStatus,
+    NotificationType,
+    TaskStatus,
+    TaskStepType,
+    TaskType,
+)
+from app.model.field import ID, JsonDict, LongVarchar, ShortVarchar, Text
 
 
 class ModelId(BaseModel):
@@ -67,15 +79,21 @@ class UserResponse(UserBase, UserSessionMixin, BaseModelInDB):
         orm_mode = True
 
 
+class UserSearch(PageParm):
+    username: LongVarchar | None = None
+    staff_id: LongVarchar | None = None
+    access_level: int | None = Field(None, ge=0)
+
+
 class NotificationBase(BaseModel):
-    type: Notification.Type
+    type: NotificationType
     receiver: int = Field(ge=0)
     content: str
 
 
 class NotificationCreate(NotificationBase):
     creator: int = Field(ge=0)
-    status: Notification.Status
+    status: NotificationStatus
 
 
 class NotificationInDB(NotificationCreate, BaseModelInDB):
@@ -87,6 +105,13 @@ class NotificationResponse(NotificationInDB):
     creator_name: str
 
 
+class NotificationSearch(PageParm):
+    notification_type: NotificationType | None = None
+    status: NotificationStatus | None = None
+    create_time_start: datetime | None = None
+    create_time_end: datetime | None = None
+
+
 class TaskStepStatusNotification(BaseModel):
     task_id: int
     task_name: str
@@ -96,7 +121,7 @@ class TaskStepStatusNotification(BaseModel):
 class ExperimentBase(BaseModel):
     name: str = Field(max_length=255)
     description: str
-    type: Experiment.Type
+    type: ExperimentType
     location: str = Field(max_length=255)
     start_at: datetime
     end_at: datetime
@@ -113,10 +138,7 @@ class ExperimentBase(BaseModel):
 
 class CreateExperimentRequest(ExperimentBase):
     assistants: list[int] = Field(default_factory=list)
-
-
-class ExperimentCreate(ExperimentBase):
-    pass
+    tags: list[str] = Field(default_factory=list)
 
 
 class ExperimentInDB(ExperimentBase, BaseModelInDB):
@@ -134,14 +156,15 @@ class UserInfo(BaseModel):
 
 
 class ExperimentSearch(PageParm):
-    search: str = ""
+    name: str | None
+    type: str | None
+    tag: str | None
     sort_by: GetExperimentsByPageSortBy = GetExperimentsByPageSortBy.START_TIME
     sort_order: GetExperimentsByPageSortOrder = GetExperimentsByPageSortOrder.DESC
 
 
 class ExperimentSimpleResponse(ExperimentBase, ModelId):
-    class Config:
-        orm_mode = True
+    tags: list[str]
 
 
 class ExperimentResponse(ExperimentSimpleResponse):
@@ -166,7 +189,7 @@ class FileBase(BaseModel):
     experiment_id: int = Field(ge=0)
     paradigm_id: int | None = Field(ge=0)
     name: str = Field(max_length=255)
-    extension: str = Field(max_length=50)
+    file_type: str = Field(max_length=50)
     size: float
     is_original: bool
 
@@ -180,7 +203,7 @@ class FileSearch(PageParm, ExperimentIdSearch):
     file_type: str = Field("", max_length=255)
 
 
-class FileResponse(FileBase, BaseModelInDB):
+class FileResponse(FileBase, ModelId):
     url: str | None
 
     class Config:
@@ -247,6 +270,7 @@ class UpdateDeviceRequest(DeviceBase, ModelId):
 
 
 class HumanSubjectSearchable(BaseModel):
+    name: ShortVarchar | None
     gender: Gender | None
     abo_blood_type: ABOBloodType | None
     marital_status: MaritalStatus | None
@@ -279,3 +303,64 @@ class HumanSubjectResponse(HumanSubjectUpdate, UserNameStaffId):
 
 class HumanSubjectSearch(PageParm, HumanSubjectSearchable, ExperimentIdSearch):
     pass
+
+
+class TaskSourceFileSearch(PageParm):
+    name: str | None = Field(None, max_length=255)
+    file_type: str | None = Field(None, max_length=50)
+    experiment_name: str | None = Field(None, max_length=255)
+
+
+class TaskSourceFileResponse(ModelId):
+    name: str = Field(max_length=255)
+    file_type: str = Field(max_length=50)
+    experiment_id: int = Field(ge=0)
+    experiment_name: str = Field(max_length=255)
+
+
+class TaskBase(BaseModel):
+    name: LongVarchar
+    description: Text
+    source_file: ID
+
+
+class TaskStepCreate(BaseModel):
+    name: LongVarchar
+    step_type: TaskStepType
+    parameters: JsonDict
+
+
+class TaskStepBase(TaskStepCreate):
+    task_id: ID
+
+
+class TaskCreate(TaskBase):
+    steps: list[TaskStepCreate] = Field(default_factory=list)
+
+
+class TaskStepInfo(TaskStepBase):
+    index: int = Field(ge=1)
+    status: TaskStatus
+    start_at: datetime | None
+    end_at: datetime | None
+
+
+class TaskBaseInfo(TaskBase):
+    type: TaskType
+    status: TaskStatus
+    start_at: datetime | None
+    end_at: datetime | None
+    creator: UserInfo
+
+
+class TaskInfo(TaskBaseInfo):
+    steps: list[TaskStepInfo]
+
+
+class TaskSearch(PageParm):
+    name: LongVarchar | None
+    type: TaskType | None
+    source_file: int | None
+    status: TaskStatus | None
+    start_at: date | None
+    creator: int | None

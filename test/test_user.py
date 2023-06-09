@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from app.model.response import NoneResponse, PagedData, Response
+from app.model.response import NoneResponse, Page, Response
 from app.model.schema import UserResponse
 
 
@@ -65,7 +65,7 @@ def test_get_user_info(created_user: dict[str, Any], logon_root_headers: dict[st
 def test_get_users_by_page(params: dict[str, str], logon_root_headers: dict[str, str]):
     r = client.get("/api/getUsersByPage", headers=logon_root_headers, params=params)
     assert r.is_success
-    ro = Response[PagedData[UserResponse]](**r.json())
+    ro = Response[Page[UserResponse]](**r.json())
     assert ro.code == 0
     assert ro.data.total > 0 and len(ro.data.items) > 0
     assert "root" in [user.staff_id for user in ro.data.items]
@@ -102,6 +102,6 @@ def test_update_password(created_user: dict[str, Any], logon_root_headers: dict[
     r = client.post("/api/login", data=login_form)
     assert r.status_code == 401
     ro = NoneResponse(**r.json())
-    assert ro.code == 1
+    assert ro.code == 3
 
     login(created_user["staff_id"], new_password)

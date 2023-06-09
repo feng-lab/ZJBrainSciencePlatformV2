@@ -8,12 +8,13 @@ services:
       LOG_ROOT: /log
       FILE_ROOT: /file
       DATABASE_URL: ${DATABASE_URL}
-      ALGORITHM_GRPC_ADDRESS: algorithm
+      ALGORITHM_HOST: algorithm
       CACHE_HOST: cache
       CACHE_PORT: 6379
     volumes:
       - /data/ZJBrainSciencePlatform/data/file:/file
       - /data/ZJBrainSciencePlatform/log/platform:/log
+      - ../..:/code
     restart: always
     depends_on:
       - database

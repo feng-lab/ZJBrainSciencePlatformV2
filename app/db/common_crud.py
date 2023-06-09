@@ -49,7 +49,7 @@ def insert_row(
     success = False
     try:
         stmt = insert(table).values(row)
-        result = cast(CursorResult, db.execute(stmt))
+        result: CursorResult = db.execute(stmt)
         if result.rowcount != 1:
             return None
         success = True

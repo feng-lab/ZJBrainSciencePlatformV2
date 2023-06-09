@@ -3,10 +3,12 @@ from typing import Any, Sequence
 
 from sqlalchemy import CursorResult, and_, insert, or_, select, update
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy.orm import Session, joinedload, load_only, raiseload, subqueryload
+from sqlalchemy.orm import Session, immediateload, joinedload, load_only, raiseload, subqueryload
 
-from app.db.orm import Experiment, ExperimentAssistant, User
-from app.model.request import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
+from app.db import common_crud
+from app.db.crud.user import load_user_info
+from app.db.orm import Experiment, ExperimentAssistant, ExperimentTag, User
+from app.model.enum_filed import GetExperimentsByPageSortBy, GetExperimentsByPageSortOrder
 from app.model.schema import ExperimentSearch
 
 logger = logging.getLogger(__name__)
@@ -57,17 +59,14 @@ def insert_or_update_experiment(db: Session, id_: int, row: dict[str, Any]) -> N
             db.rollback()
 
 
-def load_user_info_option(strategy, relation_column):
-    return strategy(relation_column).load_only(User.id, User.username, User.staff_id)
-
-
 def get_experiment_by_id(db: Session, experiment_id: int) -> Experiment | None:
     stmt = (
         select(Experiment)
         .where(Experiment.id == experiment_id, Experiment.is_deleted == False)
         .options(
-            load_user_info_option(joinedload, Experiment.main_operator_obj),
-            load_user_info_option(subqueryload, Experiment.assistants),
+            load_user_info(joinedload(Experiment.main_operator_obj)),
+            load_user_info(subqueryload(Experiment.assistants)),
+            immediateload(Experiment.tags),
         )
     )
     experiment = db.execute(stmt).scalar()
@@ -80,10 +79,14 @@ def search_experiments(db: Session, search: ExperimentSearch) -> Sequence[Experi
         .where(Experiment.id != 0)
         .offset(search.offset)
         .limit(search.limit)
-        .options(raiseload(Experiment.main_operator_obj), raiseload(Experiment.assistants))
+        .options(immediateload(Experiment.tags), raiseload("*"))
     )
-    if search.search:
-        stmt = stmt.where(Experiment.name.icontains(search.search))
+    if search.name:
+        stmt = stmt.where(Experiment.name.icontains(search.name))
+    if search.type:
+        stmt = stmt.where(Experiment.type.icontains(search.type))
+    if search.tag:
+        stmt = stmt.join(Experiment.tags).where(ExperimentTag.tag.icontains(search.tag))
     if not search.include_deleted:
         stmt = stmt.where(Experiment.is_deleted == False)
     order_by_column = SEARCH_EXPERIMENT_SORT_BY_COLUMN[search.sort_by]
@@ -118,3 +121,24 @@ def search_experiment_assistants(
     )
     assistants = db.execute(stmt).scalars().all()
     return assistants
+
+
+def update_experiment_tags(db: Session, experiment_id: int, new_tags: set[str]) -> bool:
+    old_tags = set(
+        db.execute(select(ExperimentTag.tag).where(ExperimentTag.experiment_id == experiment_id))
+        .scalars()
+        .all()
+    )
+    delete_success = common_crud.bulk_delete_rows(
+        db,
+        ExperimentTag,
+        [ExperimentTag.experiment_id == experiment_id, ExperimentTag.tag.in_(old_tags - new_tags)],
+        commit=False,
+    )
+    insert_success = common_crud.bulk_insert_rows(
+        db,
+        ExperimentTag,
+        [{"experiment_id": experiment_id, "tag": tag} for tag in new_tags - old_tags],
+        commit=False,
+    )
+    return delete_success and insert_success

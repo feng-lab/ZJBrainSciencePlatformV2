@@ -1,0 +1,58 @@
+# 成功
+- message_id: success
+  zh-CN: 成功
+  en-US: success
+
+# 400 错误
+
+- message_id: params error
+  zh-CN: '参数错误: {}'
+  en-US: 'params error: {}'
+
+- message_id: page not found
+  zh-CN: '没有该页面: {}'
+  en-US: 'page not found: {}'
+
+- message_id: not found
+  zh-CN: '{}不存在'
+  en-US: '{} cannot be found'
+
+# 401 错误
+
+- message_id: not login
+  zh-CN: 用户未登录
+  en-US: user doesn't login
+
+- message_id: wrong password
+  zh-CN: 密码错误
+  en-US: wrong password
+
+- message_id: no enough access level
+  zh-CN: 用户权限不足
+  en-US: user doesn't have enough access level
+
+- message_id: session timeout
+  zh-CN: 会话已过期，请重新登录
+  en-US: session timeout, please login
+
+- message_id: file type not supported
+  zh-CN: '{}不是支持的文件类型'
+  en-US: '{} is not supported file type'
+
+- message_id: cannot display algorithm file
+  zh-CN: 不支持展示该类型文件内容
+  en-US: cannot display content of this type of file
+
+# 500 错误
+
+- message_id: database fail
+  zh-CN: 数据库错误
+  en-US: database fail
+
+- message_id: inner server error
+  zh-CN: '服务端错误: {}'
+  en-US: 'inner server error: {}'
+
+- message_id: remote service error
+  zh-CN: '远程服务错误: {}'
+  en-US: 'remote service error: {}'

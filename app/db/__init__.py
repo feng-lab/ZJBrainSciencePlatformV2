@@ -1,3 +1,4 @@
+import contextlib
 from reprlib import recursive_repr
 from typing import TypeVar
 
@@ -28,6 +29,9 @@ def get_db_session():
         db_session.close()
 
 
+new_db_session = contextlib.contextmanager(get_db_session)
+
+
 def check_database_is_up_to_date() -> bool:
     alembic_config_file = "alembic.ini"
     alembic_config = alembic.config.Config(alembic_config_file)
@@ -44,7 +48,7 @@ def table_repr(cls: type[OrmModel]) -> type[OrmModel]:
             for field_name in obj.__table__.columns.keys()
         ]
         class_name = obj.__class__.__name__
-        return f"<{class_name}: {','.join(field_strs)}"
+        return f"<{class_name}: {','.join(field_strs)}>"
 
     cls.__repr__ = recursive_repr()(field_repr)
     return cls

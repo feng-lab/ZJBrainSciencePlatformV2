@@ -1,6 +1,6 @@
 # Docker配置
-export DOCKER_USERNAME='zjlabbrainscience'
-export DOCKER_TOKEN='dckr_pat_2PDLJLgitGJ6zztpsVtGVgGCz3s'
+export DOCKER_USERNAME='cnife'
+export DOCKER_TOKEN='dckr_pat_IJKxGMNI_c-n54Fral-saNmZv-A'
 export DOCKER_STACK_NAME='platform'
 export COMPOSE_PROJECT_NAME='platform'
 
@@ -8,7 +8,7 @@ export COMPOSE_PROJECT_NAME='platform'
 export IMAGE_REPO_PREFIX='zj-brain-science-platform'
 export CACHE_IMAGE_TAG='redis:7.0'
 export PYTHON_VERSION='3.11'
-export POETRY_VERSION='1.3.2'
+export POETRY_VERSION='1.4.2'
 export PIP_INDEX_URL='https://pypi.tuna.tsinghua.edu.cn/simple'
 
 # 目录结构

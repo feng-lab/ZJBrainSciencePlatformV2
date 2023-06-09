@@ -3,7 +3,23 @@ name: 测试环境工作流
 on: push
 
 jobs:
+
+  check-skip:
+    runs-on: ubuntu-latest
+    outputs:
+      shouldSkip: ${{ steps.checkSkip.outputs.should_skip }}
+
+    steps:
+      - name: 检查是否要跳过本次Action
+        id: checkSkip
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          skip_after_successful_duplicate: 'true'
+          concurrent_skipping: same_content_newer
+
   pytest:
+    needs: check-skip
+    if: needs.check-skip.outputs.shouldSkip != 'true'
     runs-on: ubuntu-latest
 
     services:
@@ -12,7 +28,7 @@ jobs:
         ports:
           - 8200:6379
       database:
-        image: zjlabbrainscience/zj-brain-science-platform-database:latest
+        image: cnife/zj-brain-science-platform-database:latest
         ports:
           - 8100:3306
         env:
@@ -45,7 +61,14 @@ jobs:
         run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
 
       - name: 运行Pytest
-        run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest
+        run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
+
+      - name: 生成测试结果报告
+        uses: test-summary/action@v2
+        if: always()
+        with:
+          paths: ./pytest_report.xml
+          show: all
 
   build-docker-image:
     needs: pytest
@@ -55,13 +78,18 @@ jobs:
       - name: 切换到推送的分支
         uses: actions/checkout@v3
 
+      - name: 设置时区
+        uses: szenius/set-timezone@v1.1
+        with:
+          timezoneLinux: Asia/Shanghai
+
       - name: 获取base镜像tag
         id: getBaseImageTag
         shell: bash
         run: |
           baseImageVersion="$(head -n 1 ./deploy/image-version/base.version)"
-          baseImageTag="zjlabbrainscience/zj-brain-science-platform-base:${baseImageVersion}"
-          echo "baseImageTag=${baseImageTag}" | tee -a $GITHUB_OUTPUT
+          baseImageTag="cnife/zj-brain-science-platform-base:${baseImageVersion}"
+          echo "baseImageTag=${baseImageTag}" >> $GITHUB_OUTPUT
 
       - name: 生成镜像版本
         id: generateImageVersion
@@ -78,8 +106,8 @@ jobs:
       - name: 登录到Docker Hub
         uses: docker/login-action@v2
         with:
-          username: zjlabbrainscience
-          password: dckr_pat_2PDLJLgitGJ6zztpsVtGVgGCz3s
+          username: cnife
+          password: dckr_pat_IJKxGMNI_c-n54Fral-saNmZv-A
 
       - name: 构建并推送镜像
         uses: docker/build-push-action@v4
@@ -90,10 +118,15 @@ jobs:
             BASE_IMAGE_TAG=${{ steps.getBaseImageTag.outputs.baseImageTag }}
           push: true
           tags: |
-            zjlabbrainscience/zj-brain-science-platform-platform:${{ steps.generateImageVersion.outputs.imageVersion }}
-            zjlabbrainscience/zj-brain-science-platform-platform:latest
-          cache-from: type=registry,ref=zjlabbrainscience/zj-brain-science-platform-platform:latest
+            cnife/zj-brain-science-platform-platform:${{ steps.generateImageVersion.outputs.imageVersion }}
+            cnife/zj-brain-science-platform-platform:latest
+          cache-from: type=registry,ref=cnife/zj-brain-science-platform-platform:latest
           cache-to: type=inline
 
-    outputs:
-      imageVersion: ${{ steps.generateImageVersion.outputs.imageVersion }}
+      - name: 生成镜像结果报告
+        shell: bash
+        run: |
+          echo '# Docker 镜像版本' >> $GITHUB_STEP_SUMMARY
+          echo '|Repo|Version|' >> $GITHUB_STEP_SUMMARY
+          echo '|---|---|' >> $GITHUB_STEP_SUMMARY
+          echo '|`cnife/zj-brain-science-platform-platform`|`${{ steps.generateImageVersion.outputs.imageVersion }}`|' >> $GITHUB_STEP_SUMMARY

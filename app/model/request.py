@@ -1,9 +1,9 @@
 from datetime import datetime
-from enum import StrEnum
 
 from pydantic import BaseModel, Field, validator
 
-from app.db.orm import Experiment
+from app.model.enum_filed import ExperimentType
+from app.model.field import ID
 
 
 class DeleteModelRequest(BaseModel):
@@ -25,20 +25,11 @@ class MarkNotificationsAsReadRequest(BaseModel):
     notification_ids: list[int] = Field(description="通知ID，可以有多个", default_factory=list)
 
 
-class GetExperimentsByPageSortBy(StrEnum):
-    START_TIME = "start_time"
-    TYPE = "type"
-
-
-class GetExperimentsByPageSortOrder(StrEnum):
-    ASC = "asc"
-    DESC = "desc"
-
-
 class UpdateExperimentRequest(BaseModel):
     id: int = Field(ge=0)
     name: str | None = Field(max_length=255)
-    type: Experiment.Type | None
+    description: str | None
+    type: ExperimentType | None
     location: str | None = Field(max_length=255)
     start_at: datetime | None
     end_at: datetime | None
@@ -51,6 +42,7 @@ class UpdateExperimentRequest(BaseModel):
     session_num: int | None = Field(ge=0)
     trail_num: int | None = Field(ge=0)
     is_shared: bool | None
+    tags: list[str] | None
 
 
 class UpdateExperimentAssistantsRequest(BaseModel):
@@ -76,15 +68,21 @@ class UpdateParadigmFilesRequest(BaseModel):
     file_ids: list[int] = Field(min_items=1)
 
 
-class DisplayEEGRequest(BaseModel):
-    class FileType(StrEnum):
-        EDF = "edf"
-        BDF = "bdf"
-
-    file_id: int = Field(ge=0)
+class BaseDisplayDataRequest(BaseModel):
+    file_id: ID
     window: int = Field(ge=0)
     page_index: int = Field(ge=0)
+
+
+class DisplayEEGRequest(BaseDisplayDataRequest):
     channels: list[str]
+
+
+class DisplayNeuralSpikeRequest(BaseDisplayDataRequest):
+    block_index: int = Field(0, ge=0)
+    segment_index: int = Field(0, ge=0)
+    analog_signal_index: int = Field(0, ge=0)
+    channel_indexes: list[int] | None = None
 
 
 def validate_ids(field_name: str):

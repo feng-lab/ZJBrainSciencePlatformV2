@@ -1,21 +1,16 @@
 from fastapi import APIRouter, Depends, Query
 
-from app.api import check_experiment_exists, check_human_subject_exists
+from app.api import check_experiment_exists, check_human_subject_exists, wrap_api_response
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.common.user_auth import AccessLevel, hash_password
 from app.db import common_crud
 from app.db.crud import human_subject as crud
 from app.db.orm import ExperimentHumanSubject, HumanSubject, User
 from app.model import convert
 from app.model.request import DeleteHumanSubjectRequest, UpdateExperimentHumanSubjectRequest
-from app.model.response import (
-    CreateHumanSubjectResponse,
-    NoneResponse,
-    PagedData,
-    Response,
-    wrap_api_response,
-)
+from app.model.response import CreateHumanSubjectResponse, NoneResponse, Page, Response
 from app.model.schema import (
     HumanSubjectCreate,
     HumanSubjectResponse,
@@ -46,12 +41,12 @@ def create_human_subject(
     }
     user_id = common_crud.insert_row(ctx.db, User, user_dict, commit=True)
     if user_id is None:
-        raise ServiceError.database_fail("创建被试者用户失败")
+        raise ServiceError.database_fail()
 
     human_subject_dict = request.dict() | {"user_id": user_id}
     human_subject_id = common_crud.insert_row(ctx.db, HumanSubject, human_subject_dict, commit=True)
     if human_subject_id is None:
-        raise ServiceError.database_fail("创建人类被试者失败")
+        raise ServiceError.database_fail()
 
     return CreateHumanSubjectResponse(
         user_id=user_id, username=username, staff_id=username, password=password
@@ -67,12 +62,12 @@ def delete_human_subjects(
         ctx.db, HumanSubject, where=[HumanSubject.user_id.in_(request.user_ids)], commit=False
     )
     if not success:
-        raise ServiceError.database_fail("删除人类被试者失败")
+        raise ServiceError.database_fail()
     success = common_crud.bulk_update_rows_as_deleted(
         ctx.db, User, where=[User.id.in_(request.user_ids)], commit=True
     )
     if not success:
-        raise ServiceError.database_fail("删除人类被试者用户失败")
+        raise ServiceError.database_fail()
 
 
 @router.get(
@@ -86,24 +81,24 @@ def get_human_subject_info(
 ) -> HumanSubjectResponse:
     orm_human_subject = crud.get_human_subject(ctx.db, user_id)
     if orm_human_subject is None:
-        raise ServiceError.not_found("未找到人类被试者")
+        raise ServiceError.not_found(Entity.human_subject)
     return convert.human_subject_orm_2_response(orm_human_subject)
 
 
 @router.get(
     "/api/getHumanSubjectsByPage",
     description="分页获取人类被试者详情",
-    response_model=Response[PagedData[HumanSubjectResponse]],
+    response_model=Response[Page[HumanSubjectResponse]],
 )
 @wrap_api_response
 def get_human_subjects_by_page(
     search: HumanSubjectSearch = Depends(), ctx: HumanSubjectContext = Depends()
-) -> PagedData[HumanSubjectResponse]:
+) -> Page[HumanSubjectResponse]:
     total, human_subjects = crud.search_human_subjects(ctx.db, search)
     human_subjects_responses = convert.map_list(
         convert.human_subject_orm_2_response, human_subjects
     )
-    return PagedData(total=total, items=human_subjects_responses)
+    return Page(total=total, items=human_subjects_responses)
 
 
 @router.post("/api/updateHumanSubject", description="更新人类被试者", response_model=NoneResponse)
@@ -120,7 +115,7 @@ def update_human_subject(update: HumanSubjectUpdate, ctx: ResearcherContext = De
         commit=True,
     )
     if not success:
-        raise ServiceError.database_fail("更新人类被试者失败")
+        raise ServiceError.database_fail()
 
 
 @router.post(
@@ -143,7 +138,7 @@ def add_human_subjects_in_experiment(
     if not common_crud.bulk_insert_rows(
         ctx.db, ExperimentHumanSubject, add_experiment_human_subjects, commit=True
     ):
-        raise ServiceError.database_fail("向实验中添加人类被试者失败")
+        raise ServiceError.database_fail()
 
 
 @router.delete(
@@ -165,4 +160,4 @@ def delete_human_subjects_from_experiment(
         commit=True,
     )
     if not success:
-        raise ServiceError.database_fail("从实验中删除人类被试者失败")
+        raise ServiceError.database_fail()

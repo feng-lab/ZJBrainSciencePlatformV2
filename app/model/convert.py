@@ -1,20 +1,36 @@
+import json
 from typing import Any, Callable, Iterable, TypeVar
 
 from app.common.config import config
 from app.db import OrmModel
 from app.db.crud.device import SearchDeviceRow
-from app.db.orm import Device, Experiment, File, HumanSubject, Paradigm
+from app.db.orm import (
+    Device,
+    Experiment,
+    HumanSubject,
+    Notification,
+    Paradigm,
+    Task,
+    TaskStep,
+    User,
+    VirtualFile,
+)
 from app.model.schema import (
     DeviceInfo,
     DeviceInfoWithIndex,
-    ExperimentInDB,
     ExperimentResponse,
     ExperimentSimpleResponse,
     FileResponse,
     HumanSubjectResponse,
+    NotificationResponse,
     ParadigmInDB,
     ParadigmResponse,
+    TaskBaseInfo,
+    TaskInfo,
+    TaskSourceFileResponse,
+    TaskStepInfo,
     UserInfo,
+    UserResponse,
 )
 
 A = TypeVar("A")
@@ -28,26 +44,36 @@ def map_list(function: Callable[[A], B], items: Iterable[A] | None) -> list[B]:
 
 
 # noinspection PyTypeChecker
-def orm_2_dict(orm: OrmModel) -> dict[str, Any]:
-    return {column.name: getattr(orm, column.name) for column in orm.__table__.columns}
+def orm_2_dict(
+    orm: OrmModel, *, include: set[str] | None = None, exclude: set[str] | None = None
+) -> dict[str, Any]:
+    return {
+        column.name: getattr(orm, column.name)
+        for column in orm.__table__.columns
+        if ((not include) or (column.name in include))
+        and ((not exclude) or (column.name not in exclude))
+    }
 
 
 def experiment_orm_2_response(experiment: Experiment) -> ExperimentResponse:
     return ExperimentResponse(
-        main_operator=UserInfo.from_orm(experiment.main_operator_obj),
-        assistants=map_list(UserInfo.from_orm, experiment.assistants),
-        **ExperimentInDB.from_orm(experiment).dict(exclude={"main_operator"}),
+        main_operator=user_orm_2_info(experiment.main_operator_obj),
+        assistants=map_list(user_orm_2_info, experiment.assistants),
+        tags=map_list(lambda tag: tag.tag, experiment.tags),
+        **orm_2_dict(experiment, exclude={"main_operator"}),
     )
 
 
 def experiment_orm_2_simple_response(experiment: Experiment) -> ExperimentSimpleResponse:
-    return ExperimentSimpleResponse.from_orm(experiment)
+    return ExperimentSimpleResponse(
+        tags=map_list(lambda tag: tag.tag, experiment.tags), **orm_2_dict(experiment)
+    )
 
 
 def paradigm_orm_2_response(paradigm: Paradigm) -> ParadigmResponse:
     return ParadigmResponse(
         creator=UserInfo.from_orm(paradigm.creator_obj),
-        images=map_list(lambda orm_file: orm_file.id, paradigm.files),
+        images=map_list(lambda orm_file: orm_file.id, paradigm.exist_virtual_files),
         **ParadigmInDB.from_orm(paradigm).dict(exclude={"creator"}),
     )
 
@@ -71,8 +97,93 @@ def human_subject_orm_2_response(human_subject: HumanSubject) -> HumanSubjectRes
     )
 
 
-def file_orm_2_response(file: File) -> FileResponse:
-    response = FileResponse.from_orm(file)
-    if file.extension in config.IMAGE_FILE_EXTENSIONS:
-        response.url = f"/api/downloadFile/{file.id}"
+def virtual_file_orm_2_response(virtual_file: VirtualFile) -> FileResponse:
+    response = FileResponse.from_orm(virtual_file)
+    if virtual_file.file_type in config.IMAGE_FILE_EXTENSIONS:
+        response.url = f"/api/downloadFile/{virtual_file.id}"
     return response
+
+
+def file_experiment_orm_2_task_source_response(
+    file_experiment: tuple[VirtualFile, Experiment]
+) -> TaskSourceFileResponse:
+    file, experiment = file_experiment
+    return TaskSourceFileResponse(
+        id=file.id,
+        name=file.name,
+        file_type=file.file_type,
+        experiment_id=file.experiment_id,
+        experiment_name=experiment.name,
+    )
+
+
+def user_orm_2_info(user: User) -> UserInfo:
+    return UserInfo(id=user.id, username=user.username, staff_id=user.staff_id)
+
+
+def user_orm_2_response(user: User) -> UserResponse:
+    return UserResponse(
+        **orm_2_dict(
+            user,
+            include={
+                "id",
+                "gmt_create",
+                "gmt_modified",
+                "is_deleted",
+                "last_login_time",
+                "last_logout_time",
+                "username",
+                "staff_id",
+                "access_level",
+            },
+        )
+    )
+
+
+def notification_orm_2_response(notification: Notification) -> NotificationResponse:
+    return NotificationResponse(
+        **orm_2_dict(notification, exclude={"creator_user"}),
+        creator_name=notification.creator_user.username,
+    )
+
+
+def task_step_orm_2_info(task_step: TaskStep) -> TaskStepInfo:
+    return TaskStepInfo(
+        task_id=task_step.task_id,
+        name=task_step.name,
+        step_type=task_step.type,
+        parameters=json.loads(task_step.parameter),
+        index=task_step.index,
+        status=task_step.status,
+        start_at=task_step.start_at,
+        end_at=task_step.end_at,
+    )
+
+
+def task_orm_2_info(task: Task) -> TaskInfo:
+    steps = map_list(task_step_orm_2_info, task.steps)
+    steps.sort(key=lambda step_info: step_info.index)
+    return TaskInfo(
+        name=task.name,
+        description=task.description,
+        source_file=task.source_file,
+        type=task.type,
+        status=task.status,
+        start_at=task.start_at,
+        end_at=task.end_at,
+        creator=user_orm_2_info(task.creator_obj),
+        steps=steps,
+    )
+
+
+def task_orm_2_base_info(task: Task) -> TaskBaseInfo:
+    return TaskBaseInfo(
+        name=task.name,
+        description=task.description,
+        source_file=task.source_file,
+        type=task.type,
+        status=task.status,
+        start_at=task.start_at,
+        end_at=task.end_at,
+        creator=user_orm_2_info(task.creator_obj),
+    )
