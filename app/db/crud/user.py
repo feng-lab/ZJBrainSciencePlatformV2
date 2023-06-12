@@ -16,7 +16,7 @@ def search_users(db: Session, search: UserSearch) -> tuple[int, Sequence[User]]:
         stmt = stmt.where(User.username.icontains(search.username))
     if search.staff_id:
         stmt = stmt.where(User.staff_id.icontains(search.staff_id))
-    if search.access_level:
+    if search.access_level is not None:
         stmt = stmt.where(User.access_level == search.access_level)
     if not search.include_deleted:
         stmt = stmt.where(User.is_deleted == False)
