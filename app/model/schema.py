@@ -364,3 +364,10 @@ class TaskSearch(PageParm):
     status: TaskStatus | None
     start_at: date | None
     creator: int | None
+
+
+class AtlasCreate(BaseModel):
+    name: LongVarchar
+    url: LongVarchar
+    title: LongVarchar
+    whole_segment_id: int | None

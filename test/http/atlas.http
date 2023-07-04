@@ -1,0 +1,10 @@
+### create atlas
+POST {{host}}/api/createAtlas
+Content-Type: application/json
+
+{
+  "name": "test atlas",
+  "url": "https://example.com/test_atlas",
+  "title": "测试脑图谱",
+  "whole_segment_id": null
+}

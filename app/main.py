@@ -18,6 +18,7 @@ from starlette.status import (
 
 from app.api import ApiJsonResponse
 from app.api.algorithm import router as algorithm_router
+from app.api.atlas import router as atlas_router
 from app.api.auth import router as auth_router
 from app.api.device import router as device_router
 from app.api.experiment import router as experiment_router
@@ -73,6 +74,7 @@ app.include_router(algorithm_router)
 app.include_router(device_router)
 app.include_router(human_subject_router)
 app.include_router(task_router)
+app.include_router(atlas_router)
 
 app.add_middleware(
     CORSMiddleware,
