@@ -1,6 +1,19 @@
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Date,
+    DateTime,
+    Double,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
@@ -16,6 +29,10 @@ from app.model.enum_filed import (
     TaskStepType,
     TaskType,
 )
+
+ShortVarChar: String = String(63)
+VarChar: String = String(255)
+LongVarChar: String = String(65535)
 
 
 class ModelMixin:
@@ -322,3 +339,92 @@ class TaskStep(Base, ModelMixin):
         Integer, ForeignKey("virtual_file.id"), nullable=True, comment="结果文件ID"
     )
     error_msg: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="错误信息")
+
+
+class AtlasComponentMixin:
+    atlas_id: Mapped[str] = mapped_column(Integer, nullable=False, comment="所属图谱ID")
+
+
+class TreeNodeMixin(ModelMixin):
+    parent_id: Mapped[int | None] = mapped_column(
+        Integer, nullable=True, comment="父节点ID，null表示第一层节点"
+    )
+
+
+@table_repr
+class Atlas(Base, ModelMixin):
+    __tablename__ = "atlas"
+    __table_args__ = {"comment": "脑图谱"}
+
+    name: Mapped[str] = mapped_column(VarChar, nullable=False, comment="名称")
+    url: Mapped[str] = mapped_column(VarChar, nullable=False, comment="主页地址")
+    title: Mapped[str] = mapped_column(VarChar, nullable=False, comment="页面显示的标题")
+    whole_segment_id: Mapped[int] = mapped_column(BigInteger, nullable=True, comment="全脑轮廓ID")
+
+
+@table_repr
+class AtlasRegion(Base, TreeNodeMixin, AtlasComponentMixin):
+    __tablename__ = "atlas_region"
+    __table_args__ = {"comment": "脑图谱脑区构成信息，以树状结构存储"}
+
+    region_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, comment="脑区ID")
+    description: Mapped[str] = mapped_column(VarChar, nullable=False, comment="描述")
+    acronym: Mapped[str] = mapped_column(VarChar, nullable=False, comment="缩写")
+    lobe: Mapped[str | None] = mapped_column(VarChar, nullable=True, comment="所属脑叶")
+    gyrus: Mapped[str | None] = mapped_column(VarChar, nullable=True, comment="所属脑回")
+
+
+@table_repr
+class AtlasRegionLink(Base, ModelMixin, AtlasComponentMixin):
+    __tablename__ = "atlas_region_link"
+    __table_args__ = {"comment": "脑图谱脑区之间的连接强度信息"}
+
+    link_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="连接信息ID")
+    region1: Mapped[str] = mapped_column(VarChar, nullable=False, comment="脑区1")
+    region2: Mapped[str] = mapped_column(VarChar, nullable=False, comment="脑区2")
+    value: Mapped[float | None] = mapped_column(Double, nullable=True, comment="连接强度，null表示仅有连接")
+    opposite_value: Mapped[float | None] = mapped_column(
+        Double, nullable=True, comment="反向连接强度，null表示仅有连接"
+    )
+
+
+@table_repr
+class AtlasBehavioralDomain(Base, TreeNodeMixin, AtlasComponentMixin):
+    __tablename__ = "atlas_behavioral_domain"
+    __table_args__ = {"comment": "脑图谱的行为域结构数据，以树状结构存储"}
+
+    name: Mapped[str] = mapped_column(VarChar, nullable=False, comment="名称")
+    value: Mapped[float] = mapped_column(Double, nullable=False, comment="值")
+    label: Mapped[str] = mapped_column(VarChar, nullable=False, comment="显示的名字")
+    description: Mapped[str] = mapped_column(Text, nullable=True, comment="描述")
+
+
+@table_repr
+class AtlasRegionBehavioralDomain(Base, ModelMixin, AtlasComponentMixin):
+    __tablename__ = "atlas_region_behavioral_domain"
+    __table_args__ = {"comment": "脑图谱中与脑区相关联的行为域数据"}
+
+    key: Mapped[str] = mapped_column(VarChar, nullable=False, comment="行为域")
+    value: Mapped[float] = mapped_column(Double, nullable=False, comment="行为域值")
+    region_id: Mapped[int] = mapped_column(BigInteger, nullable=False, comment="脑区ID")
+
+
+@table_repr
+class AtlasParadigmClass(Base, ModelMixin, AtlasComponentMixin):
+    __tablename__ = "atlas_paradigm_class"
+    __table_args__ = {"comment": "脑图谱范例集"}
+
+    name: Mapped[str] = mapped_column(VarChar, nullable=False, comment="名称")
+    value: Mapped[float] = mapped_column(Double, nullable=False, comment="值")
+    label: Mapped[str] = mapped_column(VarChar, nullable=False, comment="标签")
+    description: Mapped[str | None] = mapped_column(Text, nullable=True, comment="描述")
+
+
+@table_repr
+class AtlasRegionParadigmClass(Base, ModelMixin, AtlasComponentMixin):
+    __tablename__ = "atlas_region_paradigm_class"
+    __table_args__ = {"comment": "脑图谱中与脑区相关联的范例集"}
+
+    key: Mapped[str] = mapped_column(VarChar, nullable=False, comment="范例集")
+    value: Mapped[float] = mapped_column(Double, nullable=False, comment="范例集值")
+    region_id: Mapped[int] = mapped_column(BigInteger, nullable=False, comment="脑区ID")
