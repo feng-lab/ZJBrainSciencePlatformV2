@@ -21,10 +21,10 @@ class Config(BaseSettings):
     DATABASE_CONFIG: dict[str, Any] = {"echo": True}
 
     # 日志路径
-    LOG_ROOT: Path = Path.home() / "log" / "ZJBrainSciencePlatform" / "app"
+    LOG_ROOT: Path = Path(r"D:\WorkData\ZJBrainSciencePlatform\log\platform")
 
     # 文件存储路径
-    FILE_ROOT: Path = Path.home() / "data" / "ZJBrainSciencePlatform" / "file"
+    FILE_ROOT: Path = Path(r"D:\WorkData\ZJBrainSciencePlatform\data\file")
 
     # 读取文件的块大小
     FILE_CHUNK_SIZE: int = 64 * 1024
