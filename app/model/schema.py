@@ -375,3 +375,7 @@ class AtlasCreate(BaseModel):
 
 class AtlasInfo(AtlasCreate):
     pass
+
+
+class UpdateAtlasRequest(AtlasCreate, ModelId):
+    pass

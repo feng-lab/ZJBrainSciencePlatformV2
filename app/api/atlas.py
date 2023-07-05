@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
-from app.api import wrap_api_response
+from app.api import check_atlas_exists, wrap_api_response
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.localization import Entity
 from app.db import common_crud
@@ -9,7 +9,7 @@ from app.model import convert
 from app.model.field import ID
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Response
-from app.model.schema import AtlasCreate, AtlasInfo
+from app.model.schema import AtlasCreate, AtlasInfo, UpdateAtlasRequest
 
 router = APIRouter(tags=["atlas"])
 
@@ -38,3 +38,12 @@ def get_atlas_info(
     )
     atlas_info = convert.atlas_orm_2_info(atlas_orm)
     return atlas_info
+
+
+@router.post("/api/updateAtlas", description="更新脑图谱", response_model=NoneResponse)
+@wrap_api_response
+def update_atlas(request: UpdateAtlasRequest, ctx: ResearcherContext = Depends()) -> None:
+    check_atlas_exists(ctx.db, request.id)
+    common_crud.update_row(
+        ctx.db, Atlas, request.dict(exclude={"id"}), id_=request.id, commit=True, raise_on_fail=True
+    )
