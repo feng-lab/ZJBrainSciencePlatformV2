@@ -27,7 +27,7 @@ def created_user(logon_root_headers) -> dict[str, Any]:
     yield create_user
 
     delete_user = {"id": create_user["id"]}
-    r = client.request("DELETE", "/api/deleteUser", headers=logon_root_headers, json=delete_user)
+    r = client.delete("/api/deleteUser", headers=logon_root_headers, json=delete_user)
     assert r.is_success
     ro = NoneResponse(**r.json())
     assert ro.code == 0
