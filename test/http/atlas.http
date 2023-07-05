@@ -1,6 +1,7 @@
 ### create atlas
 POST {{host}}/api/createAtlas
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "name": "test atlas",
@@ -8,3 +9,11 @@ Content-Type: application/json
   "title": "测试脑图谱",
   "whole_segment_id": null
 }
+
+> {%
+    client.test("Success", function () {
+        client.assert(response.status == 200)
+        client.assert(response.body.code == 0)
+        client.assert(response.body.data > 0)
+    })
+%}
