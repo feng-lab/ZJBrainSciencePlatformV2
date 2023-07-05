@@ -5,6 +5,7 @@ from app.common.config import config
 from app.db import OrmModel
 from app.db.crud.device import SearchDeviceRow
 from app.db.orm import (
+    Atlas,
     Device,
     Experiment,
     HumanSubject,
@@ -16,6 +17,7 @@ from app.db.orm import (
     VirtualFile,
 )
 from app.model.schema import (
+    AtlasInfo,
     DeviceInfo,
     DeviceInfoWithIndex,
     ExperimentResponse,
@@ -186,4 +188,10 @@ def task_orm_2_base_info(task: Task) -> TaskBaseInfo:
         start_at=task.start_at,
         end_at=task.end_at,
         creator=user_orm_2_info(task.creator_obj),
+    )
+
+
+def atlas_orm_2_info(atlas: Atlas) -> AtlasInfo:
+    return AtlasInfo(
+        name=atlas.name, url=atlas.url, title=atlas.title, whole_segment_id=atlas.whole_segment_id
     )

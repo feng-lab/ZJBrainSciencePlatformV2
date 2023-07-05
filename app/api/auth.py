@@ -31,7 +31,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     access_token = create_access_token(user_id, config.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     # 更新最近登录时间
-    success = common_crud.update_row(db, User, {"last_login_time": now()}, id=user_id, commit=True)
+    success = common_crud.update_row(db, User, {"last_login_time": now()}, id_=user_id, commit=True)
     if not success:
         raise ServiceError.database_fail()
 
@@ -42,7 +42,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 @wrap_api_response
 def logout(ctx: AllUserContext = Depends()) -> None:
     success = common_crud.update_row(
-        ctx.db, User, {"last_logout_time": now()}, id=ctx.user_id, commit=True
+        ctx.db, User, {"last_logout_time": now()}, id_=ctx.user_id, commit=True
     )
     if not success:
         raise ServiceError.database_fail()

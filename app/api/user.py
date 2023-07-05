@@ -84,7 +84,7 @@ def update_user_access_level(
     check_user_exists(ctx.db, request.id)
 
     success = common_crud.update_row(
-        ctx.db, User, {"access_level": request.access_level}, id=request.id, commit=True
+        ctx.db, User, {"access_level": request.access_level}, id_=request.id, commit=True
     )
     if success:
         cache.invalidate_user_access_level(ctx.cache, request.id)
@@ -101,7 +101,7 @@ def update_password(request: UpdatePasswordRequest, ctx: AllUserContext = Depend
         raise ServiceError.wrong_password()
     hashed_new_password = hash_password(request.new_password)
     success = common_crud.update_row(
-        ctx.db, User, {"hashed_password": hashed_new_password}, id=user_id, commit=True
+        ctx.db, User, {"hashed_password": hashed_new_password}, id_=user_id, commit=True
     )
     if not success:
         raise ServiceError.database_fail()
@@ -110,6 +110,6 @@ def update_password(request: UpdatePasswordRequest, ctx: AllUserContext = Depend
 @router.delete("/api/deleteUser", description="删除用户", response_model=NoneResponse)
 @wrap_api_response
 def delete_user(request: DeleteModelRequest, ctx: AdministratorContext = Depends()) -> None:
-    success = common_crud.update_row_as_deleted(ctx.db, User, id=request.id, commit=True)
+    success = common_crud.update_row_as_deleted(ctx.db, User, id_=request.id, commit=True)
     if not success:
         raise ServiceError.database_fail()

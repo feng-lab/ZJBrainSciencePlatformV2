@@ -91,7 +91,9 @@ def get_paradigms_by_page(
 def update_paradigm(request: UpdateParadigmRequest, ctx: ResearcherContext = Depends()) -> None:
     update_dict = request.dict(exclude={"id", "images"})
     if len(update_dict) > 0:
-        success = common_crud.update_row(ctx.db, Paradigm, update_dict, id=request.id, commit=False)
+        success = common_crud.update_row(
+            ctx.db, Paradigm, update_dict, id_=request.id, commit=False
+        )
         if not success:
             raise ServiceError.database_fail()
 
@@ -128,7 +130,7 @@ def update_paradigm(request: UpdateParadigmRequest, ctx: ResearcherContext = Dep
 def delete_paradigm(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
     if not delete_paradigm_files(ctx.db, request.id):
         raise ServiceError.database_fail()
-    if not common_crud.update_row_as_deleted(ctx.db, Paradigm, id=request.id, commit=True):
+    if not common_crud.update_row_as_deleted(ctx.db, Paradigm, id_=request.id, commit=True):
         raise ServiceError.database_fail()
 
 

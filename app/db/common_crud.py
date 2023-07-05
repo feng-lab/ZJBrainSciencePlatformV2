@@ -7,20 +7,46 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.roles import WhereHavingRole
 
+from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.common.util import now
 from app.db import OrmModel
 
 logger = logging.getLogger(__name__)
 
 
-def get_row_by_id(db: Session, table: type[OrmModel], id_: int) -> OrmModel | None:
-    return get_row(db, table, table.id == id_)
+def get_row_by_id(
+    db: Session,
+    table: type[OrmModel],
+    id_: int,
+    *,
+    raise_on_fail: bool = False,
+    not_found_entity: Entity | None = None,
+) -> OrmModel | None:
+    return get_row(
+        db, table, table.id == id_, raise_on_fail=raise_on_fail, not_found_entity=not_found_entity
+    )
 
 
-def get_row(db: Session, table: type[OrmModel], *where: WhereHavingRole) -> OrmModel | None:
+def get_row(
+    db: Session,
+    table: type[OrmModel],
+    *where: WhereHavingRole,
+    raise_on_fail: bool = False,
+    not_found_entity: Entity | None = None,
+) -> OrmModel | None:
     stmt = select(table).where(table.is_deleted == False, *where)
-    row = db.execute(stmt).scalar()
-    return row
+    try:
+        row = db.execute(stmt).scalar()
+    except DBAPIError as e:
+        logger.error(f"get row from table {table.__name__} error, msg={e}")
+        if raise_on_fail:
+            raise ServiceError.database_fail()
+    else:
+        if row is None and raise_on_fail:
+            assert not_found_entity is not None
+            raise ServiceError.not_found(not_found_entity)
+        return row
 
 
 def exists_row(
@@ -44,25 +70,37 @@ def exists_row(
 
 
 def insert_row(
-    db: Session, table: type[OrmModel], row: dict[str, Any], *, commit: bool, return_id: bool = True
+    db: Session,
+    table: type[OrmModel],
+    row: dict[str, Any],
+    *,
+    commit: bool,
+    return_id: bool = True,
+    raise_on_fail: bool = False,
 ) -> int | None:
-    success = False
-    try:
-        stmt = insert(table).values(row)
-        result: CursorResult = db.execute(stmt)
-        if result.rowcount != 1:
+    def do_insert_row():
+        success = False
+        try:
+            stmt = insert(table).values(row)
+            result: CursorResult = db.execute(stmt)
+            if result.rowcount != 1:
+                return None
+            success = True
+            if return_id:
+                return result.inserted_primary_key.id
+        except DBAPIError as e:
+            logger.error(f"insert table {table.__name__} error, msg={e}")
             return None
-        success = True
-        if return_id:
-            return result.inserted_primary_key.id
-    except DBAPIError as e:
-        logger.error(f"insert table {table.__name__} error, msg={e}")
-        return None
-    finally:
-        if not success:
-            db.rollback()
-        elif commit:
-            db.commit()
+        finally:
+            if not success:
+                db.rollback()
+            elif commit:
+                db.commit()
+
+    result_id = do_insert_row()
+    if result_id is None and return_id and raise_on_fail:
+        raise ServiceError.database_fail()
+    return result_id
 
 
 def bulk_insert_rows(
@@ -103,29 +141,40 @@ def update_row(
     table: type[OrmModel],
     update_dict: dict[str, Any],
     *,
-    id: int | None = None,
+    id_: int | None = None,
     where: list[WhereHavingRole] | None = None,
     commit: bool,
     touch: bool = True,
+    raise_on_fail: bool = False,
 ) -> bool:
-    if id is not None:
-        where = [table.id == id]
+    if id_ is not None:
+        where = [table.id == id_]
     if where is None:
         raise ValueError("no id nor where provided")
-    return bulk_update_rows(db, table, where, update_dict, commit=commit, touch=touch)
+    return bulk_update_rows(
+        db, table, where, update_dict, commit=commit, touch=touch, raise_on_fail=raise_on_fail
+    )
 
 
 def update_row_as_deleted(
     db: Session,
     table: type[OrmModel],
     *,
-    id: int | None = None,
+    id_: int | None = None,
     where: list[WhereHavingRole] | None = None,
     commit: bool,
     touch: bool = True,
+    raise_on_fail: bool = False,
 ) -> bool:
     return update_row(
-        db, table, {"is_deleted": True}, id=id, where=where, commit=commit, touch=touch
+        db,
+        table,
+        {"is_deleted": True},
+        id_=id_,
+        where=where,
+        commit=commit,
+        touch=touch,
+        raise_on_fail=raise_on_fail,
     )
 
 
@@ -137,6 +186,7 @@ def bulk_update_rows(
     *,
     commit: bool,
     touch: bool = True,
+    raise_on_fail: bool = False,
 ) -> bool:
     success = False
     if touch:
@@ -152,6 +202,8 @@ def bulk_update_rows(
             db.rollback()
         elif commit:
             db.commit()
+    if not success and raise_on_fail:
+        raise ServiceError.database_fail()
     return success
 
 
@@ -163,12 +215,21 @@ def bulk_update_rows_as_deleted(
     where: list[WhereHavingRole] | None = None,
     commit: bool,
     touch: bool = True,
+    raise_on_fail: bool = False,
 ) -> bool:
     if ids is not None:
         where = [table.id.in_(ids)]
     if where is None:
         raise ValueError("no id nor where provided")
-    return bulk_update_rows(db, table, where, {"is_deleted": True}, commit=commit, touch=touch)
+    return bulk_update_rows(
+        db,
+        table,
+        where,
+        {"is_deleted": True},
+        commit=commit,
+        touch=touch,
+        raise_on_fail=raise_on_fail,
+    )
 
 
 def bulk_delete_rows(

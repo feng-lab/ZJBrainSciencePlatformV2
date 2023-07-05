@@ -102,7 +102,7 @@ def delete_task(request: DeleteModelRequest, ctx: ResearcherContext = Depends())
     if not success:
         raise ServiceError.database_fail()
 
-    success = common_crud.update_row_as_deleted(ctx.db, Task, id=request.id, commit=True)
+    success = common_crud.update_row_as_deleted(ctx.db, Task, id_=request.id, commit=True)
     if not success:
         raise ServiceError.database_fail()
 

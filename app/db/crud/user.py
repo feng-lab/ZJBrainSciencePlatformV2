@@ -46,7 +46,7 @@ def insert_or_update_user(db: Session, user: UserCreate) -> None:
             raise ServiceError.database_fail()
     else:
         if not common_crud.update_row(
-            db, User, user.dict() | {"is_deleted": False}, id=user_id, commit=True
+            db, User, user.dict() | {"is_deleted": False}, id_=user_id, commit=True
         ):
             raise ServiceError.database_fail()
 

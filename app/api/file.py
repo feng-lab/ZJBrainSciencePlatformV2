@@ -79,11 +79,11 @@ def save_file(
     # 更新size字段
     file_size = get_file_size(os_storage_path)
     if not common_crud.update_row(
-        db, VirtualFile, {"size": file_size}, id=virtual_file_id, commit=False
+        db, VirtualFile, {"size": file_size}, id_=virtual_file_id, commit=False
     ):
         raise ServiceError.database_fail()
     if not common_crud.update_row(
-        db, StorageFile, {"size": file_size}, id=storage_file_id, commit=True
+        db, StorageFile, {"size": file_size}, id_=storage_file_id, commit=True
     ):
         raise ServiceError.database_fail()
 
@@ -109,7 +109,7 @@ def handle_nev_zip_file(
 ) -> None:
     # 更新file_type
     if not common_crud.update_row(
-        db, VirtualFile, {"file_type": "nev"}, id=virtual_file_id, commit=False
+        db, VirtualFile, {"file_type": "nev"}, id_=virtual_file_id, commit=False
     ):
         raise ServiceError.database_fail()
 
@@ -178,7 +178,7 @@ def download_file(
 @wrap_api_response
 def delete_file(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
     file_paths = crud.get_db_storage_paths(ctx.db, request.id)
-    if not common_crud.update_row_as_deleted(ctx.db, VirtualFile, id=request.id, commit=False):
+    if not common_crud.update_row_as_deleted(ctx.db, VirtualFile, id_=request.id, commit=False):
         raise ServiceError.database_fail()
     if not common_crud.update_row_as_deleted(
         ctx.db, StorageFile, where=[StorageFile.virtual_file_id == request.id], commit=True

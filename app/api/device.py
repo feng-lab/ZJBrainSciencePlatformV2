@@ -121,6 +121,6 @@ def update_device(request: UpdateDeviceRequest, ctx: ResearcherContext = Depends
     check_device_exists(ctx.db, request.id)
 
     update_dict = request.dict(exclude={"id"})
-    success = common_crud.update_row(ctx.db, Device, update_dict, id=request.id, commit=True)
+    success = common_crud.update_row(ctx.db, Device, update_dict, id_=request.id, commit=True)
     if not success:
         raise ServiceError.database_fail()

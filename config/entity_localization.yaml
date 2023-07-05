@@ -25,3 +25,7 @@
 - entity_id: paradigm
   zh-CN: 范式
   en-US: paradigm
+
+- entity_id: atlas
+  zh-CN: 脑图谱
+  en-US: atlas

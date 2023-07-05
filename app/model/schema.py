@@ -371,3 +371,7 @@ class AtlasCreate(BaseModel):
     url: LongVarchar
     title: LongVarchar
     whole_segment_id: int | None
+
+
+class AtlasInfo(AtlasCreate):
+    pass

@@ -21,6 +21,7 @@ class Entity(StrEnum):
     human_subject = "human subject"
     task = "task"
     paradigm = "paradigm"
+    atlas = "atlas"
 
 
 MessageTemplateKey: TypeAlias = tuple[str, MessageLocale]
