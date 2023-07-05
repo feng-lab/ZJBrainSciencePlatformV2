@@ -34,7 +34,8 @@ def test_get_atlas_info(created_atlas_id: int, logon_root_headers: dict[str, str
     assert r.is_success
     ro = Response[AtlasInfo](**r.json())
     assert ro.code == 0
-    assert ro.data.dict() == test_atlas
+    assert ro.data.id > 0 and not ro.data.is_deleted
+    assert ro.data.dict(include=set(test_atlas.keys())) == test_atlas
 
 
 def test_update_atlas(created_atlas_id: int, logon_root_headers: dict[str, str]):
@@ -54,5 +55,5 @@ def test_update_atlas(created_atlas_id: int, logon_root_headers: dict[str, str])
     )
     assert r.is_success
     ro = Response[AtlasInfo](**r.json())
-    assert ro.code == 0
-    assert ro.data.dict() | {"id": created_atlas_id} == update_atlas
+    assert ro.data.id > 0 and not ro.data.is_deleted
+    assert ro.data.dict(include=set(update_atlas.keys())) == update_atlas

@@ -4,12 +4,13 @@ from app.api import check_atlas_exists, wrap_api_response
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.localization import Entity
 from app.db import common_crud
+from app.db.crud import atlas as crud
 from app.db.orm import Atlas
 from app.model import convert
 from app.model.field import ID
 from app.model.request import DeleteModelRequest
-from app.model.response import NoneResponse, Response
-from app.model.schema import AtlasCreate, AtlasInfo, UpdateAtlasRequest
+from app.model.response import NoneResponse, Page, Response
+from app.model.schema import AtlasCreate, AtlasInfo, AtlasSearch, UpdateAtlasRequest
 
 router = APIRouter(tags=["atlas"])
 
@@ -28,6 +29,15 @@ def delete_atlas(request: DeleteModelRequest, ctx: ResearcherContext = Depends()
     )
 
 
+@router.post("/api/updateAtlas", description="更新脑图谱", response_model=NoneResponse)
+@wrap_api_response
+def update_atlas(request: UpdateAtlasRequest, ctx: ResearcherContext = Depends()) -> None:
+    check_atlas_exists(ctx.db, request.id)
+    common_crud.update_row(
+        ctx.db, Atlas, request.dict(exclude={"id"}), id_=request.id, commit=True, raise_on_fail=True
+    )
+
+
 @router.get("/api/getAtlasInfo", description="获取脑图谱详情", response_model=Response[AtlasInfo])
 @wrap_api_response
 def get_atlas_info(
@@ -40,10 +50,13 @@ def get_atlas_info(
     return atlas_info
 
 
-@router.post("/api/updateAtlas", description="更新脑图谱", response_model=NoneResponse)
+@router.get(
+    "/api/getAtlasesByPage", description="分页获取脑图谱详情", response_model=Response[Page[AtlasInfo]]
+)
 @wrap_api_response
-def update_atlas(request: UpdateAtlasRequest, ctx: ResearcherContext = Depends()) -> None:
-    check_atlas_exists(ctx.db, request.id)
-    common_crud.update_row(
-        ctx.db, Atlas, request.dict(exclude={"id"}), id_=request.id, commit=True, raise_on_fail=True
-    )
+def get_atlases_by_page(
+    search: AtlasSearch = Depends(), ctx: HumanSubjectContext = Depends()
+) -> Page[AtlasInfo]:
+    total, atlas_orm = crud.search_atlases(ctx.db, search)
+    atlas_infos = convert.map_list(convert.atlas_orm_2_info, atlas_orm)
+    return Page(total=total, items=atlas_infos)

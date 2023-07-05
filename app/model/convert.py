@@ -193,5 +193,12 @@ def task_orm_2_base_info(task: Task) -> TaskBaseInfo:
 
 def atlas_orm_2_info(atlas: Atlas) -> AtlasInfo:
     return AtlasInfo(
-        name=atlas.name, url=atlas.url, title=atlas.title, whole_segment_id=atlas.whole_segment_id
+        id=atlas.id,
+        is_deleted=atlas.is_deleted,
+        gmt_create=atlas.gmt_create,
+        gmt_modified=atlas.gmt_modified,
+        name=atlas.name,
+        url=atlas.url,
+        title=atlas.title,
+        whole_segment_id=atlas.whole_segment_id,
     )

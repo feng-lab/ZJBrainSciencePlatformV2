@@ -373,9 +373,13 @@ class AtlasCreate(BaseModel):
     whole_segment_id: int | None
 
 
-class AtlasInfo(AtlasCreate):
+class AtlasInfo(AtlasCreate, BaseModelInDB):
     pass
 
 
 class UpdateAtlasRequest(AtlasCreate, ModelId):
     pass
+
+
+class AtlasSearch(PageParm):
+    name: LongVarchar | None
