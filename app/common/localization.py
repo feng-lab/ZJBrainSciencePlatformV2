@@ -22,6 +22,7 @@ class Entity(StrEnum):
     task = "task"
     paradigm = "paradigm"
     atlas = "atlas"
+    atlas_region = "atlas_region"
 
 
 MessageTemplateKey: TypeAlias = tuple[str, MessageLocale]

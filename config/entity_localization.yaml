@@ -29,3 +29,7 @@
 - entity_id: atlas
   zh-CN: 脑图谱
   en-US: atlas
+
+- entity_id: atlas_region
+  zh-CN: 脑图谱区域
+  en-US: atlas_region

@@ -6,6 +6,7 @@ from app.db import OrmModel
 from app.db.crud.device import SearchDeviceRow
 from app.db.orm import (
     Atlas,
+    AtlasRegion,
     Device,
     Experiment,
     HumanSubject,
@@ -18,6 +19,9 @@ from app.db.orm import (
 )
 from app.model.schema import (
     AtlasInfo,
+    AtlasRegionInfo,
+    AtlasRegionTreeInfo,
+    AtlasRegionTreeNode,
     DeviceInfo,
     DeviceInfoWithIndex,
     ExperimentResponse,
@@ -201,4 +205,43 @@ def atlas_orm_2_info(atlas: Atlas) -> AtlasInfo:
         url=atlas.url,
         title=atlas.title,
         whole_segment_id=atlas.whole_segment_id,
+    )
+
+
+def atlas_region_label(atlas_region: AtlasRegion) -> str:
+    return f"{atlas_region.description}({atlas_region.acronym})"
+
+
+def atlas_region_orm_2_info(atlas_region: AtlasRegion) -> AtlasRegionInfo:
+    return AtlasRegionInfo(
+        id=atlas_region.id,
+        is_deleted=atlas_region.is_deleted,
+        gmt_create=atlas_region.gmt_create,
+        gmt_modified=atlas_region.gmt_modified,
+        region_id=atlas_region.region_id,
+        atlas_id=atlas_region.atlas_id,
+        parent_id=atlas_region.parent_id,
+        description=atlas_region.description,
+        acronym=atlas_region.acronym,
+        label=atlas_region_label(atlas_region),
+        lobe=atlas_region.lobe,
+        gyrus=atlas_region.gyrus,
+    )
+
+
+def atlas_region_orm_2_tree_node(atlas_region: AtlasRegion) -> AtlasRegionTreeNode:
+    return AtlasRegionTreeNode(
+        id=atlas_region.id,
+        parent_id=atlas_region.parent_id,
+        region_id=atlas_region.region_id,
+        label=atlas_region_label(atlas_region),
+        children=[],
+    )
+
+
+def atlas_region_tree_node_2_info(atlas_region: AtlasRegionTreeNode) -> AtlasRegionTreeInfo:
+    return AtlasRegionTreeInfo(
+        region_id=atlas_region.region_id,
+        label=atlas_region.label,
+        children=map_list(atlas_region_tree_node_2_info, atlas_region.children),
     )

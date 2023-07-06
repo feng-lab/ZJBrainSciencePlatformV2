@@ -377,9 +377,45 @@ class AtlasInfo(AtlasCreate, BaseModelInDB):
     pass
 
 
-class UpdateAtlasRequest(AtlasCreate, ModelId):
+class AtlasUpdate(AtlasCreate, ModelId):
     pass
 
 
 class AtlasSearch(PageParm):
     name: LongVarchar | None
+
+
+class AtlasRegionID(BaseModel):
+    region_id: ID | None
+
+
+class AtlasRegionLabel(BaseModel):
+    label: str
+
+
+class AtlasTreeParentId(BaseModel):
+    parent_id: ID | None
+
+
+class AtlasRegionCreate(AtlasRegionID, AtlasTreeParentId):
+    atlas_id: ID
+    description: str
+    acronym: str
+    lobe: str | None
+    gyrus: str | None
+
+
+class AtlasRegionUpdate(AtlasRegionCreate, ModelId):
+    pass
+
+
+class AtlasRegionInfo(AtlasRegionCreate, BaseModelInDB, AtlasRegionLabel):
+    pass
+
+
+class AtlasRegionTreeInfo(AtlasRegionID, AtlasRegionLabel):
+    children: list["AtlasRegionTreeInfo"]
+
+
+class AtlasRegionTreeNode(AtlasRegionID, AtlasRegionLabel, ModelId, AtlasTreeParentId):
+    children: list["AtlasRegionTreeNode"]

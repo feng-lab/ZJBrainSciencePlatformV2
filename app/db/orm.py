@@ -342,7 +342,7 @@ class TaskStep(Base, ModelMixin):
 
 
 class AtlasComponentMixin:
-    atlas_id: Mapped[str] = mapped_column(Integer, nullable=False, comment="所属图谱ID")
+    atlas_id: Mapped[int] = mapped_column(Integer, nullable=False, comment="所属图谱ID")
 
 
 class TreeNodeMixin(ModelMixin):

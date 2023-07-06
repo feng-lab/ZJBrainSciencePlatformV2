@@ -12,7 +12,7 @@ from app.common.exception import ServiceError
 from app.common.localization import Entity, translate_message
 from app.db import OrmModel, common_crud
 from app.db.crud import human_subject as crud_human_subject
-from app.db.orm import Atlas, Device, Experiment, Task, User, VirtualFile
+from app.db.orm import Atlas, AtlasRegion, Device, Experiment, Task, User, VirtualFile
 from app.model.response import Response
 
 
@@ -78,6 +78,10 @@ def check_task_exists(db: Session, task_id: int) -> None:
 
 def check_atlas_exists(db: Session, atlas_id: int) -> None:
     _check_exists(db, Atlas, Entity.atlas, id_=atlas_id)
+
+
+def check_atlas_region_exists(db: Session, atlas_region_id: int) -> None:
+    _check_exists(db, AtlasRegion, Entity.atlas_region, id_=atlas_region_id)
 
 
 def _check_exists(
