@@ -3,7 +3,6 @@ from typing import Iterable
 
 import pytest
 
-from app.model.response import NoneResponse, Response
 from app.model.schema import AtlasInfo
 
 test_atlas = {
@@ -16,26 +15,25 @@ test_atlas = {
 
 @pytest.fixture(scope="function")
 def created_atlas_id(logon_root_headers: dict[str, str]) -> Iterable[int]:
-    r = client.post("/api/createAtlas", headers=logon_root_headers, json=test_atlas)
-    assert r.is_success
-    ro = Response[int](**r.json())
-    assert ro.code == 0
-    assert ro.data > 0
-
-    yield ro.data
-
-    r = client.delete("/api/deleteAtlas", headers=logon_root_headers, json={"id": (ro.data)})
-    assert r.is_success
-    assert NoneResponse(**r.json()).code == 0
+    atlas_id = client.request_with_test(
+        "POST", "/api/createAtlas", int, json=test_atlas, headers=logon_root_headers
+    )
+    yield atlas_id
+    _ = client.request_with_test(
+        "DELETE", "/api/deleteAtlas", type(None), headers=logon_root_headers, json={"id": atlas_id}
+    )
 
 
 def test_get_atlas_info(created_atlas_id: int, logon_root_headers: dict[str, str]):
-    r = client.get(f"/api/getAtlasInfo?atlas_id={created_atlas_id}", headers=logon_root_headers)
-    assert r.is_success
-    ro = Response[AtlasInfo](**r.json())
-    assert ro.code == 0
-    assert ro.data.id > 0 and not ro.data.is_deleted
-    assert ro.data.dict(include=set(test_atlas.keys())) == test_atlas
+    atlas_info = client.request_with_test(
+        "GET",
+        "/api/getAtlasInfo",
+        AtlasInfo,
+        params={"atlas_id": created_atlas_id},
+        headers=logon_root_headers,
+    )
+    assert atlas_info.id > 0 and not atlas_info.is_deleted
+    assert atlas_info.dict(include=set(test_atlas.keys())) == test_atlas
 
 
 def test_update_atlas(created_atlas_id: int, logon_root_headers: dict[str, str]):
@@ -46,14 +44,16 @@ def test_update_atlas(created_atlas_id: int, logon_root_headers: dict[str, str])
         "title": "new title",
         "whole_segment_id": None,
     }
-    r = client.post("/api/updateAtlas", headers=logon_root_headers, json=update_atlas)
-    assert r.is_success
-    assert NoneResponse(**r.json()).code == 0
-
-    r = client.get(
-        "/api/getAtlasInfo", params={"atlas_id": created_atlas_id}, headers=logon_root_headers
+    client.request_with_test(
+        "POST", "/api/updateAtlas", type(None), headers=logon_root_headers, json=update_atlas
     )
-    assert r.is_success
-    ro = Response[AtlasInfo](**r.json())
-    assert ro.data.id > 0 and not ro.data.is_deleted
-    assert ro.data.dict(include=set(update_atlas.keys())) == update_atlas
+
+    atlas_info = client.request_with_test(
+        "GET",
+        "/api/getAtlasInfo",
+        AtlasInfo,
+        params={"atlas_id": created_atlas_id},
+        headers=logon_root_headers,
+    )
+    assert atlas_info.id > 0 and not atlas_info.is_deleted
+    assert atlas_info.dict(include=set(update_atlas.keys())) == update_atlas
