@@ -7,6 +7,7 @@ from app.db.crud.device import SearchDeviceRow
 from app.db.orm import (
     Atlas,
     AtlasRegion,
+    AtlasRegionLink,
     Device,
     Experiment,
     HumanSubject,
@@ -20,6 +21,7 @@ from app.db.orm import (
 from app.model.schema import (
     AtlasInfo,
     AtlasRegionInfo,
+    AtlasRegionLinkInfo,
     AtlasRegionTreeInfo,
     AtlasRegionTreeNode,
     DeviceInfo,
@@ -244,4 +246,19 @@ def atlas_region_tree_node_2_info(atlas_region: AtlasRegionTreeNode) -> AtlasReg
         region_id=atlas_region.region_id,
         label=atlas_region.label,
         children=map_list(atlas_region_tree_node_2_info, atlas_region.children),
+    )
+
+
+def atlas_region_link_orm_2_info(link: AtlasRegionLink) -> AtlasRegionLinkInfo:
+    return AtlasRegionLinkInfo(
+        id=link.id,
+        is_deleted=link.is_deleted,
+        gmt_create=link.gmt_create,
+        gmt_modified=link.gmt_modified,
+        atlas_id=link.atlas_id,
+        link_id=link.link_id,
+        region1=link.region1,
+        region2=link.region2,
+        value=link.value,
+        opposite_value=link.opposite_value,
     )

@@ -5,7 +5,7 @@ from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.localization import Entity
 from app.db import common_crud
 from app.db.crud import atlas as crud
-from app.db.orm import Atlas, AtlasRegion
+from app.db.orm import Atlas, AtlasRegion, AtlasRegionLink
 from app.model import convert
 from app.model.field import ID
 from app.model.request import DeleteModelRequest
@@ -15,6 +15,9 @@ from app.model.schema import (
     AtlasInfo,
     AtlasRegionCreate,
     AtlasRegionInfo,
+    AtlasRegionLinkCreate,
+    AtlasRegionLinkInfo,
+    AtlasRegionLinkUpdate,
     AtlasRegionTreeInfo,
     AtlasRegionTreeNode,
     AtlasRegionUpdate,
@@ -75,6 +78,7 @@ def get_atlases_by_page(
 @router.post("/api/createAtlasRegion", description="创建脑图谱区域", response_model=Response[int])
 @wrap_api_response
 def create_atlas_region(create: AtlasRegionCreate, ctx: ResearcherContext = Depends()) -> int:
+    check_atlas_exists(ctx.db, create.atlas_id)
     return common_crud.insert_row(
         ctx.db, AtlasRegion, create.dict(), commit=True, raise_on_fail=True
     )
@@ -145,3 +149,61 @@ def build_atlas_region_trees(atlas_regions: list[AtlasRegionTreeNode]) -> list[A
             parent = regions_map[region.parent_id]
             parent.children.append(region)
     return roots
+
+
+@router.post("/api/createAtlasRegionLink", description="创建脑区连接", response_model=Response[int])
+@wrap_api_response
+def create_atlas_region_link(
+    create: AtlasRegionLinkCreate, ctx: ResearcherContext = Depends()
+) -> int:
+    check_atlas_exists(ctx.db, create.atlas_id)
+    return common_crud.insert_row(
+        ctx.db, AtlasRegionLink, create.dict(), commit=True, raise_on_fail=True
+    )
+
+
+@router.delete("/api/deleteAtlasRegionLink", description="删除脑区连接", response_model=NoneResponse)
+@wrap_api_response
+def delete_atlas_region_link(
+    request: DeleteModelRequest, ctx: ResearcherContext = Depends()
+) -> None:
+    common_crud.update_row_as_deleted(
+        ctx.db, AtlasRegionLink, id_=request.id, commit=True, raise_on_fail=True
+    )
+
+
+@router.post("/api/updateAtlasRegionLink", description="更新脑区连接", response_model=NoneResponse)
+@wrap_api_response
+def update_atlas_region_link(
+    update: AtlasRegionLinkUpdate, ctx: ResearcherContext = Depends()
+) -> None:
+    check_atlas_exists(ctx.db, update.atlas_id)
+    check_atlas_region_exists(ctx.db, update.id)
+    common_crud.update_row(
+        ctx.db,
+        AtlasRegionLink,
+        update.dict(exclude={"id"}),
+        id_=update.id,
+        commit=True,
+        raise_on_fail=True,
+    )
+
+
+@router.get(
+    "/api/getAtlasRegionLinkInfo",
+    description="获取脑区连接详情",
+    response_model=Response[AtlasRegionLinkInfo],
+)
+@wrap_api_response
+def get_atlas_region_link_info(
+    link_id: ID = Query(description="脑区连接ID"), ctx: HumanSubjectContext = Depends()
+) -> AtlasRegionLinkInfo:
+    link_orm = common_crud.get_row_by_id(
+        ctx.db,
+        AtlasRegionLink,
+        id_=link_id,
+        raise_on_fail=True,
+        not_found_entity=Entity.atlas_region_link,
+    )
+    link_info = convert.atlas_region_link_orm_2_info(link_orm)
+    return link_info

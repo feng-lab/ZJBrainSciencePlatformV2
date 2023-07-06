@@ -397,8 +397,11 @@ class AtlasTreeParentId(BaseModel):
     parent_id: ID | None
 
 
-class AtlasRegionCreate(AtlasRegionID, AtlasTreeParentId):
+class AtlasID(BaseModel):
     atlas_id: ID
+
+
+class AtlasRegionCreate(AtlasID, AtlasRegionID, AtlasTreeParentId):
     description: str
     acronym: str
     lobe: str | None
@@ -419,3 +422,19 @@ class AtlasRegionTreeInfo(AtlasRegionID, AtlasRegionLabel):
 
 class AtlasRegionTreeNode(AtlasRegionID, AtlasRegionLabel, ModelId, AtlasTreeParentId):
     children: list["AtlasRegionTreeNode"]
+
+
+class AtlasRegionLinkCreate(AtlasID):
+    link_id: ID
+    region1: str
+    region2: str
+    value: float | None
+    opposite_value: float | None
+
+
+class AtlasRegionLinkUpdate(AtlasRegionLinkCreate, ModelId):
+    pass
+
+
+class AtlasRegionLinkInfo(AtlasRegionLinkCreate, BaseModelInDB):
+    pass
