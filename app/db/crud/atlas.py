@@ -1,12 +1,12 @@
 from typing import Sequence
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import and_, select
+from sqlalchemy.orm import Session, aliased
 
 from app.common.exception import ServiceError
 from app.common.localization import Entity
 from app.db.crud import query_pages
-from app.db.orm import Atlas, AtlasRegion
+from app.db.orm import Atlas, AtlasRegion, AtlasRegionLink
 from app.model.field import ID
 from app.model.schema import AtlasSearch
 
@@ -62,3 +62,31 @@ def list_atlas_regions_by_atlas_id(db: Session, atlas_id: ID) -> Sequence[AtlasR
     )
     atlas_regions = db.execute(stmt).all()
     return atlas_regions
+
+
+# noinspection PyTypeChecker
+def get_atlas_region_link(
+    db: Session, id_: ID | None, link_id: ID | None, atlas_id: ID | None
+) -> AtlasRegionLink:
+    region1, region2 = aliased(AtlasRegion), aliased(AtlasRegion)
+    stmt = (
+        select(AtlasRegionLink)
+        .join(
+            region1, and_(AtlasRegionLink.region1 == region1.acronym, region1.is_deleted == False)
+        )
+        .join(
+            region2, and_(AtlasRegionLink.region2 == region2.acronym, region2.is_deleted == False)
+        )
+        .where(AtlasRegionLink.is_deleted == False)
+    )
+    if id_ is not None:
+        stmt = stmt.where(AtlasRegionLink.id == id_)
+    elif atlas_id is not None:
+        stmt = stmt.where(AtlasRegionLink.link_id == link_id, AtlasRegionLink.atlas_id == atlas_id)
+    else:
+        raise ServiceError.params_error("both atlas_id and id is None")
+
+    link = db.execute(stmt).scalar()
+    if link is None:
+        raise ServiceError.not_found(Entity.atlas_region_link)
+    return link

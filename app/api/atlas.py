@@ -196,14 +196,11 @@ def update_atlas_region_link(
 )
 @wrap_api_response
 def get_atlas_region_link_info(
-    link_id: ID = Query(description="脑区连接ID"), ctx: HumanSubjectContext = Depends()
+    id_: ID | None = Query(None, alias="id", description="脑区连接系统ID"),
+    atlas_id: ID | None = Query(None, description="脑图谱ID"),
+    link_id: ID | None = Query(None, description="脑区连接ID"),
+    ctx: HumanSubjectContext = Depends(),
 ) -> AtlasRegionLinkInfo:
-    link_orm = common_crud.get_row_by_id(
-        ctx.db,
-        AtlasRegionLink,
-        id_=link_id,
-        raise_on_fail=True,
-        not_found_entity=Entity.atlas_region_link,
-    )
+    link_orm = crud.get_atlas_region_link(ctx.db, id_, link_id, atlas_id)
     link_info = convert.atlas_region_link_orm_2_info(link_orm)
     return link_info
