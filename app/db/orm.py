@@ -410,14 +410,14 @@ class AtlasRegionBehavioralDomain(Base, ModelMixin, AtlasComponentMixin):
 
 
 @table_repr
-class AtlasParadigmClass(Base, ModelMixin, AtlasComponentMixin):
+class AtlasParadigmClass(Base, TreeNodeMixin, AtlasComponentMixin):
     __tablename__ = "atlas_paradigm_class"
     __table_args__ = {"comment": "脑图谱范例集"}
 
     name: Mapped[str] = mapped_column(VarChar, nullable=False, comment="名称")
     value: Mapped[float] = mapped_column(Double, nullable=False, comment="值")
     label: Mapped[str] = mapped_column(VarChar, nullable=False, comment="标签")
-    description: Mapped[str | None] = mapped_column(Text, nullable=True, comment="描述")
+    description: Mapped[str] = mapped_column(Text, nullable=False, comment="描述")
 
 
 @table_repr
