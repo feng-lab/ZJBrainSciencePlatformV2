@@ -18,6 +18,7 @@ from app.db.orm import (
     AtlasRegion,
     AtlasRegionBehavioralDomain,
     AtlasRegionLink,
+    AtlasRegionParadigmClass,
 )
 from app.model import convert
 from app.model.field import ID
@@ -40,6 +41,9 @@ from app.model.schema import (
     AtlasRegionLinkCreate,
     AtlasRegionLinkInfo,
     AtlasRegionLinkUpdate,
+    AtlasRegionParadigmClassCreate,
+    AtlasRegionParadigmClassDict,
+    AtlasRegionParadigmClassUpdate,
     AtlasRegionTreeInfo,
     AtlasRegionUpdate,
     AtlasSearch,
@@ -337,13 +341,13 @@ def update_atlas_region_behavioral_domain(
     response_model=Response[AtlasRegionBehavioralDomainDict],
 )
 @wrap_api_response
-def get_atlas_region_behavioral_domain_info(
+def get_atlas_region_behavioral_domains(
     atlas_id: ID = Query(description="脑图谱ID"),
     region_id: ID = Query(description="脑区ID"),
     ctx: HumanSubjectContext = Depends(),
 ) -> AtlasRegionBehavioralDomainDict:
     region_domains_orm = crud.list_atlas_region_behavioral_domains(ctx.db, atlas_id, region_id)
-    region_domains_dict = convert.atlas_region_behavioral_domains_orm_2_dict(region_domains_orm)
+    region_domains_dict = convert.atlas_region_associated_model_2_dict(region_domains_orm)
     return region_domains_dict
 
 
@@ -402,3 +406,64 @@ def get_paradigm_class_trees(
         convert.atlas_paradigm_class_tree_node_2_info, paradigm_class_trees
     )
     return paradigm_class_tree_infos
+
+
+@router.post(
+    "/api/createAtlasRegionParadigmClass", description="创建脑区相关的范例集", response_model=Response[int]
+)
+@wrap_api_response
+def create_atlas_region_paradigm_class(
+    create: AtlasRegionParadigmClassCreate, ctx: ResearcherContext = Depends()
+) -> int:
+    check_atlas_exists(ctx.db, create.atlas_id)
+    check_atlas_region_exists(ctx.db, create.region_id)
+    return common_crud.insert_row(
+        ctx.db, AtlasRegionParadigmClass, create.dict(), commit=True, raise_on_fail=True
+    )
+
+
+@router.delete(
+    "/api/deleteAtlasRegionParadigmClass", description="删除脑区相关的范例集", response_model=NoneResponse
+)
+@wrap_api_response
+def delete_atlas_region_paradigm_class(
+    request: DeleteModelRequest, ctx: ResearcherContext = Depends()
+) -> None:
+    common_crud.update_row_as_deleted(
+        ctx.db, AtlasRegionParadigmClass, id_=request.id, commit=True, raise_on_fail=True
+    )
+
+
+@router.post(
+    "/api/updateAtlasRegionParadigmClass", description="更新脑区相关的范例集", response_model=NoneResponse
+)
+@wrap_api_response
+def update_atlas_region_paradigm_class(
+    update: AtlasRegionParadigmClassUpdate, ctx: ResearcherContext = Depends()
+) -> None:
+    check_atlas_exists(ctx.db, update.atlas_id)
+    check_atlas_region_exists(ctx.db, update.id)
+    common_crud.update_row(
+        ctx.db,
+        AtlasRegionParadigmClass,
+        update.dict(exclude={"id"}),
+        id_=update.id,
+        commit=True,
+        raise_on_fail=True,
+    )
+
+
+@router.get(
+    "/api/getAtlasRegionParadigmClasses",
+    description="获取脑区相关的范例集详情",
+    response_model=Response[AtlasRegionBehavioralDomainDict],
+)
+@wrap_api_response
+def get_atlas_region_paradigm_classes(
+    atlas_id: ID = Query(description="脑图谱ID"),
+    region_id: ID = Query(description="脑区ID"),
+    ctx: HumanSubjectContext = Depends(),
+) -> AtlasRegionParadigmClassDict:
+    region_domains_orm = crud.list_atlas_region_paradigm_classes(ctx.db, atlas_id, region_id)
+    region_domains_dict = convert.atlas_region_associated_model_2_dict(region_domains_orm)
+    return region_domains_dict

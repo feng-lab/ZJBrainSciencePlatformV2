@@ -32,7 +32,6 @@ from app.model.enum_filed import (
 
 ShortVarChar: String = String(63)
 VarChar: String = String(255)
-LongVarChar: String = String(65535)
 
 
 class ModelMixin:

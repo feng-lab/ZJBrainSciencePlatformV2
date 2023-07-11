@@ -9,7 +9,6 @@ from app.db.orm import (
     AtlasBehavioralDomain,
     AtlasParadigmClass,
     AtlasRegion,
-    AtlasRegionBehavioralDomain,
     AtlasRegionLink,
     Device,
     Experiment,
@@ -21,13 +20,13 @@ from app.db.orm import (
     User,
     VirtualFile,
 )
+from app.model.field import LongVarchar
 from app.model.schema import (
     AtlasBehavioralDomainTreeInfo,
     AtlasBehavioralDomainTreeNode,
     AtlasInfo,
     AtlasParadigmClassTreeInfo,
     AtlasParadigmClassTreeNode,
-    AtlasRegionBehavioralDomainDict,
     AtlasRegionInfo,
     AtlasRegionLinkInfo,
     AtlasRegionTreeInfo,
@@ -298,10 +297,8 @@ def atlas_behavioral_domain_tree_node_2_info(
     )
 
 
-def atlas_region_behavioral_domains_orm_2_dict(
-    region_domains: Sequence[AtlasRegionBehavioralDomain],
-) -> AtlasRegionBehavioralDomainDict:
-    return {region_domain.key: region_domain.value for region_domain in region_domains}
+def atlas_region_associated_model_2_dict(models: Sequence) -> dict[LongVarchar, float]:
+    return {model.key: model.value for model in models}
 
 
 def atlas_paradigm_class_orm_2_tree_node(

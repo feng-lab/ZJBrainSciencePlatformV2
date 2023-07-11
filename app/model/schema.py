@@ -497,3 +497,15 @@ class AtlasParadigmClassTreeInfo(AtlasParadigmClassBase):
 
 class AtlasParadigmClassTreeNode(AtlasParadigmClassBase, ModelId, AtlasTreeParentId):
     children: list["AtlasParadigmClassTreeNode"]
+
+
+class AtlasRegionParadigmClassCreate(AtlasID, AtlasRegionID):
+    key: LongVarchar
+    value: float
+
+
+class AtlasRegionParadigmClassUpdate(AtlasRegionParadigmClassCreate, ModelId):
+    pass
+
+
+AtlasRegionParadigmClassDict: TypeAlias = dict[LongVarchar, float]

@@ -13,6 +13,7 @@ from app.db.orm import (
     AtlasRegion,
     AtlasRegionBehavioralDomain,
     AtlasRegionLink,
+    AtlasRegionParadigmClass,
 )
 from app.model.field import ID
 from app.model.schema import AtlasSearch
@@ -165,3 +166,23 @@ def list_atlas_paradigm_class_by_atlas_id(
     )
     domains = db.execute(stmt).all()
     return domains
+
+
+# noinspection PyTypeChecker
+def list_atlas_region_paradigm_classes(
+    db: Session, atlas_id: ID, region_id: ID
+) -> Sequence[AtlasRegionParadigmClass]:
+    stmt = (
+        select(AtlasRegionParadigmClass.key, AtlasRegionParadigmClass.value)
+        .join(AtlasRegion, AtlasRegionParadigmClass.region_id == AtlasRegion.region_id)
+        .join(Atlas, AtlasRegionParadigmClass.atlas_id == Atlas.id)
+        .where(
+            AtlasRegionParadigmClass.region_id == region_id,
+            AtlasRegionParadigmClass.atlas_id == atlas_id,
+            AtlasRegionParadigmClass.is_deleted == False,
+            AtlasRegion.is_deleted == False,
+            Atlas.is_deleted == False,
+        )
+    )
+    paradigm_classes = db.execute(stmt).all()
+    return paradigm_classes
