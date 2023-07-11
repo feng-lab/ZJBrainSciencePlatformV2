@@ -6,6 +6,7 @@ from app.db import OrmModel
 from app.db.crud.device import SearchDeviceRow
 from app.db.orm import (
     Atlas,
+    AtlasBehavioralDomain,
     AtlasRegion,
     AtlasRegionLink,
     Device,
@@ -19,6 +20,8 @@ from app.db.orm import (
     VirtualFile,
 )
 from app.model.schema import (
+    AtlasBehavioralDomainTreeInfo,
+    AtlasBehavioralDomainTreeNode,
     AtlasInfo,
     AtlasRegionInfo,
     AtlasRegionLinkInfo,
@@ -261,4 +264,30 @@ def atlas_region_link_orm_2_info(link: AtlasRegionLink) -> AtlasRegionLinkInfo:
         region2=link.region2,
         value=link.value,
         opposite_value=link.opposite_value,
+    )
+
+
+def atlas_behavioral_domain_orm_2_tree_node(
+    domain: AtlasBehavioralDomain,
+) -> AtlasBehavioralDomainTreeNode:
+    return AtlasBehavioralDomainTreeNode(
+        id=domain.id,
+        parent_id=domain.parent_id,
+        name=domain.name,
+        value=domain.value,
+        label=domain.label,
+        description=domain.description,
+        children=[],
+    )
+
+
+def atlas_behavioral_domain_tree_node_2_info(
+    domain: AtlasBehavioralDomainTreeNode,
+) -> AtlasBehavioralDomainTreeInfo:
+    return AtlasBehavioralDomainTreeInfo(
+        name=domain.name,
+        value=domain.value,
+        label=domain.label,
+        description=domain.description,
+        children=map_list(atlas_behavioral_domain_tree_node_2_info, domain.children),
     )

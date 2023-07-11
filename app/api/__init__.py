@@ -14,6 +14,7 @@ from app.db import OrmModel, common_crud
 from app.db.crud import human_subject as crud_human_subject
 from app.db.orm import (
     Atlas,
+    AtlasBehavioralDomain,
     AtlasRegion,
     AtlasRegionLink,
     Device,
@@ -95,6 +96,12 @@ def check_atlas_region_exists(db: Session, atlas_region_id: int) -> None:
 
 def check_atlas_region_link_exists(db: Session, atlas_region_link_id: int) -> None:
     _check_exists(db, AtlasRegionLink, Entity.atlas_region_link, id_=atlas_region_link_id)
+
+
+def check_atlas_behavioral_domain_exists(db: Session, atlas_behavioral_domain_id: int) -> None:
+    _check_exists(
+        db, AtlasBehavioralDomain, Entity.atlas_behavioral_domain, id_=atlas_behavioral_domain_id
+    )
 
 
 def _check_exists(

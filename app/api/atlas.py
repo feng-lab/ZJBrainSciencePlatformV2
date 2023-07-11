@@ -1,16 +1,24 @@
 from fastapi import APIRouter, Depends, Query
 
-from app.api import check_atlas_exists, check_atlas_region_exists, wrap_api_response
+from app.api import (
+    check_atlas_behavioral_domain_exists,
+    check_atlas_exists,
+    check_atlas_region_exists,
+    wrap_api_response,
+)
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.localization import Entity
 from app.db import common_crud
 from app.db.crud import atlas as crud
-from app.db.orm import Atlas, AtlasRegion, AtlasRegionLink
+from app.db.orm import Atlas, AtlasBehavioralDomain, AtlasRegion, AtlasRegionLink
 from app.model import convert
 from app.model.field import ID
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response
 from app.model.schema import (
+    AtlasBehavioralDomainCreate,
+    AtlasBehavioralDomainTreeInfo,
+    AtlasBehavioralDomainUpdate,
     AtlasCreate,
     AtlasInfo,
     AtlasRegionCreate,
@@ -19,7 +27,6 @@ from app.model.schema import (
     AtlasRegionLinkInfo,
     AtlasRegionLinkUpdate,
     AtlasRegionTreeInfo,
-    AtlasRegionTreeNode,
     AtlasRegionUpdate,
     AtlasSearch,
     AtlasUpdate,
@@ -134,20 +141,20 @@ def get_atlas_region_trees(
 ) -> list[AtlasRegionTreeInfo]:
     regions = crud.list_atlas_regions_by_atlas_id(ctx.db, atlas_id)
     region_tree_nodes = convert.map_list(convert.atlas_region_orm_2_tree_node, regions)
-    region_trees = build_atlas_region_trees(region_tree_nodes)
+    region_trees = build_trees(region_tree_nodes)
     region_tree_infos = convert.map_list(convert.atlas_region_tree_node_2_info, region_trees)
     return region_tree_infos
 
 
-def build_atlas_region_trees(atlas_regions: list[AtlasRegionTreeNode]) -> list[AtlasRegionTreeNode]:
-    regions_map = {region.id: region for region in atlas_regions}
+def build_trees(tree_nodes: list) -> list:
+    node_map = {node.id: node for node in tree_nodes}
     roots = []
-    for region in atlas_regions:
-        if region.parent_id is None:
-            roots.append(region)
+    for node in tree_nodes:
+        if node.parent_id is None or node.parent_id not in node_map:
+            roots.append(node)
         else:
-            parent = regions_map[region.parent_id]
-            parent.children.append(region)
+            parent = node_map[node.parent_id]
+            parent.children.append(node)
     return roots
 
 
@@ -204,3 +211,62 @@ def get_atlas_region_link_info(
     link_orm = crud.get_atlas_region_link(ctx.db, id_, link_id, atlas_id)
     link_info = convert.atlas_region_link_orm_2_info(link_orm)
     return link_info
+
+
+@router.post("/api/createBehavioralDomain", description="创建脑图谱行为域", response_model=Response[int])
+@wrap_api_response
+def create_behavioral_domain(
+    create: AtlasBehavioralDomainCreate, ctx: ResearcherContext = Depends()
+) -> int:
+    check_atlas_exists(ctx.db, create.atlas_id)
+    domain_id = common_crud.insert_row(
+        ctx.db, AtlasBehavioralDomain, create.dict(), commit=True, raise_on_fail=True
+    )
+    return domain_id
+
+
+@router.delete("/api/deleteBehavioralDomain", description="删除脑图谱行为域", response_model=NoneResponse)
+@wrap_api_response
+def delete_behavioral_domain(
+    request: DeleteModelRequest, ctx: ResearcherContext = Depends()
+) -> None:
+    common_crud.update_row_as_deleted(
+        ctx.db, AtlasBehavioralDomain, id_=request.id, commit=True, raise_on_fail=True
+    )
+
+
+@router.post(
+    "/api/updateAtlasBehavioralDomain", description="更新脑图谱行为域", response_model=NoneResponse
+)
+@wrap_api_response
+def update_atlas_region_link(
+    update: AtlasBehavioralDomainUpdate, ctx: ResearcherContext = Depends()
+) -> None:
+    check_atlas_exists(ctx.db, update.atlas_id)
+    check_atlas_behavioral_domain_exists(ctx.db, update.id)
+    common_crud.update_row(
+        ctx.db,
+        AtlasBehavioralDomain,
+        update.dict(exclude={"id"}),
+        id_=update.id,
+        commit=True,
+        raise_on_fail=True,
+    )
+
+
+@router.get(
+    "/api/getAtlasBehavioralDomainTrees",
+    description="获取脑图谱行为域树",
+    response_model=Response[list[AtlasBehavioralDomainTreeInfo]],
+)
+@wrap_api_response
+def get_atlas_behavioral_domain_trees(
+    atlas_id: ID = Query(description="脑图谱ID"), ctx: HumanSubjectContext = Depends()
+) -> list[AtlasBehavioralDomainTreeInfo]:
+    domains = crud.list_atlas_behavioral_domains_by_atlas_id(ctx.db, atlas_id)
+    domain_tree_nodes = convert.map_list(convert.atlas_behavioral_domain_orm_2_tree_node, domains)
+    domain_trees = build_trees(domain_tree_nodes)
+    domain_tree_infos = convert.map_list(
+        convert.atlas_behavioral_domain_tree_node_2_info, domain_trees
+    )
+    return domain_tree_infos

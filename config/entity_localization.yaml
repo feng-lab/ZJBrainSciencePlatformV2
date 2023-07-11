@@ -37,3 +37,7 @@
 - entity_id: atlas_region_link
   zh-CN: 脑图谱区域连接
   en-US: atlas_region_link
+
+- entity_id: atlas_behavioral_domain
+  zh-CN: 脑图谱行为域
+  en-US: atlas_behavioral_domain

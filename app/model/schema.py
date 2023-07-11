@@ -438,3 +438,26 @@ class AtlasRegionLinkUpdate(AtlasRegionLinkCreate, ModelId):
 
 class AtlasRegionLinkInfo(AtlasRegionLinkCreate, BaseModelInDB):
     pass
+
+
+class AtlasBehavioralDomainBase(BaseModel):
+    name: LongVarchar
+    value: float
+    label: LongVarchar
+    description: Text = ""
+
+
+class AtlasBehavioralDomainCreate(AtlasBehavioralDomainBase, AtlasID, AtlasTreeParentId):
+    pass
+
+
+class AtlasBehavioralDomainUpdate(AtlasBehavioralDomainCreate, ModelId):
+    pass
+
+
+class AtlasBehavioralDomainTreeInfo(AtlasBehavioralDomainBase):
+    children: list["AtlasBehavioralDomainTreeInfo"]
+
+
+class AtlasBehavioralDomainTreeNode(AtlasBehavioralDomainBase, ModelId, AtlasTreeParentId):
+    children: list["AtlasBehavioralDomainTreeNode"]
