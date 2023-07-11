@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import TypeAlias
 
 from pydantic import BaseModel, Field, validator
 
@@ -461,3 +462,15 @@ class AtlasBehavioralDomainTreeInfo(AtlasBehavioralDomainBase):
 
 class AtlasBehavioralDomainTreeNode(AtlasBehavioralDomainBase, ModelId, AtlasTreeParentId):
     children: list["AtlasBehavioralDomainTreeNode"]
+
+
+class AtlasRegionBehavioralDomainCreate(AtlasID, AtlasRegionID):
+    key: LongVarchar
+    value: float
+
+
+class AtlasRegionBehavioralDomainUpdate(AtlasRegionBehavioralDomainCreate, ModelId):
+    pass
+
+
+AtlasRegionBehavioralDomainDict: TypeAlias = dict[LongVarchar, float]

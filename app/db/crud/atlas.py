@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session, aliased
 from app.common.exception import ServiceError
 from app.common.localization import Entity
 from app.db.crud import query_pages
-from app.db.orm import Atlas, AtlasBehavioralDomain, AtlasRegion, AtlasRegionLink
+from app.db.orm import (
+    Atlas,
+    AtlasBehavioralDomain,
+    AtlasRegion,
+    AtlasRegionBehavioralDomain,
+    AtlasRegionLink,
+)
 from app.model.field import ID
 from app.model.schema import AtlasSearch
 
@@ -114,3 +120,23 @@ def list_atlas_behavioral_domains_by_atlas_id(
     )
     domains = db.execute(stmt).all()
     return domains
+
+
+# noinspection PyTypeChecker
+def list_atlas_region_behavioral_domains(
+    db: Session, atlas_id: ID, region_id: ID
+) -> Sequence[AtlasRegionBehavioralDomain]:
+    stmt = (
+        select(AtlasRegionBehavioralDomain.key, AtlasRegionBehavioralDomain.value)
+        .join(AtlasRegion, AtlasRegionBehavioralDomain.region_id == AtlasRegion.region_id)
+        .join(Atlas, AtlasRegionBehavioralDomain.atlas_id == Atlas.id)
+        .where(
+            AtlasRegionBehavioralDomain.atlas_id == atlas_id,
+            AtlasRegionBehavioralDomain.region_id == region_id,
+            AtlasRegionBehavioralDomain.is_deleted == False,
+            AtlasRegion.is_deleted == False,
+            Atlas.is_deleted == False,
+        )
+    )
+    region_domains = db.execute(stmt).all()
+    return region_domains

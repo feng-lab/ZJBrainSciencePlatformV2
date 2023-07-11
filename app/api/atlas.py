@@ -10,7 +10,13 @@ from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.localization import Entity
 from app.db import common_crud
 from app.db.crud import atlas as crud
-from app.db.orm import Atlas, AtlasBehavioralDomain, AtlasRegion, AtlasRegionLink
+from app.db.orm import (
+    Atlas,
+    AtlasBehavioralDomain,
+    AtlasRegion,
+    AtlasRegionBehavioralDomain,
+    AtlasRegionLink,
+)
 from app.model import convert
 from app.model.field import ID
 from app.model.request import DeleteModelRequest
@@ -21,6 +27,9 @@ from app.model.schema import (
     AtlasBehavioralDomainUpdate,
     AtlasCreate,
     AtlasInfo,
+    AtlasRegionBehavioralDomainCreate,
+    AtlasRegionBehavioralDomainDict,
+    AtlasRegionBehavioralDomainUpdate,
     AtlasRegionCreate,
     AtlasRegionInfo,
     AtlasRegionLinkCreate,
@@ -270,3 +279,64 @@ def get_atlas_behavioral_domain_trees(
         convert.atlas_behavioral_domain_tree_node_2_info, domain_trees
     )
     return domain_tree_infos
+
+
+@router.post(
+    "/api/createAtlasRegionBehavioralDomain", description="创建脑区相关的行为域", response_model=Response[int]
+)
+@wrap_api_response
+def create_atlas_region_behavioral_domain(
+    create: AtlasRegionBehavioralDomainCreate, ctx: ResearcherContext = Depends()
+) -> int:
+    check_atlas_exists(ctx.db, create.atlas_id)
+    check_atlas_region_exists(ctx.db, create.region_id)
+    return common_crud.insert_row(
+        ctx.db, AtlasRegionBehavioralDomain, create.dict(), commit=True, raise_on_fail=True
+    )
+
+
+@router.delete(
+    "/api/deleteAtlasRegionBehavioralDomain", description="删除脑区相关的行为域", response_model=NoneResponse
+)
+@wrap_api_response
+def delete_atlas_region_behavioral_domain(
+    request: DeleteModelRequest, ctx: ResearcherContext = Depends()
+) -> None:
+    common_crud.update_row_as_deleted(
+        ctx.db, AtlasRegionBehavioralDomain, id_=request.id, commit=True, raise_on_fail=True
+    )
+
+
+@router.post(
+    "/api/updateAtlasRegionBehavioralDomain", description="更新脑区相关的行为域", response_model=NoneResponse
+)
+@wrap_api_response
+def update_atlas_region_behavioral_domain(
+    update: AtlasRegionBehavioralDomainUpdate, ctx: ResearcherContext = Depends()
+) -> None:
+    check_atlas_exists(ctx.db, update.atlas_id)
+    check_atlas_region_exists(ctx.db, update.id)
+    common_crud.update_row(
+        ctx.db,
+        AtlasRegionBehavioralDomain,
+        update.dict(exclude={"id"}),
+        id_=update.id,
+        commit=True,
+        raise_on_fail=True,
+    )
+
+
+@router.get(
+    "/api/getAtlasRegionBehavioralDomains",
+    description="获取脑区相关的行为域详情",
+    response_model=Response[AtlasRegionBehavioralDomainDict],
+)
+@wrap_api_response
+def get_atlas_region_behavioral_domain_info(
+    atlas_id: ID = Query(description="脑图谱ID"),
+    region_id: ID = Query(description="脑区ID"),
+    ctx: HumanSubjectContext = Depends(),
+) -> AtlasRegionBehavioralDomainDict:
+    region_domains_orm = crud.list_atlas_region_behavioral_domains(ctx.db, atlas_id, region_id)
+    region_domains_dict = convert.atlas_region_behavioral_domains_orm_2_dict(region_domains_orm)
+    return region_domains_dict

@@ -1,5 +1,5 @@
 import json
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, Callable, Iterable, Sequence, TypeVar
 
 from app.common.config import config
 from app.db import OrmModel
@@ -8,6 +8,7 @@ from app.db.orm import (
     Atlas,
     AtlasBehavioralDomain,
     AtlasRegion,
+    AtlasRegionBehavioralDomain,
     AtlasRegionLink,
     Device,
     Experiment,
@@ -23,6 +24,7 @@ from app.model.schema import (
     AtlasBehavioralDomainTreeInfo,
     AtlasBehavioralDomainTreeNode,
     AtlasInfo,
+    AtlasRegionBehavioralDomainDict,
     AtlasRegionInfo,
     AtlasRegionLinkInfo,
     AtlasRegionTreeInfo,
@@ -291,3 +293,9 @@ def atlas_behavioral_domain_tree_node_2_info(
         description=domain.description,
         children=map_list(atlas_behavioral_domain_tree_node_2_info, domain.children),
     )
+
+
+def atlas_region_behavioral_domains_orm_2_dict(
+    region_domains: Sequence[AtlasRegionBehavioralDomain],
+) -> AtlasRegionBehavioralDomainDict:
+    return {region_domain.key: region_domain.value for region_domain in region_domains}
