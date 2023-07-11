@@ -15,6 +15,7 @@ from app.db.crud import human_subject as crud_human_subject
 from app.db.orm import (
     Atlas,
     AtlasBehavioralDomain,
+    AtlasParadigmClass,
     AtlasRegion,
     AtlasRegionLink,
     Device,
@@ -102,6 +103,10 @@ def check_atlas_behavioral_domain_exists(db: Session, atlas_behavioral_domain_id
     _check_exists(
         db, AtlasBehavioralDomain, Entity.atlas_behavioral_domain, id_=atlas_behavioral_domain_id
     )
+
+
+def check_atlas_paradigm_class_exists(db: Session, atlas_paradigm_class_id: int) -> None:
+    _check_exists(db, AtlasParadigmClass, Entity.atlas_paradigm_class, id_=atlas_paradigm_class_id)
 
 
 def _check_exists(

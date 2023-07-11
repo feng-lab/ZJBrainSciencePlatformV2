@@ -25,6 +25,7 @@ class Entity(StrEnum):
     atlas_region = "atlas_region"
     atlas_region_link = "atlas_region_link"
     atlas_behavioral_domain = "atlas_behavioral_domain"
+    atlas_paradigm_class = "atlas_paradigm_class"
 
 
 MessageTemplateKey: TypeAlias = tuple[str, MessageLocale]

@@ -7,6 +7,7 @@ from app.db.crud.device import SearchDeviceRow
 from app.db.orm import (
     Atlas,
     AtlasBehavioralDomain,
+    AtlasParadigmClass,
     AtlasRegion,
     AtlasRegionBehavioralDomain,
     AtlasRegionLink,
@@ -24,6 +25,8 @@ from app.model.schema import (
     AtlasBehavioralDomainTreeInfo,
     AtlasBehavioralDomainTreeNode,
     AtlasInfo,
+    AtlasParadigmClassTreeInfo,
+    AtlasParadigmClassTreeNode,
     AtlasRegionBehavioralDomainDict,
     AtlasRegionInfo,
     AtlasRegionLinkInfo,
@@ -299,3 +302,29 @@ def atlas_region_behavioral_domains_orm_2_dict(
     region_domains: Sequence[AtlasRegionBehavioralDomain],
 ) -> AtlasRegionBehavioralDomainDict:
     return {region_domain.key: region_domain.value for region_domain in region_domains}
+
+
+def atlas_paradigm_class_orm_2_tree_node(
+    paradigm_class: AtlasParadigmClass,
+) -> AtlasParadigmClassTreeNode:
+    return AtlasParadigmClassTreeNode(
+        parent_id=paradigm_class.parent_id,
+        id=paradigm_class.id,
+        name=paradigm_class.name,
+        value=paradigm_class.value,
+        label=paradigm_class.label,
+        description=paradigm_class.description,
+        children=[],
+    )
+
+
+def atlas_paradigm_class_tree_node_2_info(
+    paradigm_class: AtlasParadigmClassTreeNode,
+) -> AtlasParadigmClassTreeInfo:
+    return AtlasParadigmClassTreeInfo(
+        name=paradigm_class.name,
+        value=paradigm_class.value,
+        label=paradigm_class.label,
+        description=paradigm_class.description,
+        children=map_list(atlas_paradigm_class_tree_node_2_info, paradigm_class.children),
+    )

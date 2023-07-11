@@ -9,6 +9,7 @@ from app.db.crud import query_pages
 from app.db.orm import (
     Atlas,
     AtlasBehavioralDomain,
+    AtlasParadigmClass,
     AtlasRegion,
     AtlasRegionBehavioralDomain,
     AtlasRegionLink,
@@ -140,3 +141,27 @@ def list_atlas_region_behavioral_domains(
     )
     region_domains = db.execute(stmt).all()
     return region_domains
+
+
+# noinspection PyTypeChecker
+def list_atlas_paradigm_class_by_atlas_id(
+    db: Session, atlas_id: ID
+) -> Sequence[AtlasParadigmClass]:
+    stmt = (
+        select(
+            AtlasParadigmClass.id,
+            AtlasParadigmClass.parent_id,
+            AtlasParadigmClass.name,
+            AtlasParadigmClass.value,
+            AtlasParadigmClass.label,
+            AtlasParadigmClass.description,
+        )
+        .join(Atlas, Atlas.id == AtlasParadigmClass.atlas_id)
+        .where(
+            AtlasParadigmClass.atlas_id == atlas_id,
+            AtlasParadigmClass.is_deleted == False,
+            Atlas.is_deleted == False,
+        )
+    )
+    domains = db.execute(stmt).all()
+    return domains

@@ -41,3 +41,7 @@
 - entity_id: atlas_behavioral_domain
   zh-CN: 脑图谱行为域
   en-US: atlas_behavioral_domain
+
+- entity_id: atlas_paradigm_class
+  zh-CN: 脑图谱范例集
+  en-US: atlas_paradigm_class

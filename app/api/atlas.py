@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from app.api import (
     check_atlas_behavioral_domain_exists,
     check_atlas_exists,
+    check_atlas_paradigm_class_exists,
     check_atlas_region_exists,
     wrap_api_response,
 )
@@ -13,6 +14,7 @@ from app.db.crud import atlas as crud
 from app.db.orm import (
     Atlas,
     AtlasBehavioralDomain,
+    AtlasParadigmClass,
     AtlasRegion,
     AtlasRegionBehavioralDomain,
     AtlasRegionLink,
@@ -27,6 +29,9 @@ from app.model.schema import (
     AtlasBehavioralDomainUpdate,
     AtlasCreate,
     AtlasInfo,
+    AtlasParadigmClassCreate,
+    AtlasParadigmClassTreeInfo,
+    AtlasParadigmClassUpdate,
     AtlasRegionBehavioralDomainCreate,
     AtlasRegionBehavioralDomainDict,
     AtlasRegionBehavioralDomainUpdate,
@@ -340,3 +345,60 @@ def get_atlas_region_behavioral_domain_info(
     region_domains_orm = crud.list_atlas_region_behavioral_domains(ctx.db, atlas_id, region_id)
     region_domains_dict = convert.atlas_region_behavioral_domains_orm_2_dict(region_domains_orm)
     return region_domains_dict
+
+
+@router.post("/api/createParadigmClass", description="创建脑图谱范例集", response_model=Response[int])
+@wrap_api_response
+def create_paradigm_class(
+    create: AtlasParadigmClassCreate, ctx: ResearcherContext = Depends()
+) -> int:
+    check_atlas_exists(ctx.db, create.atlas_id)
+    paradigm_class_id = common_crud.insert_row(
+        ctx.db, AtlasParadigmClass, create.dict(), commit=True, raise_on_fail=True
+    )
+    return paradigm_class_id
+
+
+@router.delete("/api/deleteParadigmClass", description="删除脑图谱范例集", response_model=NoneResponse)
+@wrap_api_response
+def delete_paradigm_class(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
+    common_crud.update_row_as_deleted(
+        ctx.db, AtlasParadigmClass, id_=request.id, commit=True, raise_on_fail=True
+    )
+
+
+@router.post("/api/updateParadigmClass", description="更新脑图谱范例集", response_model=NoneResponse)
+@wrap_api_response
+def update_paradigm_class(
+    update: AtlasParadigmClassUpdate, ctx: ResearcherContext = Depends()
+) -> None:
+    check_atlas_exists(ctx.db, update.atlas_id)
+    check_atlas_paradigm_class_exists(ctx.db, update.id)
+    common_crud.update_row(
+        ctx.db,
+        AtlasParadigmClass,
+        update.dict(exclude={"id"}),
+        id_=update.id,
+        commit=True,
+        raise_on_fail=True,
+    )
+
+
+@router.get(
+    "/api/getParadigmClassTrees",
+    description="获取脑图谱范例集树",
+    response_model=Response[list[AtlasParadigmClassTreeInfo]],
+)
+@wrap_api_response
+def get_paradigm_class_trees(
+    atlas_id: ID = Query(description="脑图谱ID"), ctx: HumanSubjectContext = Depends()
+) -> list[AtlasParadigmClassTreeInfo]:
+    paradigm_classes = crud.list_atlas_paradigm_class_by_atlas_id(ctx.db, atlas_id)
+    paradigm_class_tree_nodes = convert.map_list(
+        convert.atlas_paradigm_class_orm_2_tree_node, paradigm_classes
+    )
+    paradigm_class_trees = build_trees(paradigm_class_tree_nodes)
+    paradigm_class_tree_infos = convert.map_list(
+        convert.atlas_paradigm_class_tree_node_2_info, paradigm_class_trees
+    )
+    return paradigm_class_tree_infos

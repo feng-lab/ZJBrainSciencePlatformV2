@@ -474,3 +474,26 @@ class AtlasRegionBehavioralDomainUpdate(AtlasRegionBehavioralDomainCreate, Model
 
 
 AtlasRegionBehavioralDomainDict: TypeAlias = dict[LongVarchar, float]
+
+
+class AtlasParadigmClassBase(BaseModel):
+    name: LongVarchar
+    value: float
+    label: LongVarchar
+    description: Text = ""
+
+
+class AtlasParadigmClassCreate(AtlasParadigmClassBase, AtlasID, AtlasTreeParentId):
+    pass
+
+
+class AtlasParadigmClassUpdate(AtlasParadigmClassCreate, ModelId):
+    pass
+
+
+class AtlasParadigmClassTreeInfo(AtlasParadigmClassBase):
+    children: list["AtlasParadigmClassTreeInfo"]
+
+
+class AtlasParadigmClassTreeNode(AtlasParadigmClassBase, ModelId, AtlasTreeParentId):
+    children: list["AtlasParadigmClassTreeNode"]
