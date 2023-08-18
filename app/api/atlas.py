@@ -7,7 +7,7 @@ from app.api import (
     check_atlas_region_exists,
     wrap_api_response,
 )
-from app.common.context import HumanSubjectContext
+from app.common.context import AllUserContext
 from app.common.localization import Entity
 from app.db import common_crud
 from app.db.crud import atlas as crud
@@ -55,13 +55,13 @@ router = APIRouter(tags=["atlas"])
 
 @router.post("/api/createAtlas", description="创建脑图谱", response_model=Response[int])
 @wrap_api_response
-def create_atlas(create: AtlasCreate, ctx: HumanSubjectContext = Depends()) -> int:
+def create_atlas(create: AtlasCreate, ctx: AllUserContext = Depends()) -> int:
     return common_crud.insert_row(ctx.db, Atlas, create.dict(), commit=True, raise_on_fail=True)
 
 
 @router.delete("/api/deleteAtlas", description="删除脑图谱", response_model=NoneResponse)
 @wrap_api_response
-def delete_atlas(request: DeleteModelRequest, ctx: HumanSubjectContext = Depends()) -> None:
+def delete_atlas(request: DeleteModelRequest, ctx: AllUserContext = Depends()) -> None:
     common_crud.update_row_as_deleted(
         ctx.db, Atlas, id_=request.id, commit=True, raise_on_fail=True
     )
@@ -69,7 +69,7 @@ def delete_atlas(request: DeleteModelRequest, ctx: HumanSubjectContext = Depends
 
 @router.post("/api/updateAtlas", description="更新脑图谱", response_model=NoneResponse)
 @wrap_api_response
-def update_atlas(request: AtlasUpdate, ctx: HumanSubjectContext = Depends()) -> None:
+def update_atlas(request: AtlasUpdate, ctx: AllUserContext = Depends()) -> None:
     check_atlas_exists(ctx.db, request.id)
     common_crud.update_row(
         ctx.db, Atlas, request.dict(exclude={"id"}), id_=request.id, commit=True, raise_on_fail=True
@@ -79,7 +79,7 @@ def update_atlas(request: AtlasUpdate, ctx: HumanSubjectContext = Depends()) -> 
 @router.get("/api/getAtlasInfo", description="获取脑图谱详情", response_model=Response[AtlasInfo])
 @wrap_api_response
 def get_atlas_info(
-    atlas_id: ID = Query(description="脑图谱ID"), ctx: HumanSubjectContext = Depends()
+    atlas_id: ID = Query(description="脑图谱ID"), ctx: AllUserContext = Depends()
 ) -> AtlasInfo:
     atlas_orm = common_crud.get_row_by_id(
         ctx.db, Atlas, atlas_id, raise_on_fail=True, not_found_entity=Entity.atlas
@@ -93,7 +93,7 @@ def get_atlas_info(
 )
 @wrap_api_response
 def get_atlases_by_page(
-    search: AtlasSearch = Depends(), ctx: HumanSubjectContext = Depends()
+    search: AtlasSearch = Depends(), ctx: AllUserContext = Depends()
 ) -> Page[AtlasInfo]:
     total, atlas_orm = crud.search_atlases(ctx.db, search)
     atlas_infos = convert.map_list(convert.atlas_orm_2_info, atlas_orm)
@@ -102,7 +102,7 @@ def get_atlases_by_page(
 
 @router.post("/api/createAtlasRegion", description="创建脑图谱区域", response_model=Response[int])
 @wrap_api_response
-def create_atlas_region(create: AtlasRegionCreate, ctx: HumanSubjectContext = Depends()) -> int:
+def create_atlas_region(create: AtlasRegionCreate, ctx: AllUserContext = Depends()) -> int:
     check_atlas_exists(ctx.db, create.atlas_id)
     return common_crud.insert_row(
         ctx.db, AtlasRegion, create.dict(), commit=True, raise_on_fail=True
@@ -111,7 +111,7 @@ def create_atlas_region(create: AtlasRegionCreate, ctx: HumanSubjectContext = De
 
 @router.delete("/api/deleteAtlasRegion", description="删除脑图谱区域", response_model=NoneResponse)
 @wrap_api_response
-def delete_atlas_region(request: DeleteModelRequest, ctx: HumanSubjectContext = Depends()) -> None:
+def delete_atlas_region(request: DeleteModelRequest, ctx: AllUserContext = Depends()) -> None:
     common_crud.update_row_as_deleted(
         ctx.db, AtlasRegion, id_=request.id, commit=True, raise_on_fail=True
     )
@@ -119,7 +119,7 @@ def delete_atlas_region(request: DeleteModelRequest, ctx: HumanSubjectContext = 
 
 @router.post("/api/updateAtlasRegion", description="更新脑图谱区域", response_model=NoneResponse)
 @wrap_api_response
-def update_atlas_region(request: AtlasRegionUpdate, ctx: HumanSubjectContext = Depends()) -> None:
+def update_atlas_region(request: AtlasRegionUpdate, ctx: AllUserContext = Depends()) -> None:
     check_atlas_region_exists(ctx.db, request.id)
     common_crud.update_row(
         ctx.db,
@@ -141,7 +141,7 @@ def get_atlas_region_info(
     id_: ID | None = Query(None, alias="id", description="脑图谱区域系统ID"),
     region_id: ID | None = Query(None, description="脑图谱区域ID"),
     atlas_id: ID | None = Query(None, description="脑图谱ID"),
-    ctx: HumanSubjectContext = Depends(),
+    ctx: AllUserContext = Depends(),
 ) -> AtlasRegionInfo:
     atlas_region_orm = crud.get_atlas_region(ctx.db, id_, region_id, atlas_id)
     atlas_region_info = convert.atlas_region_orm_2_info(atlas_region_orm)
@@ -155,7 +155,7 @@ def get_atlas_region_info(
 )
 @wrap_api_response
 def get_atlas_region_trees(
-    atlas_id: ID = Query(description="脑图谱ID"), ctx: HumanSubjectContext = Depends()
+    atlas_id: ID = Query(description="脑图谱ID"), ctx: AllUserContext = Depends()
 ) -> list[AtlasRegionTreeInfo]:
     regions = crud.list_atlas_regions_by_atlas_id(ctx.db, atlas_id)
     region_tree_nodes = convert.map_list(convert.atlas_region_orm_2_tree_node, regions)
@@ -179,7 +179,7 @@ def build_trees(tree_nodes: list) -> list:
 @router.post("/api/createAtlasRegionLink", description="创建脑区连接", response_model=Response[int])
 @wrap_api_response
 def create_atlas_region_link(
-    create: AtlasRegionLinkCreate, ctx: HumanSubjectContext = Depends()
+    create: AtlasRegionLinkCreate, ctx: AllUserContext = Depends()
 ) -> int:
     check_atlas_exists(ctx.db, create.atlas_id)
     return common_crud.insert_row(
@@ -190,7 +190,7 @@ def create_atlas_region_link(
 @router.delete("/api/deleteAtlasRegionLink", description="删除脑区连接", response_model=NoneResponse)
 @wrap_api_response
 def delete_atlas_region_link(
-    request: DeleteModelRequest, ctx: HumanSubjectContext = Depends()
+    request: DeleteModelRequest, ctx: AllUserContext = Depends()
 ) -> None:
     common_crud.update_row_as_deleted(
         ctx.db, AtlasRegionLink, id_=request.id, commit=True, raise_on_fail=True
@@ -200,7 +200,7 @@ def delete_atlas_region_link(
 @router.post("/api/updateAtlasRegionLink", description="更新脑区连接", response_model=NoneResponse)
 @wrap_api_response
 def update_atlas_region_link(
-    update: AtlasRegionLinkUpdate, ctx: HumanSubjectContext = Depends()
+    update: AtlasRegionLinkUpdate, ctx: AllUserContext = Depends()
 ) -> None:
     check_atlas_exists(ctx.db, update.atlas_id)
     check_atlas_region_exists(ctx.db, update.id)
@@ -224,7 +224,7 @@ def get_atlas_region_link_info(
     id_: ID | None = Query(None, alias="id", description="脑区连接系统ID"),
     atlas_id: ID | None = Query(None, description="脑图谱ID"),
     link_id: ID | None = Query(None, description="脑区连接ID"),
-    ctx: HumanSubjectContext = Depends(),
+    ctx: AllUserContext = Depends(),
 ) -> AtlasRegionLinkInfo:
     link_orm = crud.get_atlas_region_link(ctx.db, id_, link_id, atlas_id)
     link_info = convert.atlas_region_link_orm_2_info(link_orm)
@@ -234,7 +234,7 @@ def get_atlas_region_link_info(
 @router.post("/api/createBehavioralDomain", description="创建脑图谱行为域", response_model=Response[int])
 @wrap_api_response
 def create_behavioral_domain(
-    create: AtlasBehavioralDomainCreate, ctx: HumanSubjectContext = Depends()
+    create: AtlasBehavioralDomainCreate, ctx: AllUserContext = Depends()
 ) -> int:
     check_atlas_exists(ctx.db, create.atlas_id)
     domain_id = common_crud.insert_row(
@@ -246,7 +246,7 @@ def create_behavioral_domain(
 @router.delete("/api/deleteBehavioralDomain", description="删除脑图谱行为域", response_model=NoneResponse)
 @wrap_api_response
 def delete_behavioral_domain(
-    request: DeleteModelRequest, ctx: HumanSubjectContext = Depends()
+    request: DeleteModelRequest, ctx: AllUserContext = Depends()
 ) -> None:
     common_crud.update_row_as_deleted(
         ctx.db, AtlasBehavioralDomain, id_=request.id, commit=True, raise_on_fail=True
@@ -258,7 +258,7 @@ def delete_behavioral_domain(
 )
 @wrap_api_response
 def update_atlas_region_link(
-    update: AtlasBehavioralDomainUpdate, ctx: HumanSubjectContext = Depends()
+    update: AtlasBehavioralDomainUpdate, ctx: AllUserContext = Depends()
 ) -> None:
     check_atlas_exists(ctx.db, update.atlas_id)
     check_atlas_behavioral_domain_exists(ctx.db, update.id)
@@ -279,7 +279,7 @@ def update_atlas_region_link(
 )
 @wrap_api_response
 def get_atlas_behavioral_domain_trees(
-    atlas_id: ID = Query(description="脑图谱ID"), ctx: HumanSubjectContext = Depends()
+    atlas_id: ID = Query(description="脑图谱ID"), ctx: AllUserContext = Depends()
 ) -> list[AtlasBehavioralDomainTreeInfo]:
     domains = crud.list_atlas_behavioral_domains_by_atlas_id(ctx.db, atlas_id)
     domain_tree_nodes = convert.map_list(convert.atlas_behavioral_domain_orm_2_tree_node, domains)
@@ -295,7 +295,7 @@ def get_atlas_behavioral_domain_trees(
 )
 @wrap_api_response
 def create_atlas_region_behavioral_domain(
-    create: AtlasRegionBehavioralDomainCreate, ctx: HumanSubjectContext = Depends()
+    create: AtlasRegionBehavioralDomainCreate, ctx: AllUserContext = Depends()
 ) -> int:
     check_atlas_exists(ctx.db, create.atlas_id)
     check_atlas_region_exists(ctx.db, create.region_id)
@@ -309,7 +309,7 @@ def create_atlas_region_behavioral_domain(
 )
 @wrap_api_response
 def delete_atlas_region_behavioral_domain(
-    request: DeleteModelRequest, ctx: HumanSubjectContext = Depends()
+    request: DeleteModelRequest, ctx: AllUserContext = Depends()
 ) -> None:
     common_crud.update_row_as_deleted(
         ctx.db, AtlasRegionBehavioralDomain, id_=request.id, commit=True, raise_on_fail=True
@@ -321,7 +321,7 @@ def delete_atlas_region_behavioral_domain(
 )
 @wrap_api_response
 def update_atlas_region_behavioral_domain(
-    update: AtlasRegionBehavioralDomainUpdate, ctx: HumanSubjectContext = Depends()
+    update: AtlasRegionBehavioralDomainUpdate, ctx: AllUserContext = Depends()
 ) -> None:
     check_atlas_exists(ctx.db, update.atlas_id)
     check_atlas_region_exists(ctx.db, update.id)
@@ -344,7 +344,7 @@ def update_atlas_region_behavioral_domain(
 def get_atlas_region_behavioral_domains(
     atlas_id: ID = Query(description="脑图谱ID"),
     region_id: ID = Query(description="脑区ID"),
-    ctx: HumanSubjectContext = Depends(),
+    ctx: AllUserContext = Depends(),
 ) -> AtlasRegionBehavioralDomainDict:
     region_domains_orm = crud.list_atlas_region_behavioral_domains(ctx.db, atlas_id, region_id)
     region_domains_dict = convert.atlas_region_associated_model_2_dict(region_domains_orm)
@@ -354,7 +354,7 @@ def get_atlas_region_behavioral_domains(
 @router.post("/api/createParadigmClass", description="创建脑图谱范例集", response_model=Response[int])
 @wrap_api_response
 def create_paradigm_class(
-    create: AtlasParadigmClassCreate, ctx: HumanSubjectContext = Depends()
+    create: AtlasParadigmClassCreate, ctx: AllUserContext = Depends()
 ) -> int:
     check_atlas_exists(ctx.db, create.atlas_id)
     paradigm_class_id = common_crud.insert_row(
@@ -365,7 +365,7 @@ def create_paradigm_class(
 
 @router.delete("/api/deleteParadigmClass", description="删除脑图谱范例集", response_model=NoneResponse)
 @wrap_api_response
-def delete_paradigm_class(request: DeleteModelRequest, ctx: HumanSubjectContext = Depends()) -> None:
+def delete_paradigm_class(request: DeleteModelRequest, ctx: AllUserContext = Depends()) -> None:
     common_crud.update_row_as_deleted(
         ctx.db, AtlasParadigmClass, id_=request.id, commit=True, raise_on_fail=True
     )
@@ -374,7 +374,7 @@ def delete_paradigm_class(request: DeleteModelRequest, ctx: HumanSubjectContext 
 @router.post("/api/updateParadigmClass", description="更新脑图谱范例集", response_model=NoneResponse)
 @wrap_api_response
 def update_paradigm_class(
-    update: AtlasParadigmClassUpdate, ctx: HumanSubjectContext = Depends()
+    update: AtlasParadigmClassUpdate, ctx: AllUserContext = Depends()
 ) -> None:
     check_atlas_exists(ctx.db, update.atlas_id)
     check_atlas_paradigm_class_exists(ctx.db, update.id)
@@ -395,7 +395,7 @@ def update_paradigm_class(
 )
 @wrap_api_response
 def get_paradigm_class_trees(
-    atlas_id: ID = Query(description="脑图谱ID"), ctx: HumanSubjectContext = Depends()
+    atlas_id: ID = Query(description="脑图谱ID"), ctx: AllUserContext = Depends()
 ) -> list[AtlasParadigmClassTreeInfo]:
     paradigm_classes = crud.list_atlas_paradigm_class_by_atlas_id(ctx.db, atlas_id)
     paradigm_class_tree_nodes = convert.map_list(
@@ -413,7 +413,7 @@ def get_paradigm_class_trees(
 )
 @wrap_api_response
 def create_atlas_region_paradigm_class(
-    create: AtlasRegionParadigmClassCreate, ctx: HumanSubjectContext = Depends()
+    create: AtlasRegionParadigmClassCreate, ctx: AllUserContext = Depends()
 ) -> int:
     check_atlas_exists(ctx.db, create.atlas_id)
     check_atlas_region_exists(ctx.db, create.region_id)
@@ -427,7 +427,7 @@ def create_atlas_region_paradigm_class(
 )
 @wrap_api_response
 def delete_atlas_region_paradigm_class(
-    request: DeleteModelRequest, ctx: HumanSubjectContext = Depends()
+    request: DeleteModelRequest, ctx: AllUserContext = Depends()
 ) -> None:
     common_crud.update_row_as_deleted(
         ctx.db, AtlasRegionParadigmClass, id_=request.id, commit=True, raise_on_fail=True
@@ -439,7 +439,7 @@ def delete_atlas_region_paradigm_class(
 )
 @wrap_api_response
 def update_atlas_region_paradigm_class(
-    update: AtlasRegionParadigmClassUpdate, ctx: HumanSubjectContext = Depends()
+    update: AtlasRegionParadigmClassUpdate, ctx: AllUserContext = Depends()
 ) -> None:
     check_atlas_exists(ctx.db, update.atlas_id)
     check_atlas_region_exists(ctx.db, update.id)
@@ -462,7 +462,7 @@ def update_atlas_region_paradigm_class(
 def get_atlas_region_paradigm_classes(
     atlas_id: ID = Query(description="脑图谱ID"),
     region_id: ID = Query(description="脑区ID"),
-    ctx: HumanSubjectContext = Depends(),
+    ctx: AllUserContext = Depends(),
 ) -> AtlasRegionParadigmClassDict:
     region_domains_orm = crud.list_atlas_region_paradigm_classes(ctx.db, atlas_id, region_id)
     region_domains_dict = convert.atlas_region_associated_model_2_dict(region_domains_orm)
