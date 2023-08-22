@@ -178,9 +178,7 @@ def build_trees(tree_nodes: list) -> list:
 
 @router.post("/api/createAtlasRegionLink", description="创建脑区连接", response_model=Response[int])
 @wrap_api_response
-def create_atlas_region_link(
-    create: AtlasRegionLinkCreate, ctx: AllUserContext = Depends()
-) -> int:
+def create_atlas_region_link(create: AtlasRegionLinkCreate, ctx: AllUserContext = Depends()) -> int:
     check_atlas_exists(ctx.db, create.atlas_id)
     return common_crud.insert_row(
         ctx.db, AtlasRegionLink, create.dict(), commit=True, raise_on_fail=True
@@ -189,9 +187,7 @@ def create_atlas_region_link(
 
 @router.delete("/api/deleteAtlasRegionLink", description="删除脑区连接", response_model=NoneResponse)
 @wrap_api_response
-def delete_atlas_region_link(
-    request: DeleteModelRequest, ctx: AllUserContext = Depends()
-) -> None:
+def delete_atlas_region_link(request: DeleteModelRequest, ctx: AllUserContext = Depends()) -> None:
     common_crud.update_row_as_deleted(
         ctx.db, AtlasRegionLink, id_=request.id, commit=True, raise_on_fail=True
     )
@@ -245,9 +241,7 @@ def create_behavioral_domain(
 
 @router.delete("/api/deleteBehavioralDomain", description="删除脑图谱行为域", response_model=NoneResponse)
 @wrap_api_response
-def delete_behavioral_domain(
-    request: DeleteModelRequest, ctx: AllUserContext = Depends()
-) -> None:
+def delete_behavioral_domain(request: DeleteModelRequest, ctx: AllUserContext = Depends()) -> None:
     common_crud.update_row_as_deleted(
         ctx.db, AtlasBehavioralDomain, id_=request.id, commit=True, raise_on_fail=True
     )
@@ -353,9 +347,7 @@ def get_atlas_region_behavioral_domains(
 
 @router.post("/api/createParadigmClass", description="创建脑图谱范例集", response_model=Response[int])
 @wrap_api_response
-def create_paradigm_class(
-    create: AtlasParadigmClassCreate, ctx: AllUserContext = Depends()
-) -> int:
+def create_paradigm_class(create: AtlasParadigmClassCreate, ctx: AllUserContext = Depends()) -> int:
     check_atlas_exists(ctx.db, create.atlas_id)
     paradigm_class_id = common_crud.insert_row(
         ctx.db, AtlasParadigmClass, create.dict(), commit=True, raise_on_fail=True
