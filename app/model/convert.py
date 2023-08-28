@@ -59,14 +59,11 @@ def map_list(function: Callable[[A], B], items: Iterable[A] | None) -> list[B]:
 
 
 # noinspection PyTypeChecker
-def orm_2_dict(
-    orm: OrmModel, *, include: set[str] | None = None, exclude: set[str] | None = None
-) -> dict[str, Any]:
+def orm_2_dict(orm: OrmModel, *, include: set[str] | None = None, exclude: set[str] | None = None) -> dict[str, Any]:
     return {
         column.name: getattr(orm, column.name)
         for column in orm.__table__.columns
-        if ((not include) or (column.name in include))
-        and ((not exclude) or (column.name not in exclude))
+        if ((not include) or (column.name in include)) and ((not exclude) or (column.name not in exclude))
     }
 
 
@@ -80,9 +77,7 @@ def experiment_orm_2_response(experiment: Experiment) -> ExperimentResponse:
 
 
 def experiment_orm_2_simple_response(experiment: Experiment) -> ExperimentSimpleResponse:
-    return ExperimentSimpleResponse(
-        tags=map_list(lambda tag: tag.tag, experiment.tags), **orm_2_dict(experiment)
-    )
+    return ExperimentSimpleResponse(tags=map_list(lambda tag: tag.tag, experiment.tags), **orm_2_dict(experiment))
 
 
 def paradigm_orm_2_response(paradigm: Paradigm) -> ParadigmResponse:
@@ -106,9 +101,7 @@ def device_search_row_2_info_with_index(row: SearchDeviceRow) -> DeviceInfoWithI
 
 def human_subject_orm_2_response(human_subject: HumanSubject) -> HumanSubjectResponse:
     return HumanSubjectResponse(
-        username=human_subject.user.username,
-        staff_id=human_subject.user.staff_id,
-        **orm_2_dict(human_subject),
+        username=human_subject.user.username, staff_id=human_subject.user.staff_id, **orm_2_dict(human_subject)
     )
 
 
@@ -157,8 +150,7 @@ def user_orm_2_response(user: User) -> UserResponse:
 
 def notification_orm_2_response(notification: Notification) -> NotificationResponse:
     return NotificationResponse(
-        **orm_2_dict(notification, exclude={"creator_user"}),
-        creator_name=notification.creator_user.username,
+        **orm_2_dict(notification, exclude={"creator_user"}), creator_name=notification.creator_user.username
     )
 
 
@@ -271,9 +263,7 @@ def atlas_region_link_orm_2_info(link: AtlasRegionLink) -> AtlasRegionLinkInfo:
     )
 
 
-def atlas_behavioral_domain_orm_2_tree_node(
-    domain: AtlasBehavioralDomain,
-) -> AtlasBehavioralDomainTreeNode:
+def atlas_behavioral_domain_orm_2_tree_node(domain: AtlasBehavioralDomain) -> AtlasBehavioralDomainTreeNode:
     return AtlasBehavioralDomainTreeNode(
         id=domain.id,
         parent_id=domain.parent_id,
@@ -285,9 +275,7 @@ def atlas_behavioral_domain_orm_2_tree_node(
     )
 
 
-def atlas_behavioral_domain_tree_node_2_info(
-    domain: AtlasBehavioralDomainTreeNode,
-) -> AtlasBehavioralDomainTreeInfo:
+def atlas_behavioral_domain_tree_node_2_info(domain: AtlasBehavioralDomainTreeNode) -> AtlasBehavioralDomainTreeInfo:
     return AtlasBehavioralDomainTreeInfo(
         name=domain.name,
         value=domain.value,
@@ -301,9 +289,7 @@ def atlas_region_associated_model_2_dict(models: Sequence) -> dict[LongVarchar, 
     return {model.key: model.value for model in models}
 
 
-def atlas_paradigm_class_orm_2_tree_node(
-    paradigm_class: AtlasParadigmClass,
-) -> AtlasParadigmClassTreeNode:
+def atlas_paradigm_class_orm_2_tree_node(paradigm_class: AtlasParadigmClass) -> AtlasParadigmClassTreeNode:
     return AtlasParadigmClassTreeNode(
         parent_id=paradigm_class.parent_id,
         id=paradigm_class.id,
@@ -315,9 +301,7 @@ def atlas_paradigm_class_orm_2_tree_node(
     )
 
 
-def atlas_paradigm_class_tree_node_2_info(
-    paradigm_class: AtlasParadigmClassTreeNode,
-) -> AtlasParadigmClassTreeInfo:
+def atlas_paradigm_class_tree_node_2_info(paradigm_class: AtlasParadigmClassTreeNode) -> AtlasParadigmClassTreeInfo:
     return AtlasParadigmClassTreeInfo(
         name=paradigm_class.name,
         value=paradigm_class.value,

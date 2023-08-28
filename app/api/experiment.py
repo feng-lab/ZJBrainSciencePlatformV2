@@ -8,11 +8,7 @@ from app.db import common_crud
 from app.db.crud import experiment as crud
 from app.db.orm import Experiment, ExperimentAssistant, ExperimentTag
 from app.model import convert
-from app.model.request import (
-    DeleteModelRequest,
-    UpdateExperimentAssistantsRequest,
-    UpdateExperimentRequest,
-)
+from app.model.request import DeleteModelRequest, UpdateExperimentAssistantsRequest, UpdateExperimentRequest
 from app.model.response import NoneResponse, Response
 from app.model.schema import (
     CreateExperimentRequest,
@@ -36,12 +32,9 @@ def create_experiment(request: CreateExperimentRequest, ctx: ResearcherContext =
 
     if len(request.assistants) > 0:
         assistants = [
-            {"user_id": assistant_id, "experiment_id": experiment_id}
-            for assistant_id in set(request.assistants)
+            {"user_id": assistant_id, "experiment_id": experiment_id} for assistant_id in set(request.assistants)
         ]
-        all_inserted = common_crud.bulk_insert_rows(
-            ctx.db, ExperimentAssistant, assistants, commit=False
-        )
+        all_inserted = common_crud.bulk_insert_rows(ctx.db, ExperimentAssistant, assistants, commit=False)
         if not all_inserted:
             raise ServiceError.database_fail()
 
@@ -55,9 +48,7 @@ def create_experiment(request: CreateExperimentRequest, ctx: ResearcherContext =
     return experiment_id
 
 
-@router.get(
-    "/api/getExperimentInfo", description="获取实验详情", response_model=Response[ExperimentResponse]
-)
+@router.get("/api/getExperimentInfo", description="获取实验详情", response_model=Response[ExperimentResponse])
 @wrap_api_response
 def get_experiment_info(
     experiment_id: int = Query(description="实验ID"), ctx: HumanSubjectContext = Depends()
@@ -70,11 +61,7 @@ def get_experiment_info(
     return experiment
 
 
-@router.get(
-    "/api/getExperimentsByPage",
-    description="获取实验列表",
-    response_model=Response[list[ExperimentSimpleResponse]],
-)
+@router.get("/api/getExperimentsByPage", description="获取实验列表", response_model=Response[list[ExperimentSimpleResponse]])
 @wrap_api_response
 def get_experiments_by_page(
     search: ExperimentSearch = Depends(), ctx: HumanSubjectContext = Depends()
@@ -84,9 +71,7 @@ def get_experiments_by_page(
     return experiments
 
 
-@router.get(
-    "/api/getExperimentAssistants", description="获取实验助手列表", response_model=Response[list[UserInfo]]
-)
+@router.get("/api/getExperimentAssistants", description="获取实验助手列表", response_model=Response[list[UserInfo]])
 @wrap_api_response
 def get_experiment_assistants(
     experiment_id: int = Query(description="实验ID"), ctx: HumanSubjectContext = Depends()
@@ -119,9 +104,7 @@ def update_experiment(request: UpdateExperimentRequest, ctx: ResearcherContext =
 @router.delete("/api/deleteExperiment", description="删除实验", response_model=NoneResponse)
 @wrap_api_response
 def delete_experiment(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
-    delete_experiment_success = common_crud.update_row_as_deleted(
-        ctx.db, Experiment, id_=request.id, commit=False
-    )
+    delete_experiment_success = common_crud.update_row_as_deleted(ctx.db, Experiment, id_=request.id, commit=False)
     delete_tags_success = common_crud.bulk_delete_rows(
         ctx.db, ExperimentTag, [ExperimentTag.experiment_id == request.id], commit=False
     )
@@ -131,12 +114,8 @@ def delete_experiment(request: DeleteModelRequest, ctx: ResearcherContext = Depe
 
 @router.post("/api/addExperimentAssistants", description="添加实验助手", response_model=NoneResponse)
 @wrap_api_response
-def add_experiment_assistants(
-    request: UpdateExperimentAssistantsRequest, ctx: ResearcherContext = Depends()
-) -> None:
-    exist_assistants = set(
-        crud.search_experiment_assistants(ctx.db, request.experiment_id, request.assistant_ids)
-    )
+def add_experiment_assistants(request: UpdateExperimentAssistantsRequest, ctx: ResearcherContext = Depends()) -> None:
+    exist_assistants = set(crud.search_experiment_assistants(ctx.db, request.experiment_id, request.assistant_ids))
     assistants = [
         {"user_id": assistant_id, "experiment_id": request.experiment_id}
         for assistant_id in request.assistant_ids

@@ -19,15 +19,10 @@ depends_on = None
 
 def upgrade() -> None:
     op.add_column(
-        "atlas_paradigm_class",
-        sa.Column("parent_id", sa.Integer(), nullable=True, comment="父节点ID，null表示第一层节点"),
+        "atlas_paradigm_class", sa.Column("parent_id", sa.Integer(), nullable=True, comment="父节点ID，null表示第一层节点")
     )
     op.alter_column(
-        "atlas_paradigm_class",
-        "description",
-        existing_type=mysql.TEXT(),
-        nullable=False,
-        existing_comment="描述",
+        "atlas_paradigm_class", "description", existing_type=mysql.TEXT(), nullable=False, existing_comment="描述"
     )
     op.alter_column(
         "virtual_file",
@@ -49,10 +44,6 @@ def downgrade() -> None:
         existing_nullable=False,
     )
     op.alter_column(
-        "atlas_paradigm_class",
-        "description",
-        existing_type=mysql.TEXT(),
-        nullable=True,
-        existing_comment="描述",
+        "atlas_paradigm_class", "description", existing_type=mysql.TEXT(), nullable=True, existing_comment="描述"
     )
     op.drop_column("atlas_paradigm_class", "parent_id")

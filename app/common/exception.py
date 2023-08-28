@@ -13,14 +13,7 @@ from app.model.response import ResponseCode
 
 
 class ServiceError(Exception):
-    def __init__(
-        self,
-        *,
-        status_code: int,
-        code: int,
-        message_id: str,
-        format_args: Sequence[Any] | None = None,
-    ):
+    def __init__(self, *, status_code: int, code: int, message_id: str, format_args: Sequence[Any] | None = None):
         self.status_code: int = status_code
         self.code: int = code
         self.message_id: str = message_id
@@ -30,10 +23,7 @@ class ServiceError(Exception):
     def not_found(entity: Entity):
         entity_value = translate_entity(entity)
         return ServiceError(
-            status_code=HTTP_200_OK,
-            code=ResponseCode.PARAMS_ERROR,
-            message_id="not found",
-            format_args=(entity_value,),
+            status_code=HTTP_200_OK, code=ResponseCode.PARAMS_ERROR, message_id="not found", format_args=(entity_value,)
         )
 
     @staticmethod
@@ -66,41 +56,29 @@ class ServiceError(Exception):
     @staticmethod
     def cannot_display_algorithm_file() -> "ServiceError":
         return ServiceError(
-            status_code=HTTP_400_BAD_REQUEST,
-            code=ResponseCode.PARAMS_ERROR,
-            message_id="cannot display algorithm file",
+            status_code=HTTP_400_BAD_REQUEST, code=ResponseCode.PARAMS_ERROR, message_id="cannot display algorithm file"
         )
 
     @staticmethod
     def not_login() -> "ServiceError":
-        return ServiceError(
-            status_code=HTTP_401_UNAUTHORIZED,
-            code=ResponseCode.UNAUTHORIZED,
-            message_id="not login",
-        )
+        return ServiceError(status_code=HTTP_401_UNAUTHORIZED, code=ResponseCode.UNAUTHORIZED, message_id="not login")
 
     @staticmethod
     def wrong_password() -> "ServiceError":
         return ServiceError(
-            status_code=HTTP_401_UNAUTHORIZED,
-            code=ResponseCode.UNAUTHORIZED,
-            message_id="wrong password",
+            status_code=HTTP_401_UNAUTHORIZED, code=ResponseCode.UNAUTHORIZED, message_id="wrong password"
         )
 
     @staticmethod
     def no_enough_access_level() -> "ServiceError":
         return ServiceError(
-            status_code=HTTP_401_UNAUTHORIZED,
-            code=ResponseCode.UNAUTHORIZED,
-            message_id="no enough access level",
+            status_code=HTTP_401_UNAUTHORIZED, code=ResponseCode.UNAUTHORIZED, message_id="no enough access level"
         )
 
     @staticmethod
     def session_timeout() -> "ServiceError":
         return ServiceError(
-            status_code=HTTP_401_UNAUTHORIZED,
-            code=ResponseCode.UNAUTHORIZED,
-            message_id="session timeout",
+            status_code=HTTP_401_UNAUTHORIZED, code=ResponseCode.UNAUTHORIZED, message_id="session timeout"
         )
 
     @staticmethod
@@ -115,7 +93,5 @@ class ServiceError(Exception):
     @staticmethod
     def database_fail():
         return ServiceError(
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-            code=ResponseCode.SERVER_ERROR,
-            message_id="database fail",
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR, code=ResponseCode.SERVER_ERROR, message_id="database fail"
         )

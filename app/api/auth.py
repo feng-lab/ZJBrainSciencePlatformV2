@@ -6,12 +6,7 @@ from app.api import wrap_api_response
 from app.common.config import config
 from app.common.context import AllUserContext
 from app.common.exception import ServiceError
-from app.common.user_auth import (
-    TOKEN_TYPE,
-    create_access_token,
-    raise_unauthorized_exception,
-    verify_password,
-)
+from app.common.user_auth import TOKEN_TYPE, create_access_token, raise_unauthorized_exception, verify_password
 from app.common.util import now
 from app.db import common_crud, get_db_session
 from app.db.orm import User
@@ -41,8 +36,6 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 @router.post("/api/logout", description="用户登出", response_model=NoneResponse)
 @wrap_api_response
 def logout(ctx: AllUserContext = Depends()) -> None:
-    success = common_crud.update_row(
-        ctx.db, User, {"last_logout_time": now()}, id_=ctx.user_id, commit=True
-    )
+    success = common_crud.update_row(ctx.db, User, {"last_logout_time": now()}, id_=ctx.user_id, commit=True)
     if not success:
         raise ServiceError.database_fail()

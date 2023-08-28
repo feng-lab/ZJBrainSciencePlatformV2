@@ -15,13 +15,9 @@ UVICORN_LOGGER_NAME = "uvicorn.access"
 SQLALCHEMY_LOGGER_NAME = "sqlalchemy.engine.Engine"
 LOGGER_NAMES = {ACCESS_LOGGER_NAME, UVICORN_LOGGER_NAME, SQLALCHEMY_LOGGER_NAME}
 
-DEFAULT_LOG_FORMAT = (
-    "%(asctime)s|%(levelname)s|%(request_id)s|%(module_name)s:%(lineno)d|%(message)s"
-)
+DEFAULT_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(request_id)s|%(module_name)s:%(lineno)d|%(message)s"
 if config.DEBUG_MODE:
-    DEFAULT_LOG_FORMAT = (
-        "%(asctime)s|%(levelname)s|%(request_id)s|%(name)s|%(module_name)s:%(lineno)d|%(message)s"
-    )
+    DEFAULT_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(request_id)s|%(name)s|%(module_name)s:%(lineno)d|%(message)s"
 ACCESS_LOG_FORMAT = "%(asctime)s|%(levelname)s|%(request_id)s|%(message)s"
 
 request_id_ctxvar = ContextVar("request-id", default="")
@@ -74,13 +70,9 @@ class CustomFormatQueueHandler(QueueHandler):
 root_handler = init_handler(config.LOG_ROOT / "app.log", root_logger_filter)
 error_handler = init_handler(config.LOG_ROOT / "error.log", root_logger_filter, level=ERROR)
 access_handler = init_handler(
-    config.LOG_ROOT / "access.log",
-    name_logger_filter(ACCESS_LOGGER_NAME),
-    log_format=ACCESS_LOG_FORMAT,
+    config.LOG_ROOT / "access.log", name_logger_filter(ACCESS_LOGGER_NAME), log_format=ACCESS_LOG_FORMAT
 )
-uvicorn_handler = init_handler(
-    config.LOG_ROOT / "uvicorn.log", name_logger_filter(UVICORN_LOGGER_NAME)
-)
+uvicorn_handler = init_handler(config.LOG_ROOT / "uvicorn.log", name_logger_filter(UVICORN_LOGGER_NAME))
 sqlalchemy_handler = init_handler(
     config.LOG_ROOT / "sqlalchemy.log", name_logger_filter(SQLALCHEMY_LOGGER_NAME), level=INFO
 )

@@ -16,16 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 def get_row_by_id(
-    db: Session,
-    table: type[OrmModel],
-    id_: int,
-    *,
-    raise_on_fail: bool = False,
-    not_found_entity: Entity | None = None,
+    db: Session, table: type[OrmModel], id_: int, *, raise_on_fail: bool = False, not_found_entity: Entity | None = None
 ) -> OrmModel | None:
-    return get_row(
-        db, table, table.id == id_, raise_on_fail=raise_on_fail, not_found_entity=not_found_entity
-    )
+    return get_row(db, table, table.id == id_, raise_on_fail=raise_on_fail, not_found_entity=not_found_entity)
 
 
 def get_row(
@@ -103,9 +96,7 @@ def insert_row(
     return result_id
 
 
-def bulk_insert_rows(
-    db: Session, table: type[OrmModel], rows: list[dict[str, Any]], *, commit: bool
-) -> bool:
+def bulk_insert_rows(db: Session, table: type[OrmModel], rows: list[dict[str, Any]], *, commit: bool) -> bool:
     if not rows:
         return True
 
@@ -151,9 +142,7 @@ def update_row(
         where = [table.id == id_]
     if where is None:
         raise ValueError("no id nor where provided")
-    return bulk_update_rows(
-        db, table, where, update_dict, commit=commit, touch=touch, raise_on_fail=raise_on_fail
-    )
+    return bulk_update_rows(db, table, where, update_dict, commit=commit, touch=touch, raise_on_fail=raise_on_fail)
 
 
 def update_row_as_deleted(
@@ -167,14 +156,7 @@ def update_row_as_deleted(
     raise_on_fail: bool = False,
 ) -> bool:
     return update_row(
-        db,
-        table,
-        {"is_deleted": True},
-        id_=id_,
-        where=where,
-        commit=commit,
-        touch=touch,
-        raise_on_fail=raise_on_fail,
+        db, table, {"is_deleted": True}, id_=id_, where=where, commit=commit, touch=touch, raise_on_fail=raise_on_fail
     )
 
 
@@ -222,19 +204,11 @@ def bulk_update_rows_as_deleted(
     if where is None:
         raise ValueError("no id nor where provided")
     return bulk_update_rows(
-        db,
-        table,
-        where,
-        {"is_deleted": True},
-        commit=commit,
-        touch=touch,
-        raise_on_fail=raise_on_fail,
+        db, table, where, {"is_deleted": True}, commit=commit, touch=touch, raise_on_fail=raise_on_fail
     )
 
 
-def bulk_delete_rows(
-    db: Session, table: type[OrmModel], where: list[WhereHavingRole], *, commit: bool
-) -> bool:
+def bulk_delete_rows(db: Session, table: type[OrmModel], where: list[WhereHavingRole], *, commit: bool) -> bool:
     success = False
     try:
         stmt = delete(table).where(*where)

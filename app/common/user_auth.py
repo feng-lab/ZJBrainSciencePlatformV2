@@ -66,9 +66,7 @@ def verify_current_user(db: Session, cache: Redis, token: str, api_access_level:
         return user_id
     except ExpiredSignatureError as e:
         # token过期
-        token_payload = jwt.decode(
-            token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_signature": False}
-        )
+        token_payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_signature": False})
         logger.info(f"token expired, {token_payload=}")
         raise e
     except JWTError:

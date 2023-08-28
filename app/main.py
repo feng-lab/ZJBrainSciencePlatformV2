@@ -10,11 +10,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import RedirectResponse
-from starlette.status import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_401_UNAUTHORIZED,
-    HTTP_500_INTERNAL_SERVER_ERROR,
-)
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_500_INTERNAL_SERVER_ERROR
 
 from app.api import ApiJsonResponse
 from app.api.algorithm import router as algorithm_router
@@ -77,11 +73,7 @@ app.include_router(task_router)
 app.include_router(atlas_router)
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 
@@ -122,11 +114,7 @@ async def log_access_api(request: Request, call_next: Callable):
     start_time = datetime.now()
     request_id = generate_request_id()
     request_id_ctxvar.set(request_id)
-    request.state.access_info = {
-        "requestId": request_id,
-        "method": request.method,
-        "api": request.url.path,
-    }
+    request.state.access_info = {"requestId": request_id, "method": request.method, "api": request.url.path}
 
     response = await call_next(request)
 
@@ -144,9 +132,7 @@ async def filter_blank_query_params(request: Request, call_next: Callable):
     query_string_key = "query_string"
     latin_1_encoding = "latin-1"
     if (scope := request.scope) and scope.get(query_string_key):
-        filtered_query_params = parse_qsl(
-            qs=scope[query_string_key].decode(latin_1_encoding), keep_blank_values=False
-        )
+        filtered_query_params = parse_qsl(qs=scope[query_string_key].decode(latin_1_encoding), keep_blank_values=False)
         scope[query_string_key] = urlencode(filtered_query_params).encode(latin_1_encoding)
     return await call_next(request)
 
@@ -167,33 +153,24 @@ def handle_service_error(_request: Request, e: ServiceError):
 
 @app.exception_handler(RequestValidationError)
 def handle_request_validation_error(_request: Request, e: RequestValidationError):
-    return exception_response(
-        HTTP_400_BAD_REQUEST, ResponseCode.PARAMS_ERROR, "params error", repr(e)
-    )
+    return exception_response(HTTP_400_BAD_REQUEST, ResponseCode.PARAMS_ERROR, "params error", repr(e))
 
 
 @app.exception_handler(ExpiredSignatureError)
 def handle_expired_token_exception(_request: Request, _e: ExpiredSignatureError):
-    return exception_response(
-        HTTP_401_UNAUTHORIZED, ResponseCode.SESSION_TIMEOUT, "session timeout"
-    )
+    return exception_response(HTTP_401_UNAUTHORIZED, ResponseCode.SESSION_TIMEOUT, "session timeout")
 
 
 @app.exception_handler(HTTPException)
 @app.exception_handler(Exception)
 def handle_unexpected_exception(_request: Request, e: Exception):
-    return exception_response(
-        HTTP_500_INTERNAL_SERVER_ERROR, ResponseCode.SERVER_ERROR, "inner server error", str(e)
-    )
+    return exception_response(HTTP_500_INTERNAL_SERVER_ERROR, ResponseCode.SERVER_ERROR, "inner server error", str(e))
 
 
-def exception_response(
-    status_code: int, response_code: int, message_id: str, *format_args: Any
-) -> ApiJsonResponse:
+def exception_response(status_code: int, response_code: int, message_id: str, *format_args: Any) -> ApiJsonResponse:
     message = translate_message(message_id, *format_args)
     return ApiJsonResponse(
-        status_code=status_code,
-        content=NoneResponse(code=response_code, message=message, data=None).dict(),
+        status_code=status_code, content=NoneResponse(code=response_code, message=message, data=None).dict()
     )
 
 

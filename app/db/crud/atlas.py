@@ -29,9 +29,7 @@ def search_atlases(db: Session, search: AtlasSearch) -> tuple[int, Sequence[Atla
 
 
 # noinspection PyTypeChecker
-def get_atlas_region(
-    db: Session, id_: ID | None, region_id: ID | None, atlas_id: ID | None
-) -> AtlasRegion:
+def get_atlas_region(db: Session, id_: ID | None, region_id: ID | None, atlas_id: ID | None) -> AtlasRegion:
     stmt = (
         select(AtlasRegion)
         .join(Atlas, Atlas.id == AtlasRegion.atlas_id)
@@ -62,29 +60,19 @@ def list_atlas_regions_by_atlas_id(db: Session, atlas_id: ID) -> Sequence[AtlasR
             AtlasRegion.acronym,
         )
         .join(Atlas, Atlas.id == AtlasRegion.atlas_id)
-        .where(
-            AtlasRegion.atlas_id == atlas_id,
-            Atlas.is_deleted == False,
-            AtlasRegion.is_deleted == False,
-        )
+        .where(AtlasRegion.atlas_id == atlas_id, Atlas.is_deleted == False, AtlasRegion.is_deleted == False)
     )
     atlas_regions = db.execute(stmt).all()
     return atlas_regions
 
 
 # noinspection PyTypeChecker
-def get_atlas_region_link(
-    db: Session, id_: ID | None, link_id: ID | None, atlas_id: ID | None
-) -> AtlasRegionLink:
+def get_atlas_region_link(db: Session, id_: ID | None, link_id: ID | None, atlas_id: ID | None) -> AtlasRegionLink:
     region1, region2 = aliased(AtlasRegion), aliased(AtlasRegion)
     stmt = (
         select(AtlasRegionLink)
-        .join(
-            region1, and_(AtlasRegionLink.region1 == region1.acronym, region1.is_deleted == False)
-        )
-        .join(
-            region2, and_(AtlasRegionLink.region2 == region2.acronym, region2.is_deleted == False)
-        )
+        .join(region1, and_(AtlasRegionLink.region1 == region1.acronym, region1.is_deleted == False))
+        .join(region2, and_(AtlasRegionLink.region2 == region2.acronym, region2.is_deleted == False))
         .where(AtlasRegionLink.is_deleted == False)
     )
     if id_ is not None:
@@ -101,9 +89,7 @@ def get_atlas_region_link(
 
 
 # noinspection PyTypeChecker
-def list_atlas_behavioral_domains_by_atlas_id(
-    db: Session, atlas_id: ID
-) -> Sequence[AtlasBehavioralDomain]:
+def list_atlas_behavioral_domains_by_atlas_id(db: Session, atlas_id: ID) -> Sequence[AtlasBehavioralDomain]:
     stmt = (
         select(
             AtlasBehavioralDomain.id,
@@ -145,9 +131,7 @@ def list_atlas_region_behavioral_domains(
 
 
 # noinspection PyTypeChecker
-def list_atlas_paradigm_class_by_atlas_id(
-    db: Session, atlas_id: ID
-) -> Sequence[AtlasParadigmClass]:
+def list_atlas_paradigm_class_by_atlas_id(db: Session, atlas_id: ID) -> Sequence[AtlasParadigmClass]:
     stmt = (
         select(
             AtlasParadigmClass.id,
@@ -159,9 +143,7 @@ def list_atlas_paradigm_class_by_atlas_id(
         )
         .join(Atlas, Atlas.id == AtlasParadigmClass.atlas_id)
         .where(
-            AtlasParadigmClass.atlas_id == atlas_id,
-            AtlasParadigmClass.is_deleted == False,
-            Atlas.is_deleted == False,
+            AtlasParadigmClass.atlas_id == atlas_id, AtlasParadigmClass.is_deleted == False, Atlas.is_deleted == False
         )
     )
     domains = db.execute(stmt).all()
@@ -169,9 +151,7 @@ def list_atlas_paradigm_class_by_atlas_id(
 
 
 # noinspection PyTypeChecker
-def list_atlas_region_paradigm_classes(
-    db: Session, atlas_id: ID, region_id: ID
-) -> Sequence[AtlasRegionParadigmClass]:
+def list_atlas_region_paradigm_classes(db: Session, atlas_id: ID, region_id: ID) -> Sequence[AtlasRegionParadigmClass]:
     stmt = (
         select(AtlasRegionParadigmClass.key, AtlasRegionParadigmClass.value)
         .join(AtlasRegion, AtlasRegionParadigmClass.region_id == AtlasRegion.region_id)

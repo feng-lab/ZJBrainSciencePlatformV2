@@ -26,38 +26,16 @@ def upgrade() -> None:
         sa.Column("is_original", sa.Boolean(), nullable=False, comment="是否是设备产生的原始文件"),
         sa.Column("size", sa.Float(), nullable=False, comment="所有相关文件的大小之和"),
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
-        sa.Column(
-            "gmt_create",
-            sa.DateTime(),
-            server_default=sa.text("now()"),
-            nullable=False,
-            comment="创建时间",
-        ),
-        sa.Column(
-            "gmt_modified",
-            sa.DateTime(),
-            server_default=sa.text("now()"),
-            nullable=False,
-            comment="修改时间",
-        ),
-        sa.Column(
-            "is_deleted",
-            sa.Boolean(),
-            server_default=sa.text("false"),
-            nullable=False,
-            comment="该行是否被删除",
-        ),
+        sa.Column("gmt_create", sa.DateTime(), server_default=sa.text("now()"), nullable=False, comment="创建时间"),
+        sa.Column("gmt_modified", sa.DateTime(), server_default=sa.text("now()"), nullable=False, comment="修改时间"),
+        sa.Column("is_deleted", sa.Boolean(), server_default=sa.text("false"), nullable=False, comment="该行是否被删除"),
         sa.ForeignKeyConstraint(["experiment_id"], ["experiment.id"]),
         sa.ForeignKeyConstraint(["paradigm_id"], ["paradigm.id"]),
         sa.PrimaryKeyConstraint("id"),
         comment="虚拟文件",
     )
-    op.create_index(
-        op.f("ix_virtual_file_experiment_id"), "virtual_file", ["experiment_id"], unique=False
-    )
-    op.create_index(
-        op.f("ix_virtual_file_paradigm_id"), "virtual_file", ["paradigm_id"], unique=False
-    )
+    op.create_index(op.f("ix_virtual_file_experiment_id"), "virtual_file", ["experiment_id"], unique=False)
+    op.create_index(op.f("ix_virtual_file_paradigm_id"), "virtual_file", ["paradigm_id"], unique=False)
     op.create_table(
         "storage_file",
         sa.Column("virtual_file_id", sa.Integer(), nullable=False, comment="虚拟文件ID"),
@@ -65,34 +43,14 @@ def upgrade() -> None:
         sa.Column("size", sa.Float(), nullable=False, comment="文件大小"),
         sa.Column("storage_path", sa.String(length=255), nullable=False, comment="文件系统存储路径"),
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
-        sa.Column(
-            "gmt_create",
-            sa.DateTime(),
-            server_default=sa.text("now()"),
-            nullable=False,
-            comment="创建时间",
-        ),
-        sa.Column(
-            "gmt_modified",
-            sa.DateTime(),
-            server_default=sa.text("now()"),
-            nullable=False,
-            comment="修改时间",
-        ),
-        sa.Column(
-            "is_deleted",
-            sa.Boolean(),
-            server_default=sa.text("false"),
-            nullable=False,
-            comment="该行是否被删除",
-        ),
+        sa.Column("gmt_create", sa.DateTime(), server_default=sa.text("now()"), nullable=False, comment="创建时间"),
+        sa.Column("gmt_modified", sa.DateTime(), server_default=sa.text("now()"), nullable=False, comment="修改时间"),
+        sa.Column("is_deleted", sa.Boolean(), server_default=sa.text("false"), nullable=False, comment="该行是否被删除"),
         sa.ForeignKeyConstraint(["virtual_file_id"], ["virtual_file.id"]),
         sa.PrimaryKeyConstraint("id"),
         comment="实际文件",
     )
-    op.create_index(
-        op.f("ix_storage_file_virtual_file_id"), "storage_file", ["virtual_file_id"], unique=False
-    )
+    op.create_index(op.f("ix_storage_file_virtual_file_id"), "storage_file", ["virtual_file_id"], unique=False)
 
     op.execute("BEGIN;")
     op.execute(

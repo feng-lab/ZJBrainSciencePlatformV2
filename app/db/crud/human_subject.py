@@ -49,14 +49,12 @@ def get_human_subject(db: Session, user_id: int) -> HumanSubject | None:
     return row
 
 
-def search_human_subjects(
-    db: Session, search: HumanSubjectSearch
-) -> tuple[int, Sequence[HumanSubject]]:
+def search_human_subjects(db: Session, search: HumanSubjectSearch) -> tuple[int, Sequence[HumanSubject]]:
     base_stmt = select(HumanSubject).options(load_human_subject_user_option())
     if search.experiment_id is not None:
-        base_stmt = base_stmt.join(
-            Experiment.human_subjects.and_(Experiment.is_deleted == False)
-        ).where(Experiment.id == search.experiment_id)
+        base_stmt = base_stmt.join(Experiment.human_subjects.and_(Experiment.is_deleted == False)).where(
+            Experiment.id == search.experiment_id
+        )
     if search.name:
         base_stmt = base_stmt.where(HumanSubject.name.icontains(search.name))
     if search.gender is not None:
@@ -99,11 +97,7 @@ def check_human_subject_exists(db: Session, user_id: int) -> bool:
         select(text("1"))
         .select_from(HumanSubject)
         .join(HumanSubject.user)
-        .where(
-            HumanSubject.user_id == user_id,
-            HumanSubject.is_deleted == False,
-            User.is_deleted == False,
-        )
+        .where(HumanSubject.user_id == user_id, HumanSubject.is_deleted == False, User.is_deleted == False)
     )
     row = db.execute(stmt).first()
     return row is not None

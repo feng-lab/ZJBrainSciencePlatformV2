@@ -35,11 +35,7 @@ def create_paradigm(request: CreateParadigmRequest, ctx: ResearcherContext = Dep
     elif len(deleted_files) > 0:
         raise ServiceError.not_found(Entity.file)
 
-    paradigm_dict = {
-        "experiment_id": request.experiment_id,
-        "creator": ctx.user_id,
-        "description": request.description,
-    }
+    paradigm_dict = {"experiment_id": request.experiment_id, "creator": ctx.user_id, "description": request.description}
     paradigm_id = common_crud.insert_row(ctx.db, Paradigm, paradigm_dict, commit=True)
     if paradigm_id is None:
         raise ServiceError.database_fail()
@@ -70,11 +66,7 @@ def get_paradigm_info(
     return paradigm_response
 
 
-@router.get(
-    "/api/getParadigmsByPage",
-    description="分页获取范式详情",
-    response_model=Response[list[ParadigmResponse]],
-)
+@router.get("/api/getParadigmsByPage", description="分页获取范式详情", response_model=Response[list[ParadigmResponse]])
 @wrap_api_response
 def get_paradigms_by_page(
     experiment_id: int = Query(description="实验ID", default=0),
@@ -91,9 +83,7 @@ def get_paradigms_by_page(
 def update_paradigm(request: UpdateParadigmRequest, ctx: ResearcherContext = Depends()) -> None:
     update_dict = request.dict(exclude={"id", "images"})
     if len(update_dict) > 0:
-        success = common_crud.update_row(
-            ctx.db, Paradigm, update_dict, id_=request.id, commit=False
-        )
+        success = common_crud.update_row(ctx.db, Paradigm, update_dict, id_=request.id, commit=False)
         if not success:
             raise ServiceError.database_fail()
 
@@ -140,19 +130,13 @@ def delete_paradigm_files(db: Session, paradigm_id: int) -> bool:
         return True
 
     virtual_file_ids = [virtual_file.id for virtual_file in virtual_file_infos]
-    if not common_crud.bulk_update_rows_as_deleted(
-        db, VirtualFile, ids=virtual_file_ids, commit=False
-    ):
+    if not common_crud.bulk_update_rows_as_deleted(db, VirtualFile, ids=virtual_file_ids, commit=False):
         return False
     storage_files: list[StorageFile] = list(
-        itertools.chain.from_iterable(
-            virtual_file.storage_files for virtual_file in virtual_file_infos
-        )
+        itertools.chain.from_iterable(virtual_file.storage_files for virtual_file in virtual_file_infos)
     )
     storage_file_ids = [storage_file.id for storage_file in storage_files]
-    if not common_crud.bulk_update_rows_as_deleted(
-        db, StorageFile, ids=storage_file_ids, commit=False
-    ):
+    if not common_crud.bulk_update_rows_as_deleted(db, StorageFile, ids=storage_file_ids, commit=False):
         return False
 
     for storage_file in storage_files:

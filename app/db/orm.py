@@ -1,19 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import (
-    BigInteger,
-    Boolean,
-    Date,
-    DateTime,
-    Double,
-    Enum,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-    func,
-)
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Double, Enum, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
@@ -35,15 +22,9 @@ VarChar: String = String(255)
 
 
 class ModelMixin:
-    id: Mapped[int] = mapped_column(
-        Integer, nullable=False, primary_key=True, autoincrement=True, comment="主键"
-    )
-    gmt_create: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, server_default=func.now(), comment="创建时间"
-    )
-    gmt_modified: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, server_default=func.now(), comment="修改时间"
-    )
+    id: Mapped[int] = mapped_column(Integer, nullable=False, primary_key=True, autoincrement=True, comment="主键")
+    gmt_create: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), comment="创建时间")
+    gmt_modified: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), comment="修改时间")
     is_deleted: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=expression.false(), comment="该行是否被删除"
     )
@@ -57,12 +38,8 @@ class User(Base, ModelMixin):
     username: Mapped[str] = mapped_column(String(255), nullable=False, index=True, comment="用户名")
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False, comment="密码哈希")
     staff_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True, comment="员工号")
-    last_login_time: Mapped[datetime | None] = mapped_column(
-        DateTime, nullable=True, comment="上次登录时间"
-    )
-    last_logout_time: Mapped[datetime | None] = mapped_column(
-        DateTime, nullable=True, comment="上次下线时间"
-    )
+    last_login_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="上次登录时间")
+    last_logout_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="上次下线时间")
     access_level: Mapped[int] = mapped_column(Integer, nullable=False, comment="权限级别")
 
 
@@ -74,18 +51,10 @@ class Notification(Base, ModelMixin):
     gmt_create: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, index=True, server_default=func.now(), comment="创建时间"
     )
-    type: Mapped[NotificationType] = mapped_column(
-        Enum(NotificationType), nullable=False, comment="消息类型"
-    )
-    creator: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.id"), nullable=False, comment="消息发送者ID"
-    )
-    receiver: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.id"), nullable=False, index=True, comment="消息接收者ID"
-    )
-    status: Mapped[NotificationStatus] = mapped_column(
-        Enum(NotificationStatus), nullable=False, comment="消息状态"
-    )
+    type: Mapped[NotificationType] = mapped_column(Enum(NotificationType), nullable=False, comment="消息类型")
+    creator: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, comment="消息发送者ID")
+    receiver: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, index=True, comment="消息接收者ID")
+    status: Mapped[NotificationStatus] = mapped_column(Enum(NotificationStatus), nullable=False, comment="消息状态")
     content: Mapped[str] = mapped_column(Text, nullable=False, comment="消息内容")
 
     creator_user: Mapped[User] = relationship("User", viewonly=True, foreign_keys=[creator])
@@ -97,9 +66,7 @@ class ExperimentAssistant(Base):
     __table_args__ = {"comment": "实验助手关系"}
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), primary_key=True)
-    experiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("experiment.id"), primary_key=True
-    )
+    experiment_id: Mapped[int] = mapped_column(Integer, ForeignKey("experiment.id"), primary_key=True)
 
 
 @table_repr
@@ -107,12 +74,8 @@ class ExperimentHumanSubject(Base):
     __tablename__ = "experiment_human_subject"
     __table_args__ = {"comment": "实验包含的被试者"}
 
-    experiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("experiment.id"), primary_key=True
-    )
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("human_subject.user_id"), primary_key=True
-    )
+    experiment_id: Mapped[int] = mapped_column(Integer, ForeignKey("experiment.id"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("human_subject.user_id"), primary_key=True)
 
 
 @table_repr
@@ -120,9 +83,7 @@ class ExperimentDevice(Base):
     __tablename__ = "experiment_device"
     __table_args__ = {"comment": "实验包含的设备"}
 
-    experiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("experiment.id"), primary_key=True
-    )
+    experiment_id: Mapped[int] = mapped_column(Integer, ForeignKey("experiment.id"), primary_key=True)
     device_id: Mapped[int] = mapped_column(Integer, ForeignKey("device.id"), primary_key=True)
     index: Mapped[int] = mapped_column(Integer, nullable=False, comment="实验内序号")
 
@@ -143,24 +104,16 @@ class Experiment(Base, ModelMixin):
     __table_args__ = {"comment": "实验"}
 
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="实验名称")
-    type: Mapped[ExperimentType] = mapped_column(
-        Enum(ExperimentType), nullable=False, comment="实验类型"
-    )
+    type: Mapped[ExperimentType] = mapped_column(Enum(ExperimentType), nullable=False, comment="实验类型")
     description: Mapped[str] = mapped_column(Text, nullable=False, comment="实验描述")
     location: Mapped[str] = mapped_column(String(255), nullable=False, comment="实验地点")
-    start_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, index=True, comment="实验开始时间"
-    )
+    start_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True, comment="实验开始时间")
     end_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, comment="实验结束时间")
-    main_operator: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.id"), nullable=False, comment="主操作者ID"
-    )
+    main_operator: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, comment="主操作者ID")
     is_non_invasive: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否为无创实验")
     subject_type: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="被试类型")
     subject_num: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="被试数量")
-    neuron_source: Mapped[str | None] = mapped_column(
-        String(50), nullable=True, comment="神经元细胞来源部位"
-    )
+    neuron_source: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="神经元细胞来源部位")
     stimulation_type: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="刺激类型")
     session_num: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="实验session数量")
     trail_num: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="实验trail数量")
@@ -204,11 +157,7 @@ class VirtualFile(Base, ModelMixin):
         Integer, ForeignKey("experiment.id"), nullable=False, index=True, comment="实验ID"
     )
     paradigm_id: Mapped[int | None] = mapped_column(
-        Integer,
-        ForeignKey("paradigm.id"),
-        nullable=True,
-        index=True,
-        comment="范式ID，null表示不属于范式而属于实验",
+        Integer, ForeignKey("paradigm.id"), nullable=True, index=True, comment="范式ID，null表示不属于范式而属于实验"
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="文件名")
     file_type: Mapped[str] = mapped_column(String(50), nullable=False, comment="文件类型")
@@ -229,12 +178,8 @@ class Paradigm(Base, ModelMixin):
     __tablename__ = "paradigm"
     __table_args__ = {"comment": "实验范式"}
 
-    experiment_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("experiment.id"), nullable=False, comment="实验ID"
-    )
-    creator: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.id"), nullable=False, comment="创建者ID"
-    )
+    experiment_id: Mapped[int] = mapped_column(Integer, ForeignKey("experiment.id"), nullable=False, comment="实验ID")
+    creator: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, comment="创建者ID")
     description: Mapped[str | None] = mapped_column(Text(), nullable=False, comment="描述文字")
 
     virtual_files: Mapped[list[VirtualFile]] = relationship(VirtualFile, viewonly=True)
@@ -256,9 +201,7 @@ class Device(Base, ModelMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="设备名称")
     purpose: Mapped[str] = mapped_column(String(255), nullable=False, comment="设备用途")
 
-    experiments: Mapped[list[Experiment]] = relationship(
-        "Experiment", secondary=ExperimentDevice.__table__
-    )
+    experiments: Mapped[list[Experiment]] = relationship("Experiment", secondary=ExperimentDevice.__table__)
 
 
 @table_repr
@@ -275,12 +218,8 @@ class HumanSubject(Base, ModelMixin):
     death_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="死亡日期")
     education: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="教育程度")
     occupation: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="职业")
-    marital_status: Mapped[MaritalStatus | None] = mapped_column(
-        Enum(MaritalStatus), nullable=True, comment="婚姻状况"
-    )
-    abo_blood_type: Mapped[ABOBloodType | None] = mapped_column(
-        Enum(ABOBloodType), nullable=True, comment="ABO血型"
-    )
+    marital_status: Mapped[MaritalStatus | None] = mapped_column(Enum(MaritalStatus), nullable=True, comment="婚姻状况")
+    abo_blood_type: Mapped[ABOBloodType | None] = mapped_column(Enum(ABOBloodType), nullable=True, comment="ABO血型")
     is_left_handed: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否是左撇子")
     phone_number: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="电话号码")
     email: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="电子邮箱地址")
@@ -311,9 +250,7 @@ class Task(Base, ModelMixin):
     start_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="任务开始执行的时间")
     end_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="任务结束时间")
     status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus), nullable=False, comment="任务状态")
-    creator: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.id"), nullable=False, comment="任务创建者ID"
-    )
+    creator: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, comment="任务创建者ID")
 
     steps: Mapped[list["TaskStep"]] = relationship("TaskStep")
     creator_obj: Mapped[User] = relationship("User")
@@ -324,9 +261,7 @@ class TaskStep(Base, ModelMixin):
     __tablename__ = "task_step"
     __table_args__ = {"comment": "任务步骤"}
 
-    task_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("task.id"), nullable=False, comment="任务ID"
-    )
+    task_id: Mapped[int] = mapped_column(Integer, ForeignKey("task.id"), nullable=False, comment="任务ID")
     name: Mapped[str] = mapped_column(String(255), nullable=False, comment="步骤名字")
     type: Mapped[TaskStepType] = mapped_column(Enum(TaskStepType), nullable=False, comment="任务步骤类型")
     parameter: Mapped[str] = mapped_column(Text, nullable=False, comment="步骤参数JSON")
@@ -345,9 +280,7 @@ class AtlasComponentMixin:
 
 
 class TreeNodeMixin(ModelMixin):
-    parent_id: Mapped[int | None] = mapped_column(
-        Integer, nullable=True, comment="父节点ID，null表示第一层节点"
-    )
+    parent_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="父节点ID，null表示第一层节点")
 
 
 @table_repr
@@ -382,9 +315,7 @@ class AtlasRegionLink(Base, ModelMixin, AtlasComponentMixin):
     region1: Mapped[str] = mapped_column(VarChar, nullable=False, comment="脑区1")
     region2: Mapped[str] = mapped_column(VarChar, nullable=False, comment="脑区2")
     value: Mapped[float | None] = mapped_column(Double, nullable=True, comment="连接强度，null表示仅有连接")
-    opposite_value: Mapped[float | None] = mapped_column(
-        Double, nullable=True, comment="反向连接强度，null表示仅有连接"
-    )
+    opposite_value: Mapped[float | None] = mapped_column(Double, nullable=True, comment="反向连接强度，null表示仅有连接")
 
 
 @table_repr

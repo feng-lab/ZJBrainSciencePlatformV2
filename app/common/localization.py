@@ -46,12 +46,8 @@ def load_localization_config(path: Path, id_name: str) -> LocalizationConfig:
     return result
 
 
-message_l12n_config: LocalizationConfig = load_localization_config(
-    config.MESSAGE_LOCALIZATION_YAML_PATH, "message_id"
-)
-entity_l12n_config: LocalizationConfig = load_localization_config(
-    config.ENTITY_LOCALIZATION_YAML_PATH, "entity_id"
-)
+message_l12n_config: LocalizationConfig = load_localization_config(config.MESSAGE_LOCALIZATION_YAML_PATH, "message_id")
+entity_l12n_config: LocalizationConfig = load_localization_config(config.ENTITY_LOCALIZATION_YAML_PATH, "entity_id")
 
 locale_ctxvar = ContextVar("locale", default=MessageLocale.zh_CN)
 

@@ -27,11 +27,7 @@ def get_paradigm_by_id(db: Session, paradigm_id: int) -> Paradigm | None:
 
 
 def list_paradigm_files(db: Session, paradigm_id: int) -> list[int]:
-    stmt = (
-        select(VirtualFile.id)
-        .join(Paradigm.exist_virtual_files)
-        .where(VirtualFile.paradigm_id == paradigm_id)
-    )
+    stmt = select(VirtualFile.id).join(Paradigm.exist_virtual_files).where(VirtualFile.paradigm_id == paradigm_id)
     result = db.execute(stmt).scalars().all()
     return list(result)
 
@@ -40,10 +36,7 @@ def search_paradigms(db: Session, experiment_id: int, page_param: PageParm) -> l
     stmt = (
         select(Paradigm)
         .where(Paradigm.experiment_id == experiment_id)
-        .join(
-            Experiment,
-            and_(Paradigm.experiment_id == Experiment.id, Experiment.is_deleted == False),
-        )
+        .join(Experiment, and_(Paradigm.experiment_id == Experiment.id, Experiment.is_deleted == False))
         .offset(page_param.offset)
         .limit(page_param.limit)
         .options(load_paradigm_creator_option(), load_paradigm_files_option())
@@ -62,9 +55,7 @@ def get_paradigm_file_infos(db: Session, paradigm_id: int) -> Sequence[VirtualFi
         .join(Paradigm.exist_virtual_files)
         .where(Paradigm.id == paradigm_id)
         .options(
-            immediateload(VirtualFile.exist_storage_files).load_only(
-                StorageFile.id, StorageFile.storage_path
-            ),
+            immediateload(VirtualFile.exist_storage_files).load_only(StorageFile.id, StorageFile.storage_path),
             load_only(VirtualFile.id),
         )
     )

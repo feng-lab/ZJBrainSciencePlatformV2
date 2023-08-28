@@ -20,42 +20,24 @@ def upgrade() -> None:
     op.drop_constraint("task_ibfk_2", "task", type_="foreignkey")
     op.create_foreign_key("task_ibfk_2", "task", "virtual_file", ["source_file"], ["id"])
     op.drop_constraint("task_step_ibfk_2", "task_step", type_="foreignkey")
-    op.create_foreign_key(
-        "task_step_ibfk_2", "task_step", "virtual_file", ["result_file_id"], ["id"]
-    )
+    op.create_foreign_key("task_step_ibfk_2", "task_step", "virtual_file", ["result_file_id"], ["id"])
     op.drop_table("file")
 
 
 def downgrade() -> None:
     op.create_table(
         "file",
-        sa.Column(
-            "experiment_id", mysql.INTEGER(), autoincrement=False, nullable=False, comment="实验ID"
-        ),
-        sa.Column(
-            "paradigm_id",
-            mysql.INTEGER(),
-            autoincrement=False,
-            nullable=True,
-            comment="范式ID，null表示不属于范式而属于实验",
-        ),
+        sa.Column("experiment_id", mysql.INTEGER(), autoincrement=False, nullable=False, comment="实验ID"),
+        sa.Column("paradigm_id", mysql.INTEGER(), autoincrement=False, nullable=True, comment="范式ID，null表示不属于范式而属于实验"),
         sa.Column("name", mysql.VARCHAR(length=255), nullable=False, comment="逻辑路径"),
         sa.Column("extension", mysql.VARCHAR(length=50), nullable=False, comment="文件扩展名"),
         sa.Column("size", mysql.FLOAT(), nullable=False, comment="同一实验下的文件序号"),
         sa.Column(
-            "is_original",
-            mysql.TINYINT(display_width=1),
-            autoincrement=False,
-            nullable=False,
-            comment="是否是设备产生的原始文件",
+            "is_original", mysql.TINYINT(display_width=1), autoincrement=False, nullable=False, comment="是否是设备产生的原始文件"
         ),
         sa.Column("id", mysql.INTEGER(), autoincrement=True, nullable=False, comment="主键"),
         sa.Column(
-            "gmt_create",
-            mysql.DATETIME(),
-            server_default=sa.text("CURRENT_TIMESTAMP"),
-            nullable=False,
-            comment="创建时间",
+            "gmt_create", mysql.DATETIME(), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False, comment="创建时间"
         ),
         sa.Column(
             "gmt_modified",
@@ -80,8 +62,6 @@ def downgrade() -> None:
     op.create_index("ix_file_paradigm_id", "file", ["paradigm_id"], unique=False)
     op.create_index("ix_file_experiment_id", "file", ["experiment_id"], unique=False)
     op.drop_constraint("task_step_ibfk_2", "task_step", type_="foreignkey")
-    op.create_foreign_key(
-        "task_step_result_file_id", "task_step", "file", ["result_file_id"], ["id"]
-    )
+    op.create_foreign_key("task_step_result_file_id", "task_step", "file", ["result_file_id"], ["id"])
     op.drop_constraint("task_ibfk_2", "task", type_="foreignkey")
     op.create_foreign_key("task_ibfk_2", "task", "file", ["source_file"], ["id"])

@@ -58,9 +58,7 @@ def get_file_download_info(db: Session, virtual_file_id: int) -> tuple[str | Non
 
 def get_db_storage_paths(db: Session, virtual_file_id: int) -> Sequence[str]:
     stmt = (
-        select(StorageFile.storage_path)
-        .join(VirtualFile.exist_storage_files)
-        .where(VirtualFile.id == virtual_file_id)
+        select(StorageFile.storage_path).join(VirtualFile.exist_storage_files).where(VirtualFile.id == virtual_file_id)
     )
     return db.execute(stmt).scalars().all()
 

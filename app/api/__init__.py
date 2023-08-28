@@ -41,12 +41,7 @@ class ApiJsonEncoder(JSONEncoder):
 class ApiJsonResponse(JSONResponse):
     def render(self, content: Any) -> bytes:
         return json.dumps(
-            content,
-            ensure_ascii=False,
-            allow_nan=False,
-            indent=None,
-            separators=(",", ":"),
-            cls=ApiJsonEncoder,
+            content, ensure_ascii=False, allow_nan=False, indent=None, separators=(",", ":"), cls=ApiJsonEncoder
         ).encode("UTF-8")
 
 
@@ -100,9 +95,7 @@ def check_atlas_region_link_exists(db: Session, atlas_region_link_id: int) -> No
 
 
 def check_atlas_behavioral_domain_exists(db: Session, atlas_behavioral_domain_id: int) -> None:
-    _check_exists(
-        db, AtlasBehavioralDomain, Entity.atlas_behavioral_domain, id_=atlas_behavioral_domain_id
-    )
+    _check_exists(db, AtlasBehavioralDomain, Entity.atlas_behavioral_domain, id_=atlas_behavioral_domain_id)
 
 
 def check_atlas_paradigm_class_exists(db: Session, atlas_paradigm_class_id: int) -> None:

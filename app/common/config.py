@@ -63,14 +63,10 @@ class Config(BaseSettings):
     REQUEST_ID_HEADER_KEY: str = "X-Request-ID"
 
     # message_localization.yaml路径
-    MESSAGE_LOCALIZATION_YAML_PATH: Path = (
-        Path(__file__).parent.parent.parent / "config" / "message_localization.yaml"
-    )
+    MESSAGE_LOCALIZATION_YAML_PATH: Path = Path(__file__).parent.parent.parent / "config" / "message_localization.yaml"
 
     # entity_localization.yaml路径
-    ENTITY_LOCALIZATION_YAML_PATH: Path = (
-        Path(__file__).parent.parent.parent / "config" / "entity_localization.yaml"
-    )
+    ENTITY_LOCALIZATION_YAML_PATH: Path = Path(__file__).parent.parent.parent / "config" / "entity_localization.yaml"
 
 
 config = Config()

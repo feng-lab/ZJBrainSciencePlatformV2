@@ -118,25 +118,17 @@ def get_task_info(task_id: int = Query(ge=0), ctx: HumanSubjectContext = Depends
     return task_info
 
 
-@router.get(
-    "/api/getTasksByPage", description="分页查找任务", response_model=Response[Page[TaskBaseInfo]]
-)
+@router.get("/api/getTasksByPage", description="分页查找任务", response_model=Response[Page[TaskBaseInfo]])
 @wrap_api_response
-def get_tasks_by_page(
-    search: TaskSearch = Depends(), ctx: HumanSubjectContext = Depends()
-) -> Page[TaskBaseInfo]:
+def get_tasks_by_page(search: TaskSearch = Depends(), ctx: HumanSubjectContext = Depends()) -> Page[TaskBaseInfo]:
     total, orm_tasks = crud.search_task(ctx.db, search)
     task_base_infos = convert.map_list(convert.task_orm_2_base_info, orm_tasks)
     return Page(total=total, items=task_base_infos)
 
 
-@router.get(
-    "/api/getTaskStepsInfo", description="获取任务步骤详情", response_model=Response[list[TaskStepInfo]]
-)
+@router.get("/api/getTaskStepsInfo", description="获取任务步骤详情", response_model=Response[list[TaskStepInfo]])
 @wrap_api_response
-def get_task_steps_info(
-    task_id: int = Query(ge=0), ctx: HumanSubjectContext = Depends()
-) -> list[TaskStepInfo]:
+def get_task_steps_info(task_id: int = Query(ge=0), ctx: HumanSubjectContext = Depends()) -> list[TaskStepInfo]:
     check_task_exists(ctx.db, task_id)
 
     orm_task_steps = crud.get_steps_by_task_id(ctx.db, task_id)
