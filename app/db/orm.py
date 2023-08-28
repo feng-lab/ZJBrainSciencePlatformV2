@@ -304,6 +304,7 @@ class AtlasRegion(Base, TreeNodeMixin, AtlasComponentMixin):
     acronym: Mapped[str] = mapped_column(VarChar, nullable=False, comment="缩写")
     lobe: Mapped[str | None] = mapped_column(VarChar, nullable=True, comment="所属脑叶")
     gyrus: Mapped[str | None] = mapped_column(VarChar, nullable=True, comment="所属脑回")
+    label: Mapped[str | None] = mapped_column(VarChar, nullable=True, comment="标签")
 
 
 @table_repr

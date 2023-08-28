@@ -407,13 +407,14 @@ class AtlasRegionCreate(AtlasID, AtlasRegionID, AtlasTreeParentId):
     acronym: str
     lobe: str | None
     gyrus: str | None
+    label: str | None
 
 
 class AtlasRegionUpdate(AtlasRegionCreate, ModelId):
     pass
 
 
-class AtlasRegionInfo(AtlasRegionCreate, BaseModelInDB, AtlasRegionLabel):
+class AtlasRegionInfo(AtlasRegionCreate, BaseModelInDB):
     pass
 
 

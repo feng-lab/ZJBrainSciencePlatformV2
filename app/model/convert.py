@@ -209,10 +209,6 @@ def atlas_orm_2_info(atlas: Atlas) -> AtlasInfo:
     )
 
 
-def atlas_region_label(atlas_region: AtlasRegion) -> str:
-    return f"{atlas_region.description}({atlas_region.acronym})"
-
-
 def atlas_region_orm_2_info(atlas_region: AtlasRegion) -> AtlasRegionInfo:
     return AtlasRegionInfo(
         id=atlas_region.id,
@@ -224,7 +220,7 @@ def atlas_region_orm_2_info(atlas_region: AtlasRegion) -> AtlasRegionInfo:
         parent_id=atlas_region.parent_id,
         description=atlas_region.description,
         acronym=atlas_region.acronym,
-        label=atlas_region_label(atlas_region),
+        label=atlas_region.label,
         lobe=atlas_region.lobe,
         gyrus=atlas_region.gyrus,
     )
@@ -235,7 +231,7 @@ def atlas_region_orm_2_tree_node(atlas_region: AtlasRegion) -> AtlasRegionTreeNo
         id=atlas_region.id,
         parent_id=atlas_region.parent_id,
         region_id=atlas_region.region_id,
-        label=atlas_region_label(atlas_region),
+        label=atlas_region.label,
         children=[],
     )
 
