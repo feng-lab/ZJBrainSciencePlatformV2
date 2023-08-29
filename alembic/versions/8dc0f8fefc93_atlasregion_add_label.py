@@ -17,7 +17,8 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("atlas_region", sa.Column("label", sa.String(length=255), nullable=True, comment="标签"))
+    op.add_column("atlas_region", sa.Column("label", sa.String(length=255), nullable=False, comment="标签"))
+    op.execute("UPDATE atlas_region SET label = CONCAT(description, '(', acronym, ')') WHERE TRUE")
 
 
 def downgrade() -> None:

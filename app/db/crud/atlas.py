@@ -58,6 +58,7 @@ def list_atlas_regions_by_atlas_id(db: Session, atlas_id: ID) -> Sequence[AtlasR
             AtlasRegion.parent_id,
             AtlasRegion.description,
             AtlasRegion.acronym,
+            AtlasRegion.label,
         )
         .join(Atlas, Atlas.id == AtlasRegion.atlas_id)
         .where(AtlasRegion.atlas_id == atlas_id, Atlas.is_deleted == False, AtlasRegion.is_deleted == False)
