@@ -42,3 +42,11 @@ class GetExperimentsByPageSortBy(StrEnum):
 class GetExperimentsByPageSortOrder(StrEnum):
     ASC = "asc"
     DESC = "desc"
+
+
+class TaskStatus(StrEnum):
+    pending = "pending"
+    running = "running"
+    finished = "finished"
+    failed = "failed"
+    canceled = "canceled"

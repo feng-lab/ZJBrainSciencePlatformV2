@@ -18,7 +18,8 @@ class Config(BaseSettings):
     DATABASE_URL: str = "mysql+pymysql://zjlab:zjlab2022@localhost:8100/zj_brain_science_platform"
 
     # 数据库配置，JSON格式
-    DATABASE_CONFIG: dict[str, Any] = {"echo": True}
+    # DATABASE_CONFIG: dict[str, Any] = {"echo": True}
+    DATABASE_CONFIG: dict[str, Any] = {}
 
     # 日志路径
     LOG_ROOT: Path = Path(r"D:\WorkData\ZJBrainSciencePlatform\log\platform")

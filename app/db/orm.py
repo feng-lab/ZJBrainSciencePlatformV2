@@ -12,6 +12,7 @@ from app.model.enum_filed import (
     MaritalStatus,
     NotificationStatus,
     NotificationType,
+    TaskStatus,
 )
 
 ShortVarChar: String = String(63)
@@ -317,3 +318,49 @@ class AtlasRegionParadigmClass(Base, ModelMixin, AtlasComponentMixin):
     key: Mapped[str] = mapped_column(VarChar, nullable=False, comment="范例集")
     value: Mapped[float] = mapped_column(Double, nullable=False, comment="范例集值")
     region_id: Mapped[int] = mapped_column(BigInteger, nullable=False, comment="脑区ID")
+
+
+@table_repr
+class Task(Base, ModelMixin):
+    __tablename__ = "task"
+    __table_args__ = {"comment": "任务"}
+
+    name: Mapped[str] = mapped_column(VarChar, nullable=False, comment="任务名")
+    description: Mapped[str] = mapped_column(Text, nullable=False, comment="任务描述")
+    script_id: Mapped[int] = mapped_column(Integer, ForeignKey("task_script.id"), nullable=False, comment="任务脚本ID")
+    creator_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, comment="创建者ID")
+    source_file_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("virtual_file.id"), nullable=True, comment="任务源文件"
+    )
+    target_directory: Mapped[str | None] = mapped_column(VarChar, nullable=True, comment="任务输出文件夹")
+
+    script: Mapped["TaskScript"] = relationship("TaskScript")
+    creator: Mapped["User"] = relationship("User")
+    runs: Mapped[list["TaskRun"]] = relationship("TaskRun")
+
+
+@table_repr
+class TaskScript(Base, ModelMixin):
+    __tablename__ = "task_script"
+    __table_args__ = {"comment": "任务脚本"}
+
+    source_file: Mapped[str] = mapped_column(VarChar, nullable=False, comment="脚本源文件")
+    type: Mapped[str] = mapped_column(VarChar, nullable=False, comment="脚本类型")
+    executable: Mapped[str] = mapped_column(VarChar, nullable=False, comment="执行脚本的程序")
+    environment: Mapped[str] = mapped_column(Text, nullable=False, comment="脚本执行环境，JSON对象")
+
+    task: Mapped["Task"] = relationship("Task")
+
+
+@table_repr
+class TaskRun(Base, ModelMixin):
+    __tablename__ = "task_run"
+    __table_args__ = {"comment": "任务运行信息"}
+
+    task_id: Mapped[int] = mapped_column(Integer, ForeignKey("task.id"), nullable=False, comment="任务ID")
+    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus), nullable=False, comment="任务状态")
+    start_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="任务开始时间")
+    end_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="任务结束时间")
+    argument: Mapped[str] = mapped_column(Text, nullable=False, comment="任务参数，JSON列表")
+
+    task: Mapped[Task] = relationship("Task")
