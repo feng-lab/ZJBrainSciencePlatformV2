@@ -12,9 +12,6 @@ from app.model.enum_filed import (
     MaritalStatus,
     NotificationStatus,
     NotificationType,
-    TaskStatus,
-    TaskStepType,
-    TaskType,
 )
 
 ShortVarChar: String = String(63)
@@ -234,45 +231,6 @@ class HumanSubjectIndex(Base):
     __table_args__ = {"comment": "被试者用户序号"}
 
     index: Mapped[int] = mapped_column(Integer, primary_key=True, comment="下一个被试者的序号")
-
-
-@table_repr
-class Task(Base, ModelMixin):
-    __tablename__ = "task"
-    __table_args__ = {"comment": "任务"}
-
-    name: Mapped[str] = mapped_column(String(255), nullable=False, comment="任务名")
-    description: Mapped[str] = mapped_column(Text, nullable=False, comment="任务描述")
-    source_file: Mapped[int] = mapped_column(
-        Integer, ForeignKey("virtual_file.id"), nullable=False, comment="任务分析的文件ID"
-    )
-    type: Mapped[TaskType] = mapped_column(Enum(TaskType), nullable=False, comment="任务类型")
-    start_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="任务开始执行的时间")
-    end_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="任务结束时间")
-    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus), nullable=False, comment="任务状态")
-    creator: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, comment="任务创建者ID")
-
-    steps: Mapped[list["TaskStep"]] = relationship("TaskStep")
-    creator_obj: Mapped[User] = relationship("User")
-
-
-@table_repr
-class TaskStep(Base, ModelMixin):
-    __tablename__ = "task_step"
-    __table_args__ = {"comment": "任务步骤"}
-
-    task_id: Mapped[int] = mapped_column(Integer, ForeignKey("task.id"), nullable=False, comment="任务ID")
-    name: Mapped[str] = mapped_column(String(255), nullable=False, comment="步骤名字")
-    type: Mapped[TaskStepType] = mapped_column(Enum(TaskStepType), nullable=False, comment="任务步骤类型")
-    parameter: Mapped[str] = mapped_column(Text, nullable=False, comment="步骤参数JSON")
-    index: Mapped[int] = mapped_column(Integer, nullable=False, comment="任务中的步骤顺序")
-    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus), nullable=False, comment="步骤状态")
-    start_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="步骤开始执行的时间")
-    end_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="步骤结束时间")
-    result_file_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("virtual_file.id"), nullable=True, comment="结果文件ID"
-    )
-    error_msg: Mapped[str | None] = mapped_column(String(255), nullable=True, comment="错误信息")
 
 
 class AtlasComponentMixin:

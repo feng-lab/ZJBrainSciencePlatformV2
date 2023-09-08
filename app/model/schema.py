@@ -12,11 +12,8 @@ from app.model.enum_filed import (
     MaritalStatus,
     NotificationStatus,
     NotificationType,
-    TaskStatus,
-    TaskStepType,
-    TaskType,
 )
-from app.model.field import ID, JsonDict, LongVarchar, ShortVarchar, Text
+from app.model.field import ID, LongVarchar, ShortVarchar, Text
 
 
 class ModelId(BaseModel):
@@ -304,67 +301,6 @@ class HumanSubjectResponse(HumanSubjectUpdate, UserNameStaffId):
 
 class HumanSubjectSearch(PageParm, HumanSubjectSearchable, ExperimentIdSearch):
     pass
-
-
-class TaskSourceFileSearch(PageParm):
-    name: str | None = Field(None, max_length=255)
-    file_type: str | None = Field(None, max_length=50)
-    experiment_name: str | None = Field(None, max_length=255)
-
-
-class TaskSourceFileResponse(ModelId):
-    name: str = Field(max_length=255)
-    file_type: str = Field(max_length=50)
-    experiment_id: int = Field(ge=0)
-    experiment_name: str = Field(max_length=255)
-
-
-class TaskBase(BaseModel):
-    name: LongVarchar
-    description: Text
-    source_file: ID
-
-
-class TaskStepCreate(BaseModel):
-    name: LongVarchar
-    step_type: TaskStepType
-    parameters: JsonDict
-
-
-class TaskStepBase(TaskStepCreate):
-    task_id: ID
-
-
-class TaskCreate(TaskBase):
-    steps: list[TaskStepCreate] = Field(default_factory=list)
-
-
-class TaskStepInfo(TaskStepBase):
-    index: int = Field(ge=1)
-    status: TaskStatus
-    start_at: datetime | None
-    end_at: datetime | None
-
-
-class TaskBaseInfo(TaskBase):
-    type: TaskType
-    status: TaskStatus
-    start_at: datetime | None
-    end_at: datetime | None
-    creator: UserInfo
-
-
-class TaskInfo(TaskBaseInfo):
-    steps: list[TaskStepInfo]
-
-
-class TaskSearch(PageParm):
-    name: LongVarchar | None
-    type: TaskType | None
-    source_file: int | None
-    status: TaskStatus | None
-    start_at: date | None
-    creator: int | None
 
 
 class AtlasCreate(BaseModel):

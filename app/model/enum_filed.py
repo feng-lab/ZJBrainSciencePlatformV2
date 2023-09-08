@@ -1,25 +1,6 @@
 from enum import StrEnum
 
 
-class TaskStepType(StrEnum):
-    preprocess = "preprocess"
-    analysis = "analysis"
-
-
-class TaskStatus(StrEnum):
-    wait_start = "wait_start"
-    running = "running"
-    done = "done"
-    error = "error"
-    cancelled = "cancelled"
-
-
-class TaskType(StrEnum):
-    preprocess = "preprocess"
-    analysis = "analysis"
-    preprocess_analysis = "preprocess_analysis"
-
-
 class Gender(StrEnum):
     male = "male"
     female = "female"

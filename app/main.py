@@ -22,7 +22,6 @@ from app.api.file import router as file_router
 from app.api.human_subject import router as human_subject_router
 from app.api.notification import router as notification_router
 from app.api.paradigm import router as paradigm_router
-from app.api.task import router as task_router
 from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
 from app.api.user import router as user_router
 from app.common.config import config
@@ -69,7 +68,6 @@ app.include_router(paradigm_router)
 app.include_router(algorithm_router)
 app.include_router(device_router)
 app.include_router(human_subject_router)
-app.include_router(task_router)
 app.include_router(atlas_router)
 
 app.add_middleware(
