@@ -9,6 +9,7 @@ Options:
   -L                 Use LOCAL environment (default)
   -T                 Use TESTING environment
   -P                 Use PRODUCTION environment
+  -A                 Use ATLAS environment
   -h                 Print this usage
 
 Command:
@@ -31,7 +32,7 @@ check-and-set-env() {
 # 读取通用配置
 source "$(dirname -- "${BASH_SOURCE[0]}")/deploy/config/config.sh"
 
-while getopts 'LTPh' OPT; do
+while getopts 'LTPAh' OPT; do
   case "$OPT" in
   L)
     check-and-set-env LOCAL
@@ -41,6 +42,9 @@ while getopts 'LTPh' OPT; do
     ;;
   P)
     check-and-set-env PRODUCTION
+    ;;
+  A)
+    check-and-set-env ATLAS
     ;;
   h)
     print-usage

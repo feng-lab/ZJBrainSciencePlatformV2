@@ -14,6 +14,7 @@ Image version:
 Options:
   -T             Use TESTING env (default)
   -P             Use PRODUCTION env
+  -A             Use ATLAS env
   -c on | off    Check workspace is clean (default on)
   -b on | off    Build new docker image (default off)
   -p on | off    Push image to docker hub (default off)
@@ -45,13 +46,16 @@ pushImage='off'
 deployStack='off'
 dryRun='off'
 
-while getopts 'TPc:b:p:d:nh' OPT; do
+while getopts 'TPAc:b:p:d:nh' OPT; do
   case $OPT in
   T)
     currentEnv=TESTING
     ;;
   P)
     currentEnv=PRODUCTION
+    ;;
+  A)
+    currentEnv=ATLAS
     ;;
   c)
     set-option checkClean
@@ -215,7 +219,6 @@ if [ "$deployStack" == on ]; then
   "${scp[@]}" "$tmpComposeYaml" "${sshConfig}:/data/ZJBrainSciencePlatform/compose/${service}.compose.yaml"
   "${ssh[@]}" "$sshConfig" bash <<EOF
 set -euo pipefail
-mkdir -p /data/ZJBrainSciencePlatform/data/file && cd /data/ZJBrainSciencePlatform && mkdir log mysql compose && cd mysql && mkdir backup data log
 docker login --username "${DOCKER_USERNAME}" --password "${DOCKER_TOKEN}"
 docker stack deploy --compose-file "/data/ZJBrainSciencePlatform/compose/${service}.compose.yaml" --with-registry-auth "$DOCKER_STACK_NAME"
 sleep 3
