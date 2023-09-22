@@ -5,6 +5,7 @@ import pytest
 
 import alembic.command
 import alembic.config
+from app.api import encrypt_password
 from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
 from app.main import app
 
@@ -24,4 +25,4 @@ def run_alembic_upgrade_head() -> None:
 
 @pytest.fixture(scope="session")
 def logon_root_headers(run_alembic_upgrade_head, run_app_startup_shutdown) -> dict[str, str]:
-    return login(ROOT_USERNAME, ROOT_PASSWORD)
+    return login(ROOT_USERNAME, encrypt_password(ROOT_PASSWORD))

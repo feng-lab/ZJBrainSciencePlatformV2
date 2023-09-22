@@ -1,9 +1,12 @@
+import base64
 import functools
 import json
 from datetime import date, datetime
 from json import JSONEncoder
 from typing import Any, Callable
 
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.roles import WhereHavingRole
 from starlette.responses import JSONResponse
@@ -55,6 +58,24 @@ def wrap_api_response(func: Callable[..., Any]):
         return json_response
 
     return wrapper
+
+
+AUTH_AES_KEY: bytes = b"#030doH2<FIb#b88"
+aes_cipher = AES.new(AUTH_AES_KEY, AES.MODE_ECB)
+
+
+def encrypt_password(data: str) -> str:
+    pad_data = pad(data.encode("UTF-8"), AES.block_size, style="pkcs7")
+    enc_data = aes_cipher.encrypt(pad_data)
+    base64_enc_data = base64.b64encode(enc_data).decode("ASCII")
+    return base64_enc_data
+
+
+def decrypt_password(data: str) -> str:
+    enc_data = base64.b64decode(data.encode("ASCII"))
+    pad_data = aes_cipher.decrypt(enc_data)
+    data = unpad(pad_data, AES.block_size, style="pkcs7").decode("UTF-8")
+    return data
 
 
 def check_experiment_exists(db: Session, experiment_id: int) -> None:

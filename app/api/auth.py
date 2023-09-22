@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app.api import wrap_api_response
+from app.api import decrypt_password, wrap_api_response
 from app.common.config import config
 from app.common.context import AllUserContext
 from app.common.exception import ServiceError
@@ -18,7 +18,8 @@ router = APIRouter(tags=["auth"])
 @router.post("/api/login", description="用户登录，获取AccessToken", response_model=LoginResponse)
 def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db_session)):
     # 验证用户名与密码是否匹配
-    user_id = verify_password(db, form.username, form.password)
+    password = decrypt_password(form.password)
+    user_id = verify_password(db, form.username, password)
     if user_id is None:
         raise_unauthorized_exception(staff_id=form.username)
 

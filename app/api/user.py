@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 import app.db.crud.user as crud
-from app.api import check_user_exists, wrap_api_response
+from app.api import check_user_exists, decrypt_password, wrap_api_response
 from app.common.context import AdministratorContext, AllUserContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.localization import Entity
@@ -28,7 +28,8 @@ def create_user(request: CreateUserRequest, ctx: AdministratorContext = Depends(
         return exists_user.id
 
     # 数据库不能保存密码明文，只能保存密码哈希值
-    user_dict = request.dict(exclude={"password"}) | {"hashed_password": hash_password(request.password)}
+    password = decrypt_password(request.password)
+    user_dict = request.dict(exclude={"password"}) | {"hashed_password": hash_password(password)}
     user_id = common_crud.insert_row(ctx.db, User, user_dict, commit=True)
     if user_id is None:
         raise ServiceError.database_fail()
@@ -78,11 +79,12 @@ def update_user_access_level(request: UpdateUserAccessLevelRequest, ctx: Adminis
 @router.post("/api/updatePassword", description="用户修改密码", response_model=NoneResponse)
 @wrap_api_response
 def update_password(request: UpdatePasswordRequest, ctx: AllUserContext = Depends()) -> None:
+    old_password, new_password = decrypt_password(request.old_password), decrypt_password(request.new_password)
     staff_id = crud.get_user_staff_id(ctx.db, ctx.user_id)
-    user_id = verify_password(ctx.db, staff_id, request.old_password)
+    user_id = verify_password(ctx.db, staff_id, old_password)
     if user_id is None or user_id != ctx.user_id:
         raise ServiceError.wrong_password()
-    hashed_new_password = hash_password(request.new_password)
+    hashed_new_password = hash_password(new_password)
     success = common_crud.update_row(ctx.db, User, {"hashed_password": hashed_new_password}, id_=user_id, commit=True)
     if not success:
         raise ServiceError.database_fail()
