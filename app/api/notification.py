@@ -11,12 +11,7 @@ from app.model import convert
 from app.model.enum_filed import NotificationStatus
 from app.model.request import MarkNotificationsAsReadRequest
 from app.model.response import Page, Response
-from app.model.schema import (
-    NotificationBase,
-    NotificationCreate,
-    NotificationResponse,
-    NotificationSearch,
-)
+from app.model.schema import NotificationBase, NotificationCreate, NotificationResponse, NotificationSearch
 
 router = APIRouter(tags=["notification"])
 
@@ -24,12 +19,8 @@ router = APIRouter(tags=["notification"])
 @router.post("/api/sendNotification", description="发送通知", response_model=Response[int])
 @wrap_api_response
 def send_notification(request: NotificationBase, ctx: HumanSubjectContext = Depends()) -> int:
-    notification_create = NotificationCreate(
-        **request.dict(), creator=ctx.user_id, status=NotificationStatus.unread
-    )
-    notification_id = common_crud.insert_row(
-        ctx.db, Notification, notification_create.dict(), commit=True
-    )
+    notification_create = NotificationCreate(**request.dict(), creator=ctx.user_id, status=NotificationStatus.unread)
+    notification_id = common_crud.insert_row(ctx.db, Notification, notification_create.dict(), commit=True)
     if notification_id is None:
         raise ServiceError.database_fail()
     return notification_id
@@ -43,9 +34,7 @@ def get_unread_notification_count(ctx: HumanSubjectContext = Depends()) -> int:
 
 
 @router.get(
-    "/api/getRecentUnreadNotifications",
-    description="获取最近未读通知",
-    response_model=Response[list[NotificationResponse]],
+    "/api/getRecentUnreadNotifications", description="获取最近未读通知", response_model=Response[list[NotificationResponse]]
 )
 @wrap_api_response
 def get_recent_unread_notifications(
@@ -56,25 +45,17 @@ def get_recent_unread_notifications(
     return convert.map_list(convert.notification_orm_2_response, orm_notifications)
 
 
-@router.get(
-    "/api/getNotificationsByPage",
-    description="分页获取所有通知",
-    response_model=Response[Page[NotificationResponse]],
-)
+@router.get("/api/getNotificationsByPage", description="分页获取所有通知", response_model=Response[Page[NotificationResponse]])
 @wrap_api_response
 def get_notifications_by_page(
     search: NotificationSearch = Depends(), ctx: HumanSubjectContext = Depends()
 ) -> Page[NotificationResponse]:
     total, orm_notifications = crud.search_notifications(ctx.db, search, ctx.user_id)
-    notification_responses = convert.map_list(
-        convert.notification_orm_2_response, orm_notifications
-    )
+    notification_responses = convert.map_list(convert.notification_orm_2_response, orm_notifications)
     return Page(total=total, items=notification_responses)
 
 
-@router.post(
-    "/api/markNotificationsAsRead", description="批量将通知标记为已读", response_model=Response[list[int]]
-)
+@router.post("/api/markNotificationsAsRead", description="批量将通知标记为已读", response_model=Response[list[int]])
 @wrap_api_response
 def mark_notifications_as_read(
     request: MarkNotificationsAsReadRequest, ctx: HumanSubjectContext = Depends()

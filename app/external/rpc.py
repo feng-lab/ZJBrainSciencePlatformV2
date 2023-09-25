@@ -37,9 +37,7 @@ def do_rpc(api: str, request: Req, response_model: type[Resp]) -> Resp:
         response_type = Response[response_model]
     response = response_type.parse_obj(http_response.json())
     if response.code != ResponseCode.SUCCESS:
-        logger.error(
-            f"remote service returns error, code={response.code}, message={response.message}"
-        )
+        logger.error(f"remote service returns error, code={response.code}, message={response.message}")
         raise ServiceError.remote_service_error(response.message)
     return response.data
 

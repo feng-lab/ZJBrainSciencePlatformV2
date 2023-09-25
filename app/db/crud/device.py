@@ -7,17 +7,16 @@ from app.db.orm import Device, Experiment, ExperimentDevice
 from app.model.schema import DeviceSearch
 
 
-def filter_experiment_devices_to_add(
-    db: Session, experiment_id: int, device_ids: list[int]
-) -> Sequence[int]:
-    stmt = (select(Device.id).where(Device.id.in_(device_ids))).except_(
-        select(Device.id)
-        .join(Device.experiments)
-        .where(
-            Experiment.id == experiment_id,
-            Experiment.is_deleted == False,
-            Device.is_deleted == False,
-        )
+def filter_experiment_devices_to_add(db: Session, experiment_id: int, device_ids: list[int]) -> Sequence[int]:
+    stmt = select(Device.id).where(
+        Device.id.in_(device_ids),
+        Device.id.not_in(
+            (
+                select(Device.id)
+                .join(Device.experiments)
+                .where(Experiment.id == experiment_id, Experiment.is_deleted == False, Device.is_deleted == False)
+            )
+        ),
     )
     device_ids = db.execute(stmt).scalars().all()
     return device_ids
@@ -28,11 +27,7 @@ def get_last_index(db: Session, experiment_id: int) -> int | None:
         select(ExperimentDevice.index)
         .join(Experiment, Experiment.id == ExperimentDevice.experiment_id)
         .join(Device, ExperimentDevice.device_id == Device.id)
-        .where(
-            Experiment.id == experiment_id,
-            Experiment.is_deleted == False,
-            Device.is_deleted == False,
-        )
+        .where(Experiment.id == experiment_id, Experiment.is_deleted == False, Device.is_deleted == False)
         .order_by(ExperimentDevice.index.desc())
         .limit(1)
     )

@@ -12,13 +12,7 @@ from app.db.orm import Device, ExperimentDevice
 from app.model import convert
 from app.model.request import DeleteDevicesRequest, UpdateDevicesInExperimentRequest
 from app.model.response import NoneResponse, Page, Response
-from app.model.schema import (
-    CreateDeviceRequest,
-    DeviceInfo,
-    DeviceInfoWithIndex,
-    DeviceSearch,
-    UpdateDeviceRequest,
-)
+from app.model.schema import CreateDeviceRequest, DeviceInfo, DeviceInfoWithIndex, DeviceSearch, UpdateDeviceRequest
 
 router = APIRouter(tags=["device"])
 
@@ -36,30 +30,23 @@ def create_device(request: CreateDeviceRequest, ctx: ResearcherContext = Depends
 @router.delete("/api/deleteDevices", description="批量删除设备", response_model=NoneResponse)
 @wrap_api_response
 def delete_device(request: DeleteDevicesRequest, ctx: ResearcherContext = Depends()) -> None:
-    success = common_crud.bulk_update_rows_as_deleted(
-        ctx.db, Device, ids=request.device_ids, commit=True
-    )
+    success = common_crud.bulk_update_rows_as_deleted(ctx.db, Device, ids=request.device_ids, commit=True)
     if not success:
         raise ServiceError.database_fail()
 
 
 @router.post("/api/addDevicesInExperiment", description="将设备添加到实验中", response_model=NoneResponse)
 @wrap_api_response
-def add_devices_in_experiment(
-    request: UpdateDevicesInExperimentRequest, ctx: ResearcherContext = Depends()
-) -> None:
+def add_devices_in_experiment(request: UpdateDevicesInExperimentRequest, ctx: ResearcherContext = Depends()) -> None:
     check_experiment_exists(ctx.db, request.experiment_id)
 
-    add_device_ids = set(
-        crud.filter_experiment_devices_to_add(ctx.db, request.experiment_id, request.device_ids)
-    )
+    add_device_ids = set(crud.filter_experiment_devices_to_add(ctx.db, request.experiment_id, request.device_ids))
     if len(add_device_ids) > 0:
         last_index = crud.get_last_index(ctx.db, request.experiment_id)
         add_devices = [
             {"experiment_id": request.experiment_id, "device_id": device_id, "index": index}
             for device_id, index in zip(
-                add_device_ids,
-                itertools.count(start=(last_index + 1 if last_index is not None else 1), step=1),
+                add_device_ids, itertools.count(start=(last_index + 1 if last_index is not None else 1), step=1)
             )
         ]
         success = common_crud.bulk_insert_rows(ctx.db, ExperimentDevice, add_devices, commit=True)
@@ -67,9 +54,7 @@ def add_devices_in_experiment(
             raise ServiceError.database_fail()
 
 
-@router.delete(
-    "/api/deleteDevicesFromExperiment", description="从设备中删除设备", response_model=NoneResponse
-)
+@router.delete("/api/deleteDevicesFromExperiment", description="从设备中删除设备", response_model=NoneResponse)
 @wrap_api_response
 def delete_devices_from_experiment(
     request: UpdateDevicesInExperimentRequest, ctx: ResearcherContext = Depends()
@@ -79,10 +64,7 @@ def delete_devices_from_experiment(
     success = common_crud.bulk_delete_rows(
         ctx.db,
         ExperimentDevice,
-        [
-            ExperimentDevice.experiment_id == request.experiment_id,
-            ExperimentDevice.device_id.in_(request.device_ids),
-        ],
+        [ExperimentDevice.experiment_id == request.experiment_id, ExperimentDevice.device_id.in_(request.device_ids)],
         commit=True,
     )
     if not success:
@@ -101,11 +83,7 @@ def get_device_info(
     return device_info
 
 
-@router.get(
-    "/api/getDevicesByPage",
-    description="分页获取设备详情",
-    response_model=Response[Page[DeviceInfoWithIndex]],
-)
+@router.get("/api/getDevicesByPage", description="分页获取设备详情", response_model=Response[Page[DeviceInfoWithIndex]])
 @wrap_api_response
 def get_devices_by_page(
     search: DeviceSearch = Depends(), ctx: HumanSubjectContext = Depends()
@@ -121,6 +99,6 @@ def update_device(request: UpdateDeviceRequest, ctx: ResearcherContext = Depends
     check_device_exists(ctx.db, request.id)
 
     update_dict = request.dict(exclude={"id"})
-    success = common_crud.update_row(ctx.db, Device, update_dict, id=request.id, commit=True)
+    success = common_crud.update_row(ctx.db, Device, update_dict, id_=request.id, commit=True)
     if not success:
         raise ServiceError.database_fail()

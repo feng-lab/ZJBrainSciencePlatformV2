@@ -17,9 +17,7 @@ def search_source_files(
         .select_from(VirtualFile)
         .join(Experiment, Experiment.id == VirtualFile.experiment_id)
         .options(
-            load_only(
-                VirtualFile.id, VirtualFile.name, VirtualFile.file_type, VirtualFile.experiment_id
-            ),
+            load_only(VirtualFile.id, VirtualFile.name, VirtualFile.file_type, VirtualFile.experiment_id),
             load_only(Experiment.name),
         )
     )
@@ -39,8 +37,7 @@ def get_task_info_by_id(db: Session, task_id: int) -> Task | None:
         select(Task)
         .where(Task.id == task_id, Task.is_deleted == False)
         .options(
-            load_user_info(joinedload(Task.creator_obj)),
-            immediateload(Task.steps.and_(TaskStep.is_deleted == False)),
+            load_user_info(joinedload(Task.creator_obj)), immediateload(Task.steps.and_(TaskStep.is_deleted == False))
         )
     )
     task = db.execute(stmt).scalar()
@@ -48,9 +45,7 @@ def get_task_info_by_id(db: Session, task_id: int) -> Task | None:
 
 
 def search_task(db: Session, search: TaskSearch) -> tuple[int, Sequence[Task]]:
-    base_stmt = select(Task).options(
-        load_user_info(joinedload(Task.creator_obj)), noload(Task.steps)
-    )
+    base_stmt = select(Task).options(load_user_info(joinedload(Task.creator_obj)), noload(Task.steps))
     if not search.include_deleted:
         base_stmt = base_stmt.where(Task.is_deleted == False)
     if search.name:

@@ -43,9 +43,7 @@ def upload_file(
     return virtual_file_id
 
 
-def save_file(
-    db: Session, file: UploadFile, experiment_id: int, is_original: bool
-) -> tuple[int, Path]:
+def save_file(db: Session, file: UploadFile, experiment_id: int, is_original: bool) -> tuple[int, Path]:
     # 插入VirtualFile行
     name = file.filename
     file_type = get_filename_extension(name)
@@ -62,12 +60,7 @@ def save_file(
 
     # 插入StorageFile行
     storage_path = f"{experiment_id}/{virtual_file_id}{'.' + file_type if file_type else ''}"
-    storage_file_dict = {
-        "virtual_file_id": virtual_file_id,
-        "name": name,
-        "size": -1.0,
-        "storage_path": storage_path,
-    }
+    storage_file_dict = {"virtual_file_id": virtual_file_id, "name": name, "size": -1.0, "storage_path": storage_path}
     storage_file_id = common_crud.insert_row(db, StorageFile, storage_file_dict, commit=False)
     if storage_file_id is None:
         raise ServiceError.database_fail()
@@ -78,13 +71,9 @@ def save_file(
 
     # 更新size字段
     file_size = get_file_size(os_storage_path)
-    if not common_crud.update_row(
-        db, VirtualFile, {"size": file_size}, id=virtual_file_id, commit=False
-    ):
+    if not common_crud.update_row(db, VirtualFile, {"size": file_size}, id_=virtual_file_id, commit=False):
         raise ServiceError.database_fail()
-    if not common_crud.update_row(
-        db, StorageFile, {"size": file_size}, id=storage_file_id, commit=True
-    ):
+    if not common_crud.update_row(db, StorageFile, {"size": file_size}, id_=storage_file_id, commit=True):
         raise ServiceError.database_fail()
 
     return virtual_file_id, os_storage_path
@@ -104,13 +93,9 @@ def is_nev_zip_file(path: Path) -> bool:
         return True
 
 
-def handle_nev_zip_file(
-    db: Session, zip_file_path: Path, experiment_id: int, virtual_file_id: int
-) -> None:
+def handle_nev_zip_file(db: Session, zip_file_path: Path, experiment_id: int, virtual_file_id: int) -> None:
     # 更新file_type
-    if not common_crud.update_row(
-        db, VirtualFile, {"file_type": "nev"}, id=virtual_file_id, commit=False
-    ):
+    if not common_crud.update_row(db, VirtualFile, {"file_type": "nev"}, id_=virtual_file_id, commit=False):
         raise ServiceError.database_fail()
 
     # 创建文件夹
@@ -144,29 +129,21 @@ def handle_nev_zip_file(
 
 @router.get("/api/getFileTypes", description="获取当前实验已有的文件类型", response_model=Response[list[str]])
 @wrap_api_response
-def get_file_types(
-    experiment_id: int = Query(description="实验ID"), ctx: HumanSubjectContext = Depends()
-) -> list[str]:
+def get_file_types(experiment_id: int = Query(description="实验ID"), ctx: HumanSubjectContext = Depends()) -> list[str]:
     extensions = crud.get_file_extensions(ctx.db, experiment_id)
     return list(extensions)
 
 
-@router.get(
-    "/api/getFilesByPage", description="分页获取文件列表", response_model=Response[list[FileResponse]]
-)
+@router.get("/api/getFilesByPage", description="分页获取文件列表", response_model=Response[list[FileResponse]])
 @wrap_api_response
-def get_files_by_page(
-    search: FileSearch = Depends(), ctx: HumanSubjectContext = Depends()
-) -> Page[FileResponse]:
+def get_files_by_page(search: FileSearch = Depends(), ctx: HumanSubjectContext = Depends()) -> Page[FileResponse]:
     total, files = crud.search_files(ctx.db, search)
     file_responses = convert.map_list(convert.virtual_file_orm_2_response, files)
     return Page(total=total, items=file_responses)
 
 
 @router.get("/api/downloadFile/{file_id}", description="下载文件")
-def download_file(
-    file_id: int = Path(description="文件ID"), ctx: NotLogonContext = Depends()
-) -> FastApiFileResponse:
+def download_file(file_id: int = Path(description="文件ID"), ctx: NotLogonContext = Depends()) -> FastApiFileResponse:
     filename, db_storage_path = crud.get_file_download_info(ctx.db, file_id)
     if filename is None:
         raise ServiceError.not_found(Entity.file)
@@ -178,7 +155,7 @@ def download_file(
 @wrap_api_response
 def delete_file(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
     file_paths = crud.get_db_storage_paths(ctx.db, request.id)
-    if not common_crud.update_row_as_deleted(ctx.db, VirtualFile, id=request.id, commit=False):
+    if not common_crud.update_row_as_deleted(ctx.db, VirtualFile, id_=request.id, commit=False):
         raise ServiceError.database_fail()
     if not common_crud.update_row_as_deleted(
         ctx.db, StorageFile, where=[StorageFile.virtual_file_id == request.id], commit=True

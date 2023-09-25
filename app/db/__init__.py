@@ -43,10 +43,7 @@ def check_database_is_up_to_date() -> bool:
 
 def table_repr(cls: type[OrmModel]) -> type[OrmModel]:
     def field_repr(obj: OrmModel) -> str:
-        field_strs = [
-            f"{field_name}={getattr(obj, field_name)}"
-            for field_name in obj.__table__.columns.keys()
-        ]
+        field_strs = [f"{field_name}={getattr(obj, field_name)}" for field_name in obj.__table__.columns.keys()]
         class_name = obj.__class__.__name__
         return f"<{class_name}: {','.join(field_strs)}>"
 

@@ -82,9 +82,7 @@ class JsonDict(dict):
 
     @staticmethod
     def _is_valid_dict(d: dict) -> bool:
-        return all(
-            isinstance(key, str) and JsonDict._is_valid_value(value) for key, value in d.items()
-        )
+        return all(isinstance(key, str) and JsonDict._is_valid_value(value) for key, value in d.items())
 
 
 def _get_varchar_validator(cls: type[Varchar], max_length: int) -> VarcharValidator:

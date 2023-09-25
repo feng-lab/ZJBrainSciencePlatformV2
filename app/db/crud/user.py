@@ -16,7 +16,7 @@ def search_users(db: Session, search: UserSearch) -> tuple[int, Sequence[User]]:
         stmt = stmt.where(User.username.icontains(search.username))
     if search.staff_id:
         stmt = stmt.where(User.staff_id.icontains(search.staff_id))
-    if search.access_level:
+    if search.access_level is not None:
         stmt = stmt.where(User.access_level == search.access_level)
     if not search.include_deleted:
         stmt = stmt.where(User.is_deleted == False)
@@ -24,37 +24,29 @@ def search_users(db: Session, search: UserSearch) -> tuple[int, Sequence[User]]:
 
 
 def get_user_access_level(db: Session, user_id: int) -> int | None:
-    return db.execute(
-        select(User.access_level).where(User.id == user_id, User.is_deleted == False)
-    ).scalar()
+    return db.execute(select(User.access_level).where(User.id == user_id, User.is_deleted == False)).scalar()
 
 
 def get_user_auth_by_staff_id(db: Session, staff_id: str) -> UserAuth | None:
-    stmt = select(
-        User.id, User.username, User.staff_id, User.access_level, User.hashed_password
-    ).where(User.staff_id == staff_id, User.is_deleted == False)
+    stmt = select(User.id, User.username, User.staff_id, User.access_level, User.hashed_password).where(
+        User.staff_id == staff_id, User.is_deleted == False
+    )
     row = db.execute(stmt).first()
     return UserAuth.from_orm(row) if row is not None else None
 
 
 def insert_or_update_user(db: Session, user: UserCreate) -> None:
-    user_id = db.execute(
-        select(User.id).where(User.username == user.username, User.staff_id == user.staff_id)
-    ).scalar()
+    user_id = db.execute(select(User.id).where(User.username == user.username, User.staff_id == user.staff_id)).scalar()
     if user_id is None:
         if common_crud.insert_row(db, User, user.dict(), commit=True) is None:
             raise ServiceError.database_fail()
     else:
-        if not common_crud.update_row(
-            db, User, user.dict() | {"is_deleted": False}, id=user_id, commit=True
-        ):
+        if not common_crud.update_row(db, User, user.dict() | {"is_deleted": False}, id_=user_id, commit=True):
             raise ServiceError.database_fail()
 
 
 def get_user_staff_id(db: Session, user_id: int) -> str | None:
-    return db.execute(
-        select(User.staff_id).where(User.id == user_id, User.is_deleted == False)
-    ).scalar()
+    return db.execute(select(User.staff_id).where(User.id == user_id, User.is_deleted == False)).scalar()
 
 
 def load_user_info(load):

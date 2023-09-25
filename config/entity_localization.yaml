@@ -25,3 +25,23 @@
 - entity_id: paradigm
   zh-CN: 范式
   en-US: paradigm
+
+- entity_id: atlas
+  zh-CN: 脑图谱
+  en-US: atlas
+
+- entity_id: atlas_region
+  zh-CN: 脑图谱区域
+  en-US: atlas_region
+
+- entity_id: atlas_region_link
+  zh-CN: 脑图谱区域连接
+  en-US: atlas_region_link
+
+- entity_id: atlas_behavioral_domain
+  zh-CN: 脑图谱行为域
+  en-US: atlas_behavioral_domain
+
+- entity_id: atlas_paradigm_class
+  zh-CN: 脑图谱范例集
+  en-US: atlas_paradigm_class

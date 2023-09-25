@@ -9,9 +9,7 @@ AsyncFn = Callable[[], Awaitable[None]]
 logger = logging.getLogger(__name__)
 
 
-def repeat_task(
-    interval_in_seconds: float, max_repetitions: int | None = None
-) -> Callable[[Fn | AsyncFn], AsyncFn]:
+def repeat_task(interval_in_seconds: float, max_repetitions: int | None = None) -> Callable[[Fn | AsyncFn], AsyncFn]:
     def decorator(func: Fn | AsyncFn) -> AsyncFn:
         is_async_fn = asyncio.iscoroutinefunction(func)
         first_run = True

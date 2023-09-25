@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import TypeAlias
 
 from pydantic import BaseModel, Field, validator
 
@@ -364,3 +365,148 @@ class TaskSearch(PageParm):
     status: TaskStatus | None
     start_at: date | None
     creator: int | None
+
+
+class AtlasCreate(BaseModel):
+    name: LongVarchar
+    url: LongVarchar
+    title: LongVarchar
+    whole_segment_id: int | None
+
+
+class AtlasInfo(AtlasCreate, BaseModelInDB):
+    pass
+
+
+class AtlasUpdate(AtlasCreate, ModelId):
+    pass
+
+
+class AtlasSearch(PageParm):
+    name: LongVarchar | None
+
+
+class AtlasRegionID(BaseModel):
+    region_id: ID | None
+
+
+class AtlasRegionLabel(BaseModel):
+    label: str
+
+
+class AtlasTreeParentId(BaseModel):
+    parent_id: ID | None
+
+
+class AtlasID(BaseModel):
+    atlas_id: ID
+
+
+class AtlasRegionCreate(AtlasID, AtlasRegionID, AtlasTreeParentId):
+    description: str
+    acronym: str
+    lobe: str | None
+    gyrus: str | None
+    label: str | None
+
+
+class AtlasRegionUpdate(AtlasRegionCreate, ModelId):
+    pass
+
+
+class AtlasRegionInfo(AtlasRegionCreate, BaseModelInDB):
+    pass
+
+
+class AtlasRegionTreeInfo(AtlasRegionID, AtlasRegionLabel):
+    children: list["AtlasRegionTreeInfo"]
+
+
+class AtlasRegionTreeNode(AtlasRegionID, AtlasRegionLabel, ModelId, AtlasTreeParentId):
+    children: list["AtlasRegionTreeNode"]
+
+
+class AtlasRegionLinkCreate(AtlasID):
+    link_id: ID
+    region1: str
+    region2: str
+    value: float | None
+    opposite_value: float | None
+
+
+class AtlasRegionLinkUpdate(AtlasRegionLinkCreate, ModelId):
+    pass
+
+
+class AtlasRegionLinkInfo(AtlasRegionLinkCreate, BaseModelInDB):
+    pass
+
+
+class AtlasBehavioralDomainBase(BaseModel):
+    name: LongVarchar
+    value: float
+    label: LongVarchar
+    description: Text = ""
+
+
+class AtlasBehavioralDomainCreate(AtlasBehavioralDomainBase, AtlasID, AtlasTreeParentId):
+    pass
+
+
+class AtlasBehavioralDomainUpdate(AtlasBehavioralDomainCreate, ModelId):
+    pass
+
+
+class AtlasBehavioralDomainTreeInfo(AtlasBehavioralDomainBase):
+    children: list["AtlasBehavioralDomainTreeInfo"]
+
+
+class AtlasBehavioralDomainTreeNode(AtlasBehavioralDomainBase, ModelId, AtlasTreeParentId):
+    children: list["AtlasBehavioralDomainTreeNode"]
+
+
+class AtlasRegionBehavioralDomainCreate(AtlasID, AtlasRegionID):
+    key: LongVarchar
+    value: float
+
+
+class AtlasRegionBehavioralDomainUpdate(AtlasRegionBehavioralDomainCreate, ModelId):
+    pass
+
+
+AtlasRegionBehavioralDomainDict: TypeAlias = dict[LongVarchar, float]
+
+
+class AtlasParadigmClassBase(BaseModel):
+    name: LongVarchar
+    value: float
+    label: LongVarchar
+    description: Text = ""
+
+
+class AtlasParadigmClassCreate(AtlasParadigmClassBase, AtlasID, AtlasTreeParentId):
+    pass
+
+
+class AtlasParadigmClassUpdate(AtlasParadigmClassCreate, ModelId):
+    pass
+
+
+class AtlasParadigmClassTreeInfo(AtlasParadigmClassBase):
+    children: list["AtlasParadigmClassTreeInfo"]
+
+
+class AtlasParadigmClassTreeNode(AtlasParadigmClassBase, ModelId, AtlasTreeParentId):
+    children: list["AtlasParadigmClassTreeNode"]
+
+
+class AtlasRegionParadigmClassCreate(AtlasID, AtlasRegionID):
+    key: LongVarchar
+    value: float
+
+
+class AtlasRegionParadigmClassUpdate(AtlasRegionParadigmClassCreate, ModelId):
+    pass
+
+
+AtlasRegionParadigmClassDict: TypeAlias = dict[LongVarchar, float]

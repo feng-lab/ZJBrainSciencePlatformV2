@@ -19,9 +19,7 @@ def get_notification_unread_count(db: Session, user_id: int) -> int:
     return db.execute(stmt).scalar()
 
 
-def search_notifications(
-    db: Session, search: NotificationSearch, user_id: int
-) -> tuple[int, Sequence[Notification]]:
+def search_notifications(db: Session, search: NotificationSearch, user_id: int) -> tuple[int, Sequence[Notification]]:
     stmt = (
         select(Notification)
         .options(immediateload(Notification.creator_user).load_only(User.username))
@@ -41,9 +39,7 @@ def search_notifications(
     return query_pages(db, stmt, search.offset, search.limit)
 
 
-def list_recent_unread_notifications(
-    db: Session, user_id: int, count: int
-) -> Sequence[Notification]:
+def list_recent_unread_notifications(db: Session, user_id: int, count: int) -> Sequence[Notification]:
     stmt = (
         select(Notification)
         .options(immediateload(Notification.creator_user).load_only(User.username))
@@ -55,9 +51,7 @@ def list_recent_unread_notifications(
     return notifications
 
 
-def list_unread_notification_ids(
-    db: Session, user_id: int, is_all: bool, msg_ids: list[int]
-) -> list[int]:
+def list_unread_notification_ids(db: Session, user_id: int, is_all: bool, msg_ids: list[int]) -> list[int]:
     stmt = select(Notification.id).where(
         Notification.receiver == user_id,
         Notification.is_deleted == False,

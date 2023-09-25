@@ -27,9 +27,7 @@ def insert_or_update_experiment(db: Session, id_: int, row: dict[str, Any]) -> N
             .where(
                 or_(
                     Experiment.id == id_,
-                    and_(
-                        Experiment.name == row["name"], Experiment.description == row["description"]
-                    ),
+                    and_(Experiment.name == row["name"], Experiment.description == row["description"]),
                 )
             )
             .order_by(Experiment.id.asc())
@@ -44,9 +42,7 @@ def insert_or_update_experiment(db: Session, id_: int, row: dict[str, Any]) -> N
             exists_experiment_id = exists_result.id
         if exists_experiment_id != id_:
             update_result: CursorResult = db.execute(
-                update(Experiment)
-                .where(Experiment.id == exists_experiment_id)
-                .values(id=id_, **row)
+                update(Experiment).where(Experiment.id == exists_experiment_id).values(id=id_, **row)
             )
             assert update_result.rowcount == 1
         success = True
@@ -104,20 +100,15 @@ def list_experiment_assistants(db: Session, experiment_id: int) -> Sequence[User
         select(User)
         .options(load_only(User.id, User.username, User.staff_id))
         .join(Experiment.assistants)
-        .where(
-            Experiment.id == experiment_id, Experiment.is_deleted == False, User.is_deleted == False
-        )
+        .where(Experiment.id == experiment_id, Experiment.is_deleted == False, User.is_deleted == False)
     )
     users = db.execute(stmt).scalars().all()
     return users
 
 
-def search_experiment_assistants(
-    db: Session, experiment_id: int, assistant_ids: list[int]
-) -> Sequence[int]:
+def search_experiment_assistants(db: Session, experiment_id: int, assistant_ids: list[int]) -> Sequence[int]:
     stmt = select(ExperimentAssistant.user_id).where(
-        ExperimentAssistant.experiment_id == experiment_id,
-        ExperimentAssistant.user_id.in_(assistant_ids),
+        ExperimentAssistant.experiment_id == experiment_id, ExperimentAssistant.user_id.in_(assistant_ids)
     )
     assistants = db.execute(stmt).scalars().all()
     return assistants
@@ -125,9 +116,7 @@ def search_experiment_assistants(
 
 def update_experiment_tags(db: Session, experiment_id: int, new_tags: set[str]) -> bool:
     old_tags = set(
-        db.execute(select(ExperimentTag.tag).where(ExperimentTag.experiment_id == experiment_id))
-        .scalars()
-        .all()
+        db.execute(select(ExperimentTag.tag).where(ExperimentTag.experiment_id == experiment_id)).scalars().all()
     )
     delete_success = common_crud.bulk_delete_rows(
         db,
@@ -136,9 +125,6 @@ def update_experiment_tags(db: Session, experiment_id: int, new_tags: set[str]) 
         commit=False,
     )
     insert_success = common_crud.bulk_insert_rows(
-        db,
-        ExperimentTag,
-        [{"experiment_id": experiment_id, "tag": tag} for tag in new_tags - old_tags],
-        commit=False,
+        db, ExperimentTag, [{"experiment_id": experiment_id, "tag": tag} for tag in new_tags - old_tags], commit=False
     )
     return delete_success and insert_success

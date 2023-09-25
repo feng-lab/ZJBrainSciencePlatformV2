@@ -21,6 +21,11 @@ class Entity(StrEnum):
     human_subject = "human subject"
     task = "task"
     paradigm = "paradigm"
+    atlas = "atlas"
+    atlas_region = "atlas_region"
+    atlas_region_link = "atlas_region_link"
+    atlas_behavioral_domain = "atlas_behavioral_domain"
+    atlas_paradigm_class = "atlas_paradigm_class"
 
 
 MessageTemplateKey: TypeAlias = tuple[str, MessageLocale]
@@ -41,12 +46,8 @@ def load_localization_config(path: Path, id_name: str) -> LocalizationConfig:
     return result
 
 
-message_l12n_config: LocalizationConfig = load_localization_config(
-    config.MESSAGE_LOCALIZATION_YAML_PATH, "message_id"
-)
-entity_l12n_config: LocalizationConfig = load_localization_config(
-    config.ENTITY_LOCALIZATION_YAML_PATH, "entity_id"
-)
+message_l12n_config: LocalizationConfig = load_localization_config(config.MESSAGE_LOCALIZATION_YAML_PATH, "message_id")
+entity_l12n_config: LocalizationConfig = load_localization_config(config.ENTITY_LOCALIZATION_YAML_PATH, "entity_id")
 
 locale_ctxvar = ContextVar("locale", default=MessageLocale.zh_CN)
 
