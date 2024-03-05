@@ -1,11 +1,11 @@
 # Docker配置
-export DOCKER_USERNAME='cnife'
-export DOCKER_TOKEN='dckr_pat_IJKxGMNI_c-n54Fral-saNmZv-A'
+export DOCKER_USERNAME='caitaozjlab'
+export DOCKER_TOKEN='dckr_pat_3vHgyUohktPfh6AkThPE88CUzIs'
 export DOCKER_STACK_NAME='platform'
 export COMPOSE_PROJECT_NAME='platform'
 
 # 镜像配置
-export IMAGE_REPO_PREFIX='zj-brain-science-platform'
+export IMAGE_REPO_PREFIX='zjbs'
 export CACHE_IMAGE_TAG='redis:7.0'
 export PYTHON_VERSION='3.11'
 export POETRY_VERSION='1.4.2'

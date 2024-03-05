@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "之江实验室 Brain Science 平台"
 authors = ["蔡涛 <caitao@zhejianglab.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"

@@ -2,79 +2,69 @@
 
 ## 依赖版本
 
-* Python >= 3.11
+* Python 3.11
+* Linux / WSL 操作系统
 * Docker & Docker Compose
+* [Poetry](https://python-poetry.org/docs/#installation)
+* [GitHub CLI](https://cli.github.com/)
 
 详细依赖版本见 [pyproject.toml](./pyproject.toml) 文件。
 
-## 启动应用
+## 1 配置开发环境
 
-### 1 配置开发环境
-
-#### 1.1 安装 Poetry
-
-本项目使用 Poetry 管理项目依赖和虚拟环境，需要 [安装 Poetry](https://python-poetry.org/docs/#installation)。
+### 1.1 安装依赖
 
 ```shell
-# Linux, macOS, Windows (WSL)
-curl -sSL https://install.python-poetry.org | python3 -
-
-# Windows (Powershell)
-(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
+poetry env use <Python 3.11 路径>
+poetry install --sync
 ```
 
-### 1.2 安装依赖
+### 1.2 启动 MySQL 和 Redis 依赖
+
+如果在 Linux 环境下，或者有 WSL，可以直接运行
+
+```bash
+bash compose.sh
+# 首次启动，或者更新 alembic 迁移命令后，需要运行下面的命令
+bash compose.sh alembic
+```
+
+如果是在纯 Windows 环境下，可以手动运行配置命令
+
+```powershell
+$env:DATABASE_URL = "mysql+pymysql://zjlab:zjlab2022@database:3306/zj_brain_science_platform"
+$env:PLATFORM_IMAGE_TAG = "caitaozjlab/zjbs-platform"
+$env:DATABASE_IMAGE_TAG = "caitaozjlab/zjbs-database"
+$env:CACHE_IMAGE_TAG = "redis:7.0"
+docker compose -f .\deploy\compose\dev.compose.yaml up -d --force-recreate database cache
+# 首次启动，或者更新 alembic 迁移命令后，需要运行下面的命令
+docker compose -f .\deploy\compose\dev.compose.yaml run --rm platform alembic upgrade head
+```
+
+### 1.4 启动应用
 
 ```shell
-poetry install --without alembic --sync
+poetry run python -m uvicorn app.main:app --reload
 ```
 
-### 2 启动 MySQL 数据库
+在浏览器中打开链接 http://127.0.0.1:8000/docs
 
-#### 2.1 设置启动参数
+## 2 部署
+
+### 2.1 GitHub CI
+
+项目推送到 GitHub 会触发自动构建，运行下面的命令打开最近的构建结果
 
 ```shell
-# Linux bash
-export DEBUG_MODE='True'
-export DATABASE_URL='mysql+pymysql://zjlab:zjlab2022@localhost:8100/zj_brain_science_platform'
-export DATABASE_CONFIG='{}'
+gh run view --web
 ```
 
-```shell
-# Windows PowerShell
-$env:DEBUG_MODE='True'
-$env:DATABASE_URL='mysql+pymysql://zjlab:zjlab2022@localhost:8100/zj_brain_science_platform'
-$env:DATABASE_CONFIG='{}'
+### 2.2 测试和环境部署
+
+GitHub CI 报告中有最新的镜像版本，记下来。Linux / WSL 环境下运行
+
+```bash
+bash build.sh -T -d on platform <镜像版本>
 ```
 
-#### 2.2 启动数据库
-
-建议使用 Docker
-
-```shell
-python ./build.py up-database
-```
-
-#### 2.3 迁移数据库
-
-```shell
-python ./build.py run-alembic-bash
-
-alembic upgrade head
-```
-
-### 3 启动应用
-
-#### 3.1 开发环境
-
-```shell
-python -m uvicorn app.main:app --reload
-```
-
-在浏览器中打开链接 http://127.0.0.1:8000 
-
-#### 3.2 Docker Compose 部署
-
-```shell
-python ./build.py up-backend
-```
+`-T` 部署到测试环境，`-P` 部署到生产环境。
