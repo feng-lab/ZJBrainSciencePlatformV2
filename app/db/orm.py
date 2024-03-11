@@ -365,7 +365,7 @@ class Dataset(Base,ModelMixin):
     __tablename__ = "Dataset"
     __table_args__ = {"comment": "数据集"}
 
-    user_id : Mapped[int] = mapped_column(Integer, ForeignKey("user.id"),  primary_key=True)
+    user_id : Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, unique=True, index=True, comment="用户ID")
     # created_at : Mapped[DateTime] = mapped_column(DateTime, nullable=False,index=True, erver_default=func.now(), comment="创建时间")
     # modified_at : Mapped[DateTime] = mapped_column(DateTime, nullable=False, server_default=func.now(), comment="修改时间")
     # is_deleted : Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=expression.false(), comment="该行是否被删除")
