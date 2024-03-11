@@ -61,3 +61,4 @@ class GetExperimentsByPageSortBy(StrEnum):
 class GetExperimentsByPageSortOrder(StrEnum):
     ASC = "asc"
     DESC = "desc"
+

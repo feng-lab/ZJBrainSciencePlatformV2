@@ -149,6 +149,7 @@ class StorageFile(Base, ModelMixin):
 
 
 @table_repr
+# class VirtualFile(Base, ModelMixin):
 class VirtualFile(Base, ModelMixin):
     __tablename__ = "virtual_file"
     __table_args__ = {"comment": "虚拟文件"}
@@ -359,3 +360,45 @@ class AtlasRegionParadigmClass(Base, ModelMixin, AtlasComponentMixin):
     key: Mapped[str] = mapped_column(VarChar, nullable=False, comment="范例集")
     value: Mapped[float] = mapped_column(Double, nullable=False, comment="范例集值")
     region_id: Mapped[int] = mapped_column(BigInteger, nullable=False, comment="脑区ID")
+
+class Dataset(Base,ModelMixin):
+    __tablename__ = "Dataset"
+    __table_args__ = {"comment": "数据集"}
+
+    user_id : Mapped[int] = mapped_column(Integer, ForeignKey("user.id"),  primary_key=True)
+    # created_at : Mapped[DateTime] = mapped_column(DateTime, nullable=False,index=True, erver_default=func.now(), comment="创建时间")
+    # modified_at : Mapped[DateTime] = mapped_column(DateTime, nullable=False, server_default=func.now(), comment="修改时间")
+    # is_deleted : Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=expression.false(), comment="该行是否被删除")
+
+    description: Mapped[str] = mapped_column(Text, nullable=False, comment="描述")
+    species: Mapped[str | None] = mapped_column(Text, nullable=True, comment="物种")
+    paper_title : Mapped[str | None] = mapped_column(Text, nullable=True, comment="文章标题")
+    paper_doi : Mapped[str | None] = mapped_column(Text, nullable=True, comment="文章DOI")
+    development_stage : Mapped[str | None] = mapped_column(Text, nullable=False, comment="发育时期")
+    file_format : Mapped[str | None] = mapped_column(Text, nullable=True, comment="文件格式")
+    sample_size : Mapped[int | None] = mapped_column(Integer, nullable=True, comment="样本数量")
+    data_publisher :  Mapped[str | None]  = mapped_column(Text, nullable=True, comment="数据发布机构/单位")
+    date_update_year :  Mapped[str | None] = mapped_column(DateTime, nullable=True, comment="数据更新年份")
+    file_count : Mapped[float | None] = mapped_column(Float, nullable=True, comment="文件数量")
+    file_total_size_gb :  Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
+    file_acquired_size_gb : Mapped[float | None] = mapped_column(Float, nullable=True, comment="以获取数据(GB)")
+    associated_diseases : Mapped[str | None] = mapped_column(Text, nullable=False, comment="相关疾病")
+    organ : Mapped[str| None] = mapped_column(Text, nullable=True, comment="器官")
+    cell_count : Mapped[int | None] = mapped_column(Integer, nullable=True, comment="细胞数")
+    data_type : Mapped[str | None] = mapped_column(Text, nullable=True, comment="数据类型")
+    experiment_platform : Mapped[str | None] = mapped_column(Text, nullable=True, comment="实验、测序平台")
+    fetch_url : Mapped[str | None] = mapped_column(Text, nullable=True, comment="下载路径")
+    project : Mapped[str | None] = mapped_column(Text, nullable=True, comment="项目")
+
+class DatasetFile(Base,ModelMixin):
+    __tablename__ = "DatasetFile"
+    __table_args__ = {"comment": "数据集文件"}
+
+    # user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), primary_key=True, comment="用户id")
+    # created_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False,index=True, erver_default=func.now(), comment="创建时间")
+    # modified_at: Mapped[DateTime] = mapped_column(DateTime, nullable=False, server_default=func.now(),
+    #                                               comment="修改时间")
+    # is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=expression.false(),
+    #                                          comment="该行是否被删除")
+    path: Mapped[str] = mapped_column(Text, nullable=False, comment="文件路径")
+    dataset_id: Mapped[int] = mapped_column(Integer, ForeignKey("Dataset.id"),  nullable=False, index=True,comment="数据集id")
