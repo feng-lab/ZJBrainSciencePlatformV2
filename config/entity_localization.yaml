@@ -32,16 +32,24 @@
 
 - entity_id: atlas_region
   zh-CN: 脑图谱区域
-  en-US: atlas_region
+  en-US: atlas region
 
 - entity_id: atlas_region_link
   zh-CN: 脑图谱区域连接
-  en-US: atlas_region_link
+  en-US: atlas region link
 
 - entity_id: atlas_behavioral_domain
   zh-CN: 脑图谱行为域
-  en-US: atlas_behavioral_domain
+  en-US: atlas behavioral domain
 
 - entity_id: atlas_paradigm_class
   zh-CN: 脑图谱范例集
-  en-US: atlas_paradigm_class
+  en-US: atlas paradigm class
+
+- entity_id: dataset
+  zh-CN: 数据集
+  en-US: dataset
+
+- entity_id: dataset_file
+  zh-CN: 数据集文件
+  en-US: dataset file

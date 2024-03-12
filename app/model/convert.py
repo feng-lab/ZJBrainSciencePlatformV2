@@ -10,6 +10,7 @@ from app.db.orm import (
     AtlasParadigmClass,
     AtlasRegion,
     AtlasRegionLink,
+    Dataset,
     Device,
     Experiment,
     HumanSubject,
@@ -31,6 +32,7 @@ from app.model.schema import (
     AtlasRegionLinkInfo,
     AtlasRegionTreeInfo,
     AtlasRegionTreeNode,
+    DatasetInfo,
     DeviceInfo,
     DeviceInfoWithIndex,
     ExperimentResponse,
@@ -305,3 +307,7 @@ def atlas_paradigm_class_tree_node_2_info(paradigm_class: AtlasParadigmClassTree
         description=paradigm_class.description,
         children=map_list(atlas_paradigm_class_tree_node_2_info, paradigm_class.children),
     )
+
+
+def dataset_orm_2_info(dataset: Dataset) -> DatasetInfo:
+    return DatasetInfo.from_orm(dataset)

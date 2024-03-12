@@ -16,6 +16,7 @@ from app.api import ApiJsonResponse
 from app.api.algorithm import router as algorithm_router
 from app.api.atlas import router as atlas_router
 from app.api.auth import router as auth_router
+from app.api.dataset import router as dataset_router
 from app.api.device import router as device_router
 from app.api.experiment import router as experiment_router
 from app.api.file import router as file_router
@@ -56,6 +57,7 @@ app = FastAPI(
         {"name": "paradigm"},
         {"name": "algorithm"},
         {"name": "task"},
+        {"name": "dataset"},
     ],
     debug=config.DEBUG_MODE,
 )
@@ -71,6 +73,7 @@ app.include_router(device_router)
 app.include_router(human_subject_router)
 app.include_router(task_router)
 app.include_router(atlas_router)
+app.include_router(dataset_router)
 
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
