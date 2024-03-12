@@ -21,10 +21,10 @@ class Config(BaseSettings):
     DATABASE_CONFIG: dict[str, Any] = {"echo": True}
 
     # 日志路径
-    LOG_ROOT: Path = Path(r"D:\win\zjlab\文件等\平台搭建\newdoc2\log\platform")
+    LOG_ROOT: Path
 
     # 文件存储路径
-    FILE_ROOT: Path = Path(r"D:\win\zjlab\文件等\平台搭建\newdoc2\data\file")
+    FILE_ROOT: Path
 
     # 读取文件的块大小
     FILE_CHUNK_SIZE: int = 64 * 1024
