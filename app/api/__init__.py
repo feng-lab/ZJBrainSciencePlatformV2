@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import functools
 import json
@@ -21,6 +22,7 @@ from app.db.orm import (
     AtlasParadigmClass,
     AtlasRegion,
     AtlasRegionLink,
+    Dataset,
     Device,
     Experiment,
     Task,
@@ -49,15 +51,24 @@ class ApiJsonResponse(JSONResponse):
 
 
 def wrap_api_response(func: Callable[..., Any]):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> ApiJsonResponse:
-        response_data = func(*args, **kwargs)
+    def response_2_json(response: Response) -> ApiJsonResponse:
         success_message = translate_message("success")
-        response = Response(data=response_data, message=success_message)
+        response = Response(data=response, message=success_message)
         json_response = ApiJsonResponse(response.dict())
         return json_response
 
-    return wrapper
+    @functools.wraps(func)
+    async def async_wrapper(*args, **kwargs) -> ApiJsonResponse:
+        return response_2_json(await func(*args, **kwargs))
+
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs) -> ApiJsonResponse:
+        return response_2_json(func(*args, **kwargs))
+
+    if asyncio.iscoroutinefunction(func):
+        return async_wrapper
+    else:
+        return sync_wrapper
 
 
 AUTH_AES_KEY: bytes = b"#030doH2<FIb#b88"
@@ -121,6 +132,10 @@ def check_atlas_behavioral_domain_exists(db: Session, atlas_behavioral_domain_id
 
 def check_atlas_paradigm_class_exists(db: Session, atlas_paradigm_class_id: int) -> None:
     _check_exists(db, AtlasParadigmClass, Entity.atlas_paradigm_class, id_=atlas_paradigm_class_id)
+
+
+def check_dataset_exists(db: Session, dataset_id: int) -> None:
+    _check_exists(db, Dataset, Entity.dataset, id_=dataset_id)
 
 
 def _check_exists(

@@ -551,45 +551,46 @@ files = [
 
 [[package]]
 name = "httpcore"
-version = "0.16.3"
+version = "1.0.4"
 description = "A minimal low-level HTTP client."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "httpcore-0.16.3-py3-none-any.whl", hash = "sha256:da1fb708784a938aa084bde4feb8317056c55037247c787bd7e19eb2c2949dc0"},
-    {file = "httpcore-0.16.3.tar.gz", hash = "sha256:c5d6f04e2fc530f39e0c077e6a30caa53f1451096120f1f38b954afd0b17c0cb"},
+    {file = "httpcore-1.0.4-py3-none-any.whl", hash = "sha256:ac418c1db41bade2ad53ae2f3834a3a0f5ae76b56cf5aa497d2d033384fc7d73"},
+    {file = "httpcore-1.0.4.tar.gz", hash = "sha256:cb2839ccfcba0d2d3c1131d3c3e26dfc327326fbe7a5dc0dbfe9f6c9151bb022"},
 ]
 
 [package.dependencies]
-anyio = ">=3.0,<5.0"
 certifi = "*"
 h11 = ">=0.13,<0.15"
-sniffio = "==1.*"
 
 [package.extras]
+asyncio = ["anyio (>=4.0,<5.0)"]
 http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
+trio = ["trio (>=0.22.0,<0.25.0)"]
 
 [[package]]
 name = "httpx"
-version = "0.23.3"
+version = "0.27.0"
 description = "The next generation HTTP client."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "httpx-0.23.3-py3-none-any.whl", hash = "sha256:a211fcce9b1254ea24f0cd6af9869b3d29aba40154e947d2a07bb499b3e310d6"},
-    {file = "httpx-0.23.3.tar.gz", hash = "sha256:9818458eb565bb54898ccb9b8b251a28785dd4a55afbc23d0eb410754fe7d0f9"},
+    {file = "httpx-0.27.0-py3-none-any.whl", hash = "sha256:71d5465162c13681bff01ad59b2cc68dd838ea1f10e51574bac27103f00c91a5"},
+    {file = "httpx-0.27.0.tar.gz", hash = "sha256:a0cb88a46f32dc874e04ee956e4c2764aba2aa228f650b06788ba6bda2962ab5"},
 ]
 
 [package.dependencies]
+anyio = "*"
 certifi = "*"
-httpcore = ">=0.15.0,<0.17.0"
-rfc3986 = {version = ">=1.3,<2", extras = ["idna2008"]}
+httpcore = "==1.*"
+idna = "*"
 sniffio = "*"
 
 [package.extras]
 brotli = ["brotli", "brotlicffi"]
-cli = ["click (==8.*)", "pygments (==2.*)", "rich (>=10,<13)"]
+cli = ["click (==8.*)", "pygments (==2.*)", "rich (>=10,<14)"]
 http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
 
@@ -1281,23 +1282,6 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
-name = "rfc3986"
-version = "1.5.0"
-description = "Validating URI References per RFC 3986"
-optional = false
-python-versions = "*"
-files = [
-    {file = "rfc3986-1.5.0-py2.py3-none-any.whl", hash = "sha256:a86d6e1f5b1dc238b218b012df0aa79409667bb209e58da56d0b94704e712a97"},
-    {file = "rfc3986-1.5.0.tar.gz", hash = "sha256:270aaf10d87d0d4e095063c65bf3ddbc6ee3d0b226328ce21e036f946e421835"},
-]
-
-[package.dependencies]
-idna = {version = "*", optional = true, markers = "extra == \"idna2008\""}
-
-[package.extras]
-idna2008 = ["idna"]
-
-[[package]]
 name = "rich"
 version = "13.7.1"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
@@ -1563,7 +1547,21 @@ files = [
     {file = "wcwidth-0.2.13.tar.gz", hash = "sha256:72ea0c06399eb286d978fdedb6923a9eb47e1c486ce63e9b4e64fc18303972b5"},
 ]
 
+[[package]]
+name = "zjbs-file-client"
+version = "0.9.0"
+description = "The file client of ZJBrainSciencePlatform"
+optional = false
+python-versions = ">=3.11"
+files = [
+    {file = "zjbs_file_client-0.9.0-py3-none-any.whl", hash = "sha256:fb4932c503e0ffef7d4d8ffd187f8b49084e14a5e41c3c040c0a8ab732ed18ea"},
+    {file = "zjbs_file_client-0.9.0.tar.gz", hash = "sha256:95d85cdc2a8dc10c0f7e11b2f3acd298d63e60f12dddb8c27e063ccd028f3710"},
+]
+
+[package.dependencies]
+httpx = ">=0.25.0"
+
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "df50140ec26b3028db2770c096f744a680810e55ef8deb80b51238030eab3bae"
+content-hash = "25d3d13b44a7dce7dc449feaaa33b5424f8fd3e56f3acc30f1c65a527c6e0917"

@@ -21,10 +21,10 @@ class Config(BaseSettings):
     DATABASE_CONFIG: dict[str, Any] = {"echo": True}
 
     # 日志路径
-    LOG_ROOT: Path
+    LOG_ROOT: Path = Path(__file__).parent.parent.parent / ".debug_data" / "log"
 
     # 文件存储路径
-    FILE_ROOT: Path
+    FILE_ROOT: Path = Path(__file__).parent.parent.parent / ".debug_data" / "file"
 
     # 读取文件的块大小
     FILE_CHUNK_SIZE: int = 64 * 1024
@@ -67,6 +67,9 @@ class Config(BaseSettings):
 
     # entity_localization.yaml路径
     ENTITY_LOCALIZATION_YAML_PATH: Path = Path(__file__).parent.parent.parent / "config" / "entity_localization.yaml"
+
+    # 文件服务器地址
+    FILE_SERVER_URL: str = "http://localhost:8300"
 
 
 config = Config()

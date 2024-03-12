@@ -41,3 +41,16 @@ services:
     ports:
       - "8200:6379"
     restart: always
+
+  file-server:
+    image: ${FILE_SERVER_IMAGE_TAG}
+    ports:
+      - "8300:80"
+    environment:
+      ZJBS_FILE_FILE_DIR: /data/file
+      ZJBS_FILE_LOG_DIR: /data/log
+    volumes:
+      - ${FILE_DIR:-/data/ZJBrainSciencePlatform/file_server/file}:/data/file
+      - ${LOG_DIR:-/data/ZJBrainSciencePlatform/file_server/log}:/data/log
+    healthcheck:
+      test: CMD curl --fail http://localhost/docs

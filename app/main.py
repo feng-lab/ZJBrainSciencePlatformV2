@@ -11,6 +11,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED, HTTP_500_INTERNAL_SERVER_ERROR
+from zjbs_file_client import close_client, init_client
 
 from app.api import ApiJsonResponse
 from app.api.algorithm import router as algorithm_router
@@ -107,9 +108,19 @@ def database_heartbeat() -> None:
         send_heartbeat(db)
 
 
+@app.on_event("startup")
+async def init_file_server_client() -> None:
+    await init_client(config.FILE_SERVER_URL)
+
+
 @app.on_event("shutdown")
 def stop_log_queue() -> None:
     log_queue_listener.stop()
+
+
+@app.on_event("shutdown")
+async def close_file_server_client() -> None:
+    await close_client()
 
 
 @app.middleware("http")

@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "之江实验室 Brain Science 平台"
 authors = ["蔡涛 <caitao@zhejianglab.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -20,6 +21,7 @@ redis = { extras = ["hiredis"], version = "^4.4.0" }
 requests = "^2.28.2"
 pyyaml = "^6.0"
 pycryptodome = "^3.19.0"
+zjbs-file-client = "^0.9.0"
 
 [tool.poetry.group.alembic.dependencies]
 alembic = "^1.11.3"
@@ -34,7 +36,6 @@ setuptools = "^68.1.2"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.1"
-httpx = "^0.23.3"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,12 +1,19 @@
-from fastapi import APIRouter, Depends
+from pathlib import PurePosixPath
+from typing import Annotated
+from urllib.parse import quote
+
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
+from fastapi.responses import StreamingResponse
+from zjbs_file_client import upload
+from zjbs_file_client.async_client import delete, get_client, rename
 
 import app.db.crud.dataset as crud
-from app.api import wrap_api_response
+from app.api import check_dataset_exists, wrap_api_response
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.localization import Entity
 from app.db import common_crud
-from app.db.orm import Dataset
+from app.db.orm import Dataset, DatasetFile
 from app.model import convert
 from app.model.response import NoneResponse, Page, Response
 from app.model.schema import CreateDatasetRequest, DatasetInfo, DatasetSearch, UpdateDatasetRequest
@@ -60,3 +67,96 @@ def delete_dataset(dataset_id: int, ctx: ResearcherContext = Depends()) -> None:
     success = common_crud.bulk_update_rows_as_deleted(ctx.db, Dataset, ids=[dataset_id], commit=True)
     if not success:
         raise ServiceError.database_fail()
+
+
+def dataset_file_path(dataset_id: int, *parts: str) -> PurePosixPath:
+    file_path = PurePosixPath(f"/dataset_{dataset_id}")
+    for part in parts:
+        file_path = file_path / part.lstrip("/")
+    return file_path
+
+
+@router.post("/api/uploadDatasetFile", description="上传数据集文件", response_model=NoneResponse)
+@wrap_api_response
+async def upload_dataset_file(
+    dataset_id: Annotated[int, Form(description="数据集ID")],
+    directory: Annotated[str, Form(description="目标文件夹路径")],
+    file: Annotated[UploadFile, File(description="文件")],
+    ctx: ResearcherContext = Depends(),
+) -> None:
+    check_dataset_exists(ctx.db, dataset_id)
+    directory_path = dataset_file_path(dataset_id, directory)
+    await upload(str(directory_path), file.file, file.filename, mkdir=True, allow_overwrite=True)
+
+    success = common_crud.insert_row(
+        ctx.db, DatasetFile, {"dataset_id": dataset_id, "path": str(directory_path)}, commit=True
+    )
+    if not success:
+        raise ServiceError.database_fail()
+
+
+@router.get("/api/downloadDatasetFile", description="下载数据集文件")
+async def download_dataset_file(
+    dataset_id: Annotated[int, Query(description="数据集ID")],
+    path: Annotated[str, Query(description="文件路径")],
+    ctx: HumanSubjectContext = Depends(),
+) -> StreamingResponse:
+    check_dataset_exists(ctx.db, dataset_id)
+    file_path = dataset_file_path(dataset_id, path)
+    file_server_response = await get_client().post("/download-file", params={"path": str(file_path)})
+    if file_server_response.status_code != 200:
+        raise ServiceError.remote_service_error(file_server_response.text)
+    return StreamingResponse(
+        file_server_response.iter_bytes(1024),
+        headers={"Content-Disposition": f"attachment; filename={quote(file_path.name)}"},
+    )
+
+
+@router.get("/api/listDatasetFiles", description="获取数据集文件列表")
+@wrap_api_response
+async def list_dataset_files(
+    dataset_id: Annotated[int, Query(description="数据集ID")],
+    directory: Annotated[str, Query(description="文件夹路径")],
+    ctx: HumanSubjectContext = Depends(),
+):
+    check_dataset_exists(ctx.db, dataset_id)
+    directory_path = dataset_file_path(dataset_id, directory)
+    file_server_response = await get_client().post("/list-directory", params={"directory": str(directory_path)})
+    if file_server_response.status_code != 200:
+        raise ServiceError.remote_service_error(file_server_response.text)
+    return file_server_response.json()
+
+
+@router.post("/api/renameDatasetFile", description="重命名数据集文件", response_model=NoneResponse)
+@wrap_api_response
+async def rename_dataset_file(
+    dataset_id: Annotated[int, Form(description="数据集ID")],
+    path: Annotated[str, Form(description="文件路径")],
+    new_name: Annotated[str, Form(description="新文件名")],
+    ctx: ResearcherContext = Depends(),
+) -> None:
+    check_dataset_exists(ctx.db, dataset_id)
+    path = dataset_file_path(dataset_id, path)
+    await rename(str(path), new_name)
+
+    success = common_crud.update_row(
+        ctx.db,
+        DatasetFile,
+        {"path": str(path.with_name(new_name))},
+        where=[DatasetFile.dataset_id == dataset_id],
+        commit=True,
+    )
+    if not success:
+        raise ServiceError.database_fail()
+
+
+@router.delete("/api/deleteDatasetFile", description="删除数据集文件", response_model=NoneResponse)
+@wrap_api_response
+async def delete_dataset_file(
+    dataset_id: Annotated[int, Form(description="数据集ID")],
+    path: Annotated[str, Form(description="文件路径")],
+    ctx: ResearcherContext = Depends(),
+) -> None:
+    check_dataset_exists(ctx.db, dataset_id)
+    path = dataset_file_path(dataset_id, path)
+    await delete(str(path))

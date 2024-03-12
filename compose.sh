@@ -64,7 +64,7 @@ DATABASE_URL=
 
 case "$command" in
 up-depends)
-  args=(up -d --force-recreate database cache)
+  args=(up -d --force-recreate database cache file-server)
   ;;
 alembic)
   args=(run --rm platform alembic upgrade head)
@@ -87,6 +87,7 @@ export DATABASE_URL="mysql+pymysql://zjlab:zjlab2022@${databaseHost}:${databaseP
 
 export PLATFORM_IMAGE_TAG="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-platform"
 export DATABASE_IMAGE_TAG="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-database"
+export FILE_SERVER_IMAGE_TAG="${DOCKER_USERNAME}/${IMAGE_REPO_PREFIX}-file-server"
 
 docker compose \
   --file "${composeDir:?}/dev.compose.yaml" \
