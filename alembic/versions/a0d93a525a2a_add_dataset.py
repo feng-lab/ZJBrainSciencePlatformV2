@@ -2,7 +2,7 @@
 
 Revision ID: a0d93a525a2a
 Revises: 8dc0f8fefc93
-Create Date: 2024-03-12 10:12:56.244385
+Create Date: 2024-03-12 11:11:06.354044
 
 """
 from alembic import op
@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade() -> None:
     op.create_table(
-        "Dataset",
+        "dataset",
         sa.Column("user_id", sa.Integer(), nullable=False, comment="用户ID"),
         sa.Column("description", sa.Text(), nullable=False, comment="描述"),
         sa.Column("species", sa.Text(), nullable=True, comment="物种"),
@@ -47,24 +47,24 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         comment="数据集",
     )
-    op.create_index(op.f("ix_Dataset_user_id"), "Dataset", ["user_id"], unique=False)
+    op.create_index(op.f("ix_dataset_user_id"), "dataset", ["user_id"], unique=False)
     op.create_table(
-        "DatasetFile",
+        "dataset_file",
         sa.Column("dataset_id", sa.Integer(), nullable=False, comment="数据集id"),
         sa.Column("path", sa.Text(), nullable=False, comment="文件路径"),
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False, comment="主键"),
         sa.Column("gmt_create", sa.DateTime(), server_default=sa.text("now()"), nullable=False, comment="创建时间"),
         sa.Column("gmt_modified", sa.DateTime(), server_default=sa.text("now()"), nullable=False, comment="修改时间"),
         sa.Column("is_deleted", sa.Boolean(), server_default=sa.text("false"), nullable=False, comment="该行是否被删除"),
-        sa.ForeignKeyConstraint(["dataset_id"], ["Dataset.id"]),
+        sa.ForeignKeyConstraint(["dataset_id"], ["dataset.id"]),
         sa.PrimaryKeyConstraint("id"),
         comment="数据集文件",
     )
-    op.create_index(op.f("ix_DatasetFile_dataset_id"), "DatasetFile", ["dataset_id"], unique=False)
+    op.create_index(op.f("ix_dataset_file_dataset_id"), "dataset_file", ["dataset_id"], unique=False)
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_DatasetFile_dataset_id"), table_name="DatasetFile")
-    op.drop_table("DatasetFile")
-    op.drop_index(op.f("ix_Dataset_user_id"), table_name="Dataset")
-    op.drop_table("Dataset")
+    op.drop_index(op.f("ix_dataset_file_dataset_id"), table_name="dataset_file")
+    op.drop_table("dataset_file")
+    op.drop_index(op.f("ix_dataset_user_id"), table_name="dataset")
+    op.drop_table("dataset")

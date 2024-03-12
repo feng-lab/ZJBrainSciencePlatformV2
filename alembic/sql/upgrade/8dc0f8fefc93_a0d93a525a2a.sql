@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `Dataset`
+CREATE TABLE dataset
 (
     id                    INTEGER  NOT NULL COMMENT '主键' AUTO_INCREMENT,
     gmt_create            DATETIME NOT NULL COMMENT '创建时间'       DEFAULT NOW(),
@@ -28,9 +28,9 @@ CREATE TABLE IF NOT EXISTS `Dataset`
     FOREIGN KEY (user_id) REFERENCES user (id)
 ) COMMENT ='数据集';
 
-CREATE INDEX `ix_Dataset_user_id` ON `Dataset` (user_id);
+CREATE INDEX ix_dataset_user_id ON dataset (user_id);
 
-CREATE TABLE IF NOT EXISTS `DatasetFile`
+CREATE TABLE dataset_file
 (
     id           INTEGER  NOT NULL COMMENT '主键' AUTO_INCREMENT,
     gmt_create   DATETIME NOT NULL COMMENT '创建时间'       DEFAULT NOW(),
@@ -39,10 +39,10 @@ CREATE TABLE IF NOT EXISTS `DatasetFile`
     dataset_id   INTEGER  NOT NULL COMMENT '数据集id',
     path         TEXT     NOT NULL COMMENT '文件路径',
     PRIMARY KEY (id),
-    FOREIGN KEY (dataset_id) REFERENCES `Dataset` (id)
+    FOREIGN KEY (dataset_id) REFERENCES dataset (id)
 ) COMMENT ='数据集文件';
 
-CREATE INDEX `ix_DatasetFile_dataset_id` ON `DatasetFile` (dataset_id);
+CREATE INDEX ix_dataset_file_dataset_id ON dataset_file (dataset_id);
 
 UPDATE alembic_version
 SET version_num='a0d93a525a2a'

@@ -362,7 +362,7 @@ class AtlasRegionParadigmClass(Base, ModelMixin, AtlasComponentMixin):
 
 
 class Dataset(Base, ModelMixin):
-    __tablename__ = "Dataset"
+    __tablename__ = "dataset"
     __table_args__ = {"comment": "数据集"}
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, index=True, comment="用户ID")
@@ -390,10 +390,10 @@ class Dataset(Base, ModelMixin):
 
 
 class DatasetFile(Base, ModelMixin):
-    __tablename__ = "DatasetFile"
+    __tablename__ = "dataset_file"
     __table_args__ = {"comment": "数据集文件"}
 
     dataset_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("Dataset.id"), nullable=False, index=True, comment="数据集id"
+        Integer, ForeignKey("dataset.id"), nullable=False, index=True, comment="数据集id"
     )
     path: Mapped[str] = mapped_column(Text, nullable=False, comment="文件路径")
