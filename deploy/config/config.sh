@@ -6,9 +6,9 @@ export COMPOSE_PROJECT_NAME='platform'
 
 # 镜像配置
 export IMAGE_REPO_PREFIX='zjbs'
-export CACHE_IMAGE_TAG='redis:7.0'
+export CACHE_IMAGE_TAG='redis:7-alpine'
 export PYTHON_VERSION='3.11'
-export POETRY_VERSION='1.4.2'
+export POETRY_VERSION='1.8.2'
 export PIP_INDEX_URL='https://pypi.tuna.tsinghua.edu.cn/simple'
 
 # 目录结构
