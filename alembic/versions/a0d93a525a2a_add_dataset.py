@@ -5,9 +5,9 @@ Revises: 8dc0f8fefc93
 Create Date: 2024-03-12 11:11:06.354044
 
 """
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "a0d93a525a2a"
@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column("file_format", sa.Text(), nullable=True, comment="文件格式"),
         sa.Column("sample_count", sa.Integer(), nullable=True, comment="样本数量"),
         sa.Column("data_publisher", sa.Text(), nullable=True, comment="数据发布机构/单位"),
-        sa.Column("date_update_year", sa.Date(), nullable=True, comment="数据更新年份"),
+        sa.Column("data_update_year", sa.Date(), nullable=True, comment="数据更新年份"),
         sa.Column("file_count", sa.Integer(), nullable=True, comment="文件数量"),
         sa.Column("file_total_size_gb", sa.Float(), nullable=True, comment="数据总量(GB)"),
         sa.Column("file_acquired_size_gb", sa.Float(), nullable=True, comment="已获取数据(GB)"),

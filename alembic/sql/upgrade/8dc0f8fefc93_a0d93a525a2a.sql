@@ -13,7 +13,7 @@ CREATE TABLE dataset
     file_format           TEXT COMMENT '文件格式',
     sample_count          INTEGER COMMENT '样本数量',
     data_publisher        TEXT COMMENT '数据发布机构/单位',
-    date_update_year      DATE COMMENT '数据更新年份',
+    data_update_year      DATE COMMENT '数据更新年份',
     file_count            INTEGER COMMENT '文件数量',
     file_total_size_gb    FLOAT COMMENT '数据总量(GB)',
     file_acquired_size_gb FLOAT COMMENT '已获取数据(GB)',

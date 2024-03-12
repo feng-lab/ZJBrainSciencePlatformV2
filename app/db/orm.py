@@ -374,7 +374,7 @@ class Dataset(Base, ModelMixin):
     file_format: Mapped[str | None] = mapped_column(Text, nullable=True, comment="文件格式")
     sample_count: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="样本数量")
     data_publisher: Mapped[str | None] = mapped_column(Text, nullable=True, comment="数据发布机构/单位")
-    date_update_year: Mapped[datetime | None] = mapped_column(Date, nullable=True, comment="数据更新年份")
+    data_update_year: Mapped[date | None] = mapped_column(Date, nullable=True, comment="数据更新年份")
     file_count: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="文件数量")
     file_total_size_gb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
     file_acquired_size_gb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="已获取数据(GB)")
@@ -386,7 +386,7 @@ class Dataset(Base, ModelMixin):
     fetch_url: Mapped[str | None] = mapped_column(Text, nullable=True, comment="下载路径")
     project: Mapped[str | None] = mapped_column(Text, nullable=True, comment="项目")
 
-    steps: Mapped[list["DatasetFile"]] = relationship("DatasetFile")
+    steps: Mapped[list["DatasetFile"]] = relationship("DatasetFile", viewonly=True)
 
 
 class DatasetFile(Base, ModelMixin):
