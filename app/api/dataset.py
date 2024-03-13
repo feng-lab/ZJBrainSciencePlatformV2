@@ -15,6 +15,7 @@ from app.common.localization import Entity
 from app.db import common_crud
 from app.db.orm import Dataset, DatasetFile
 from app.model import convert
+from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response
 from app.model.schema import CreateDatasetRequest, DatasetInfo, DatasetSearch, UpdateDatasetRequest
 
@@ -63,8 +64,8 @@ def update_dataset(request: UpdateDatasetRequest, ctx: ResearcherContext = Depen
 
 @router.delete("/api/deleteDataset", description="删除数据集", response_model=NoneResponse)
 @wrap_api_response
-def delete_dataset(dataset_id: int, ctx: ResearcherContext = Depends()) -> None:
-    success = common_crud.bulk_update_rows_as_deleted(ctx.db, Dataset, ids=[dataset_id], commit=True)
+def delete_dataset(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
+    success = common_crud.bulk_update_rows_as_deleted(ctx.db, Dataset, ids=[request.id], commit=True)
     if not success:
         raise ServiceError.database_fail()
 
