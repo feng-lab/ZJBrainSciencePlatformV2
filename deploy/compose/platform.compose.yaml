@@ -18,5 +18,7 @@ services:
     deploy:
       replicas: ${REPLICAS}
       restart_policy:
-        condition: on-failure
-        delay: 3s
+        condition: any
+        delay: 10s
+    healthcheck:
+      test: curl --fail http://localhost/openapi.json || exit 1

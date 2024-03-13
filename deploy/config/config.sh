@@ -19,6 +19,9 @@ imageVersionDir="$(cd -- "${projectDir}/deploy/image-version" &>/dev/null && pwd
 composeDir="$(cd -- "${projectDir}/deploy/compose" &>/dev/null && pwd)"
 export configDir projectDir dockerfileDir imageVersionDir composeDir
 
+# SSH配置
+export SSH_CONFIG_HOST=''
+
 # 工具函数
 generate-tag-version() {
   local dateTime gitHash

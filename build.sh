@@ -5,7 +5,7 @@ print-usage() {
   cat <<EOF
 Usage: $0 [OPTIONS] [SERVICE] [IMAGE VERSION]
 
-Service: platform | database | cache
+Service: platform | database | cache | file-server
   Docker image name, default is platform
 
 Image version:
@@ -95,7 +95,7 @@ fi
 
 if [ "${1:-}" ]; then
   service="$1"
-  if [[ ! "$service" =~ platform|database|cache ]]; then
+  if [[ ! "$service" =~ platform|database|cache|file-server ]]; then
     echo >&2 invalid service: "$service"
     exit 1
   fi
