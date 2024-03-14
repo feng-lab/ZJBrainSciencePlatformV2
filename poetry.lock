@@ -1477,18 +1477,18 @@ full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyam
 
 [[package]]
 name = "traitlets"
-version = "5.14.1"
+version = "5.14.2"
 description = "Traitlets Python configuration system"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "traitlets-5.14.1-py3-none-any.whl", hash = "sha256:2e5a030e6eff91737c643231bfcf04a65b0132078dad75e4936700b213652e74"},
-    {file = "traitlets-5.14.1.tar.gz", hash = "sha256:8585105b371a04b8316a43d5ce29c098575c2e477850b62b848b964f1444527e"},
+    {file = "traitlets-5.14.2-py3-none-any.whl", hash = "sha256:fcdf85684a772ddeba87db2f398ce00b40ff550d1528c03c14dbf6a02003cd80"},
+    {file = "traitlets-5.14.2.tar.gz", hash = "sha256:8cdd83c040dab7d1dee822678e5f5d100b514f7b72b01615b26fc5718916fdf9"},
 ]
 
 [package.extras]
 docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
-test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,<7.5)", "pytest-mock", "pytest-mypy-testing"]
+test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,<8.1)", "pytest-mock", "pytest-mypy-testing"]
 
 [[package]]
 name = "typing-extensions"
@@ -1549,13 +1549,13 @@ files = [
 
 [[package]]
 name = "zjbs-file-client"
-version = "0.9.0"
+version = "0.10.0"
 description = "The file client of ZJBrainSciencePlatform"
 optional = false
 python-versions = ">=3.11"
 files = [
-    {file = "zjbs_file_client-0.9.0-py3-none-any.whl", hash = "sha256:fb4932c503e0ffef7d4d8ffd187f8b49084e14a5e41c3c040c0a8ab732ed18ea"},
-    {file = "zjbs_file_client-0.9.0.tar.gz", hash = "sha256:95d85cdc2a8dc10c0f7e11b2f3acd298d63e60f12dddb8c27e063ccd028f3710"},
+    {file = "zjbs_file_client-0.10.0-py3-none-any.whl", hash = "sha256:94a54e7930f8180bd47f6484f092c97e0a6eaee65c763ad45d7ae50ffcb292f1"},
+    {file = "zjbs_file_client-0.10.0.tar.gz", hash = "sha256:5bf3918ee22d4dffdd3a3a75abbece8af0907783a0977d33c7eebd97a2faf628"},
 ]
 
 [package.dependencies]
@@ -1564,4 +1564,4 @@ httpx = ">=0.25.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "25d3d13b44a7dce7dc449feaaa33b5424f8fd3e56f3acc30f1c65a527c6e0917"
+content-hash = "ef42d500255325f2206602d3f98125aabd76a2387032497ef8fa78e6b8c19f13"
