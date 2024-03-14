@@ -12,6 +12,7 @@ services:
       ALGORITHM_HOST: algorithm
       CACHE_HOST: cache
       CACHE_PORT: 6379
+      FILE_SERVER_URL: http://file-server
     volumes:
       - /data/ZJBrainSciencePlatform/data/file:/file
       - /data/ZJBrainSciencePlatform/log/platform:/log
