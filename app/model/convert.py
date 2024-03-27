@@ -20,6 +20,7 @@ from app.db.orm import (
     TaskStep,
     User,
     VirtualFile,
+    EEGData,
 )
 from app.model.field import LongVarchar
 from app.model.schema import (
@@ -48,6 +49,7 @@ from app.model.schema import (
     TaskStepInfo,
     UserInfo,
     UserResponse,
+    EEGDataInfo,
 )
 
 A = TypeVar("A")
@@ -311,3 +313,7 @@ def atlas_paradigm_class_tree_node_2_info(paradigm_class: AtlasParadigmClassTree
 
 def dataset_orm_2_info(dataset: Dataset) -> DatasetInfo:
     return DatasetInfo.from_orm(dataset)
+
+
+def EEGData_orm_2_info(eegdata: EEGData) -> EEGDataInfo:
+    return EEGDataInfo.from_orm(eegdata)

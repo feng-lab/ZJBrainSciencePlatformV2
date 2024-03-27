@@ -28,6 +28,7 @@ class Entity(StrEnum):
     atlas_paradigm_class = "atlas_paradigm_class"
     dataset = "dataset"
     dataset_file = "dataset_file"
+    EEGData = 'EEGData'
 
 
 MessageTemplateKey: TypeAlias = tuple[str, MessageLocale]
