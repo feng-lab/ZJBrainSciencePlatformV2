@@ -4,7 +4,7 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from fastapi.responses import StreamingResponse
-from zjbs_file_client import Client
+from zjbs_file_client import Client, FileType
 
 import app.db.crud.dataset as crud
 from app.api import check_dataset_exists, wrap_api_response
@@ -17,7 +17,13 @@ from app.db.orm import Dataset, DatasetFile
 from app.model import convert
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response
-from app.model.schema import CreateDatasetRequest, DatasetInfo, DatasetSearch, UpdateDatasetRequest
+from app.model.schema import (
+    CreateDatasetRequest,
+    DatasetDirectoryTreeNode,
+    DatasetInfo,
+    DatasetSearch,
+    UpdateDatasetRequest,
+)
 
 router = APIRouter(tags=["dataset"])
 
@@ -129,6 +135,28 @@ def list_dataset_files(
         if file_server_response.status_code != 200:
             raise ServiceError.remote_service_error(file_server_response.text)
         return file_server_response.json()
+
+
+@router.post(
+    "/api/getDatasetDirectoryTree",
+    description="获取数据集文件树（仅包括文件夹）",
+    response_model=Response[list[DatasetDirectoryTreeNode]],
+)
+@wrap_api_response
+def list_dataset_directory_tree(
+    dataset_id: int = Query(description="数据集ID", ge=0), ctx: HumanSubjectContext = Depends()
+) -> list[DatasetDirectoryTreeNode]:
+    check_dataset_exists(ctx.db, dataset_id)
+    with Client(config.FILE_SERVER_URL) as client:
+        return walk_dataset_directory_tree(dataset_file_path(dataset_id, "/"), client)
+
+
+def walk_dataset_directory_tree(root: PurePosixPath, client: Client) -> list[DatasetDirectoryTreeNode]:
+    return [
+        DatasetDirectoryTreeNode(name=item.name, dirs=walk_dataset_directory_tree(root / item.name, client))
+        for item in client.list_directory(str(root))
+        if item.type == FileType.directory
+    ]
 
 
 @router.post("/api/renameDatasetFile", description="重命名数据集文件", response_model=NoneResponse)

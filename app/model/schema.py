@@ -550,3 +550,8 @@ class DatasetSearch(PageParm, DatasetBase):
 
 class UpdateDatasetRequest(CreateDatasetRequest, ModelId):
     pass
+
+
+class DatasetDirectoryTreeNode(BaseModel):
+    name: str
+    dirs: list["DatasetDirectoryTreeNode"]
