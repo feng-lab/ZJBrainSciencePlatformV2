@@ -559,7 +559,7 @@ class CreateEEGDataRequest(BaseModel):
     data_update_year: date | None
 
 
-class EEGDataInfo(CreateDatasetRequest, BaseModelInDB):
+class EEGDataInfo(CreateEEGDataRequest, BaseModelInDB):
     class Config:
         orm_mode = True
 

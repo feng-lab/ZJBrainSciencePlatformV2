@@ -10,7 +10,7 @@ from app.db import common_crud
 from app.db.orm import EEGData
 
 from app.model import convert
-from app.model.schema import CreateDatasetRequest, EEGDataInfo, EEGDataSearch, UpdateEEGDataRequest
+from app.model.schema import CreateEEGDataRequest, EEGDataInfo, EEGDataSearch, UpdateEEGDataRequest
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response
 
@@ -19,7 +19,7 @@ router = APIRouter(tags=["eegdata"])
 
 @router.post("/api/createEEGData", description="创建数据集", response_model=Response[int])
 @wrap_api_response
-def create_eegdata(request: CreateDatasetRequest, ctx: ResearcherContext = Depends()) -> int:
+def create_eegdata(request: CreateEEGDataRequest, ctx: ResearcherContext = Depends()) -> int:
     eegdata_dict = request.dict()
     eegdata_id = common_crud.insert_row(ctx.db, EEGData, eegdata_dict, commit=True)
     if eegdata_id is None:
