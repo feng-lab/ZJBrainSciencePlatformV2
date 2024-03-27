@@ -119,7 +119,7 @@ def download_dataset_file(
         return StreamingResponse(
             file_server_response.iter_bytes(1024),
             headers={
-                "Content-Disposition": f"attachment; filename={quote(file_path.name)}",
+                "Content-Disposition": f'attachment; filename="{quote(file_path.name)}"',
                 "Content-Type": guess_type(file_path.name)[0] or "text/plain",
             },
         )
