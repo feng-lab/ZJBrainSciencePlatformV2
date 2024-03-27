@@ -137,7 +137,7 @@ def list_dataset_files(
         return file_server_response.json()
 
 
-@router.post(
+@router.get(
     "/api/getDatasetDirectoryTree",
     description="获取数据集文件树（仅包括文件夹）",
     response_model=Response[list[DatasetDirectoryTreeNode]],
