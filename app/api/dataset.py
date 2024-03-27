@@ -4,6 +4,7 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from fastapi.responses import StreamingResponse
+from starlette.responses import guess_type
 from zjbs_file_client import Client, FileType
 
 import app.db.crud.dataset as crud
@@ -117,7 +118,10 @@ def download_dataset_file(
             raise ServiceError.remote_service_error(file_server_response.text)
         return StreamingResponse(
             file_server_response.iter_bytes(1024),
-            headers={"Content-Disposition": f"attachment; filename={quote(file_path.name)}"},
+            headers={
+                "Content-Disposition": f"attachment; filename={quote(file_path.name)}",
+                "Content-Type": guess_type(file_path.name)[0] or "text/plain",
+            },
         )
 
 
