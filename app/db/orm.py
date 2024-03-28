@@ -407,14 +407,6 @@ class EEGData(Base, ModelMixin):
     gender: Mapped[Gender | None] = mapped_column(Enum(Gender), nullable=False, comment="性别")
     age: Mapped[int] = mapped_column(Integer, nullable=False,comment="年龄")
     data_update_year: Mapped[DateTime] = mapped_column(DateTime, nullable = False, comment="数据上传时间")
+    #
 
-
-class EEGDataFile(Base, ModelMixin):
-    __tablename__ = "eegdata_file"
-    __table_args__ = {"comment": "脑电数据文件"}
-
-    eegdata_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("eegdata.id"), nullable=False, index=True, comment="脑电数据id"
-    )
-    path: Mapped[str] = mapped_column(Text, nullable=False, comment="文件路径")
 
