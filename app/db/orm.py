@@ -409,11 +409,11 @@ class EEGData(Base, ModelMixin):
     data_update_year: Mapped[DateTime] = mapped_column(DateTime, nullable = False, comment="数据上传时间")
     #
 
-class EEGDataFile(Base, ModelMixin):
-    __tablename__ = "eegdata_file"
-    __table_args__ = {"comment": "数据集文件"}
-
-    dataset_id: Mapped[int] = mapped_column(
-        Integer, nullable=False, index=True, comment="脑电数据的id"
-    )
-    path: Mapped[str] = mapped_column(Text, nullable=False, comment="文件路径")
+# class EEGDataFile(Base, ModelMixin):
+#     __tablename__ = "eegdata_file"
+#     __table_args__ = {"comment": "数据集文件"}
+#
+#     dataset_id: Mapped[int] = mapped_column(
+#         Integer, nullable=False, index=True, comment="脑电数据的id"
+#     )
+#     path: Mapped[str] = mapped_column(Text, nullable=False, comment="文件路径")
