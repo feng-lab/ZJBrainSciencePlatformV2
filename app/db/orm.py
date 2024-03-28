@@ -414,6 +414,6 @@ class EEGDataFile(Base, ModelMixin):
     __table_args__ = {"comment": "数据集文件"}
 
     eegdata_id: Mapped[int] = mapped_column(
-        Integer, nullable=False, index=True, comment="脑电数据的id"
+        Integer, ForeignKey("eegdata.id"), nullable=False, index=True, comment="脑电数据的id"
     )
     path: Mapped[str] = mapped_column(Text, nullable=False, comment="文件路径")
