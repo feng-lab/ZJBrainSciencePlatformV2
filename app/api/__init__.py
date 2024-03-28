@@ -23,6 +23,7 @@ from app.db.orm import (
     AtlasRegion,
     AtlasRegionLink,
     Dataset,
+    EEGData,
     Device,
     Experiment,
     Task,
@@ -136,6 +137,10 @@ def check_atlas_paradigm_class_exists(db: Session, atlas_paradigm_class_id: int)
 
 def check_dataset_exists(db: Session, dataset_id: int) -> None:
     _check_exists(db, Dataset, Entity.dataset, id_=dataset_id)
+
+
+def check_eegdata_exists(db: Session, eegdata_id: int) -> None:
+    _check_exists(db, EEGData, Entity.EEGData, id_=eegdata_id)
 
 
 def _check_exists(
