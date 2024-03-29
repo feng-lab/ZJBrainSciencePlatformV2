@@ -13,7 +13,7 @@ def search_eegdata(db: Session, search: EEGDataSearch) -> tuple[int, Sequence[EE
     if search.user_id is not None:
         base_stmt = base_stmt.where(EEGData.user_id == search.user_id)
     if search.gender is not None:
-        base_stmt = base_stmt.where(EEGData.gender.icontains(search.gender))
+        base_stmt = base_stmt.where(EEGData.gender == search.gender)
     if search.data_update_year is not None:
         base_stmt = base_stmt.where(EEGData.data_update_year == search.data_update_year)
     if search.age is not None:

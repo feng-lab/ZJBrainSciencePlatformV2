@@ -96,8 +96,4 @@ class ServiceError(Exception):
             status_code=HTTP_500_INTERNAL_SERVER_ERROR, code=ResponseCode.SERVER_ERROR, message_id="database fail"
         )
 
-    @staticmethod
-    def eegdata_fail():
-        return ServiceError(
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR, code=ResponseCode.SERVER_ERROR, message_id="eegdata fail"
-        )
+

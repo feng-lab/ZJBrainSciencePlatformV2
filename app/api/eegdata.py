@@ -13,7 +13,7 @@ from app.common.localization import Entity
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.config import config
 from app.db import common_crud
-from app.db.orm import EEGData,EEGDataFile
+from app.db.orm import EEGData
 
 from app.model import convert
 from app.model.schema import CreateEEGDataRequest, EEGDataInfo, EEGDataSearch, UpdateEEGDataRequest
@@ -25,7 +25,7 @@ router = APIRouter(tags=["eegdata"])
 
 @router.post("/api/createEEGData", description="创建数据集", response_model=Response[int])
 @wrap_api_response
-def create_eegdata(request: CreateEEGDataRequest, ctx: ResearcherContext = Depends()) -> int:
+def create_eeg_data(request: CreateEEGDataRequest, ctx: ResearcherContext = Depends()) -> int:
     eegdata_dict = request.dict()
     eegdata_id = common_crud.insert_row(ctx.db, EEGData, eegdata_dict, commit=True)
     if eegdata_id is None:
@@ -35,76 +35,73 @@ def create_eegdata(request: CreateEEGDataRequest, ctx: ResearcherContext = Depen
 
 @router.post("/api/getEEGDataInfo", description="获取数据集详情", response_model=Response[EEGDataInfo])
 @wrap_api_response
-def get_eegdata_info(eegdata_id: int, ctx: HumanSubjectContext = Depends()) -> EEGDataInfo:
-    orm_EEGData = common_crud.get_row_by_id(ctx.db, EEGData, eegdata_id)
-    if orm_EEGData is None:
+def get_eeg_data_info(eegdata_id: int, ctx: HumanSubjectContext = Depends()) -> EEGDataInfo:
+    orm_eeg_data = common_crud.get_row_by_id(ctx.db, EEGData, eegdata_id)
+    if orm_eeg_data is None:
         raise ServiceError.not_found(Entity.EEGData)
-    eegdata_info = convert.EEGData_orm_2_info(orm_EEGData)
-    return eegdata_info
+    eeg_data_info = convert.EEGData_orm_2_info(orm_eeg_data)
+    return eeg_data_info
 
 
 @router.post("/api/getEEGDataByPag", description="获取数据集列表", response_model=Response[Page[EEGDataInfo]])
 @wrap_api_response
-def get_dataset_by_page(search: EEGDataSearch = Depends(), ctx: HumanSubjectContext = Depends()) -> Page[EEGDataInfo]:
-    total, orm_eegdata = crud.search_eegdata(ctx.db, search)
-    eegdata_infos = convert.map_list(convert.EEGData_orm_2_info, orm_eegdata)
-    return Page(total=total, items=eegdata_infos)
+def get_eeg_data_by_page(search: EEGDataSearch = Depends(), ctx: HumanSubjectContext = Depends()) -> Page[EEGDataInfo]:
+    total, orm_eeg_data = crud.search_eegdata(ctx.db, search)
+    eeg_data_infos = convert.map_list(convert.EEGData_orm_2_info, orm_eeg_data)
+    return Page(total=total, items=eeg_data_infos)
 
 
 @router.post("/api/updateEEGData", description="更新数据集", response_model=NoneResponse)
 @wrap_api_response
-def update_EEGData(request: UpdateEEGDataRequest, ctx: ResearcherContext = Depends()) -> None:
-    orm_eegdata = common_crud.get_row_by_id(ctx.db, EEGData, request.id)
-    if orm_eegdata is None:
-        raise ServiceError.not_found(Entity.dataset)
+def update_eeg_data(request: UpdateEEGDataRequest, ctx: ResearcherContext = Depends()) -> None:
+    orm_eeg_data = common_crud.get_row_by_id(ctx.db, EEGData, request.id)
+    if orm_eeg_data is None:
+        raise ServiceError.not_found(Entity.EEGData)
     dataset_dict = request.dict(exclude_unset=True)
     success = common_crud.update_row(ctx.db, EEGData, dataset_dict, id_=request.id, commit=True)
     if not success:
-        raise ServiceError.eegdata_fail()
+        raise ServiceError.database_fail()
 
 
 @router.delete("/api/deleteEEGData", description="删除数据集", response_model=NoneResponse)
 @wrap_api_response
-def delete_dataset(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
+def delete_eeg_data(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
     success = common_crud.bulk_update_rows_as_deleted(ctx.db, EEGData, ids=[request.id], commit=True)
     if not success:
-        raise ServiceError.eegdata_fail()
+        raise ServiceError.database_fail()
 
 
-def eegdata_file_path(eegdata_id: int, *parts: str) -> PurePosixPath:
-    file_path = PurePosixPath(f"/EEGdata_{eegdata_id}")
+def eeg_data_file_path(eeg_data_id: int, *parts: str) -> PurePosixPath:
+    file_path = PurePosixPath(f"/EEGdata_{eeg_data_id}")
     for part in parts:
         file_path = file_path / part.lstrip("/")
     return file_path
 
+
 @router.post("/api/uploadEEGDataFile", description="上传脑电数据文件", response_model=NoneResponse)
 @wrap_api_response
-def upload_eegdata_file(
-    eegdata_id: Annotated[int, Form(description="脑电数据ID")],
+def upload_eeg_data_file(
+    eeg_data_id: Annotated[int, Form(description="脑电数据ID")],
     directory: Annotated[str, Form(description="目标文件夹路径")],
     file: Annotated[UploadFile, File(description="文件")],
     ctx: ResearcherContext = Depends(),
 ) -> None:
-    check_eegdata_exists(ctx.db, eegdata_id)
-    directory_path = eegdata_file_path(eegdata_id, directory)
+    check_eegdata_exists(ctx.db, eeg_data_id)
+    directory_path = eeg_data_file_path(eeg_data_id, directory)
     with Client(config.FILE_SERVER_URL) as client:
         client.upload(str(directory_path), file.file, file.filename, mkdir=True, allow_overwrite=True)
 
-    success = common_crud.insert_row(
-        ctx.db, EEGDataFile, {"dataset_id": eegdata_id, "path": str(directory_path)}, commit=True
-    )
-    if not success:
-        raise ServiceError.eegdata_fail()
+
 
 
 @router.get("/api/downloadEEGDataFile", description="下载脑电数据文件")
-def download_eegdata_file(
-    eegdata_id: Annotated[int, Query(description="脑电数据ID")],
+def download_eeg_data_file(
+    eeg_data_id: Annotated[int, Query(description="脑电数据ID")],
     path: Annotated[str, Query(description="文件路径")],
     ctx: HumanSubjectContext = Depends(),
 ) -> StreamingResponse:
-    check_eegdata_exists(ctx.db, eegdata_id)
-    file_path = eegdata_file_path(eegdata_id, path)
+    check_eegdata_exists(ctx.db, eeg_data_id)
+    file_path = eeg_data_file_path(eeg_data_id, path)
     with Client(config.FILE_SERVER_URL) as client:
         file_server_response = client.inner.post("/download-file", params={"path": str(file_path)})
         if file_server_response.status_code != 200:
@@ -117,18 +114,12 @@ def download_eegdata_file(
 
 @router.delete("/api/deleteEEGDataFile", description="删除脑电文件", response_model=NoneResponse)
 @wrap_api_response
-def delete_dataset_file(
-    eegdata_id: Annotated[int, Form(description="脑电数据ID")],
+def delete_eeg_data_file(
+    eeg_data_id: Annotated[int, Form(description="脑电数据ID")],
     path: Annotated[str, Form(description="文件路径")],
     ctx: ResearcherContext = Depends(),
 ) -> None:
-    check_eegdata_exists(ctx.db, eegdata_id)
-    path = eegdata_file_path(eegdata_id, path)
+    check_eegdata_exists(ctx.db, eeg_data_id)
+    path = eeg_data_file_path(eeg_data_id, path)
     with Client(config.FILE_SERVER_URL) as client:
         client.delete(str(path))
-
-    success = common_crud.update_row_as_deleted(
-        ctx.db, EEGDataFile, where=[EEGDataFile.eegdata_id == eegdata_id, EEGDataFile.path == path], commit=True
-    )
-    if not success:
-        raise ServiceError.eegdata_fail()
