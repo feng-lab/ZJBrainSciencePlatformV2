@@ -2,9 +2,10 @@ from pathlib import PurePosixPath
 from typing import Annotated
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
+from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
 from fastapi.responses import StreamingResponse
-from zjbs_file_client import Client
+from starlette.responses import guess_type
+from zjbs_file_client import Client, FileType
 
 import app.db.crud.dataset as crud
 from app.api import check_dataset_exists, wrap_api_response
@@ -17,7 +18,13 @@ from app.db.orm import Dataset, DatasetFile
 from app.model import convert
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response
-from app.model.schema import CreateDatasetRequest, DatasetInfo, DatasetSearch, UpdateDatasetRequest
+from app.model.schema import (
+    CreateDatasetRequest,
+    DatasetDirectoryTreeNode,
+    DatasetInfo,
+    DatasetSearch,
+    UpdateDatasetRequest,
+)
 
 router = APIRouter(tags=["dataset"])
 
@@ -26,9 +33,18 @@ router = APIRouter(tags=["dataset"])
 @wrap_api_response
 def create_dataset(request: CreateDatasetRequest, ctx: ResearcherContext = Depends()) -> int:
     dataset_dict = request.dict()
-    dataset_id = common_crud.insert_row(ctx.db, Dataset, dataset_dict, commit=True)
+    dataset_id = common_crud.insert_row(ctx.db, Dataset, dataset_dict, commit=False)
     if dataset_id is None:
         raise ServiceError.database_fail()
+
+    with Client(config.FILE_SERVER_URL) as client:
+        file_server_response = client.inner.post(
+            "/create-directory", params={"path": dataset_file_path(dataset_id, "/"), "exists_ok": True}
+        )
+        if not file_server_response.is_success:
+            raise ServiceError.remote_service_error(file_server_response.reason_phrase)
+
+    ctx.db.commit()
     return dataset_id
 
 
@@ -111,7 +127,10 @@ def download_dataset_file(
             raise ServiceError.remote_service_error(file_server_response.text)
         return StreamingResponse(
             file_server_response.iter_bytes(1024),
-            headers={"Content-Disposition": f"attachment; filename={quote(file_path.name)}"},
+            headers={
+                "Content-Disposition": f'attachment; filename="{quote(file_path.name)}"',
+                "Content-Type": guess_type(file_path.name)[0] or "text/plain",
+            },
         )
 
 
@@ -131,12 +150,34 @@ def list_dataset_files(
         return file_server_response.json()
 
 
+@router.get(
+    "/api/getDatasetDirectoryTree",
+    description="获取数据集文件树（仅包括文件夹）",
+    response_model=Response[list[DatasetDirectoryTreeNode]],
+)
+@wrap_api_response
+def list_dataset_directory_tree(
+    dataset_id: int = Query(description="数据集ID", ge=0), ctx: HumanSubjectContext = Depends()
+) -> list[DatasetDirectoryTreeNode]:
+    check_dataset_exists(ctx.db, dataset_id)
+    with Client(config.FILE_SERVER_URL) as client:
+        return walk_dataset_directory_tree(dataset_file_path(dataset_id, "/"), client)
+
+
+def walk_dataset_directory_tree(root: PurePosixPath, client: Client) -> list[DatasetDirectoryTreeNode]:
+    return [
+        DatasetDirectoryTreeNode(name=item.name, dirs=walk_dataset_directory_tree(root / item.name, client))
+        for item in client.list_directory(str(root))
+        if item.type == FileType.directory
+    ]
+
+
 @router.post("/api/renameDatasetFile", description="重命名数据集文件", response_model=NoneResponse)
 @wrap_api_response
 def rename_dataset_file(
-    dataset_id: Annotated[int, Form(description="数据集ID")],
-    path: Annotated[str, Form(description="文件路径")],
-    new_name: Annotated[str, Form(description="新文件名")],
+    dataset_id: Annotated[int, Body(description="数据集ID")],
+    path: Annotated[str, Body(description="文件路径")],
+    new_name: Annotated[str, Body(description="新文件名")],
     ctx: ResearcherContext = Depends(),
 ) -> None:
     check_dataset_exists(ctx.db, dataset_id)
@@ -158,8 +199,8 @@ def rename_dataset_file(
 @router.delete("/api/deleteDatasetFile", description="删除数据集文件", response_model=NoneResponse)
 @wrap_api_response
 def delete_dataset_file(
-    dataset_id: Annotated[int, Form(description="数据集ID")],
-    path: Annotated[str, Form(description="文件路径")],
+    dataset_id: Annotated[int, Body(description="数据集ID")],
+    path: Annotated[str, Body(description="文件路径")],
     ctx: ResearcherContext = Depends(),
 ) -> None:
     check_dataset_exists(ctx.db, dataset_id)

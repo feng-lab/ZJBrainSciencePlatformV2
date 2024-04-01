@@ -552,6 +552,11 @@ class UpdateDatasetRequest(CreateDatasetRequest, ModelId):
     pass
 
 
+class DatasetDirectoryTreeNode(BaseModel):
+    name: str
+    dirs: list["DatasetDirectoryTreeNode"]
+
+
 class CreateEEGDataRequest(BaseModel):
     user_id: ID
     gender:  Gender | None
