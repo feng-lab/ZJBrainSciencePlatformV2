@@ -53,3 +53,7 @@
 - entity_id: dataset_file
   zh-CN: 数据集文件
   en-US: dataset file
+
+- entity_id: eeg_data
+  zh-CN: 脑电数据
+  en-US: eeg data

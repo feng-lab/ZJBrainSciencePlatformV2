@@ -140,7 +140,7 @@ def check_dataset_exists(db: Session, dataset_id: int) -> None:
 
 
 def check_eegdata_exists(db: Session, eegdata_id: int) -> None:
-    _check_exists(db, EEGData, Entity.EEGData, id_=eegdata_id)
+    _check_exists(db, EEGData, Entity.eeg_data, id_=eegdata_id)
 
 
 def _check_exists(

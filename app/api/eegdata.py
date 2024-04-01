@@ -38,7 +38,7 @@ def create_eeg_data(request: CreateEEGDataRequest, ctx: ResearcherContext = Depe
 def get_eeg_data_info(eegdata_id: int, ctx: HumanSubjectContext = Depends()) -> EEGDataInfo:
     orm_eeg_data = common_crud.get_row_by_id(ctx.db, EEGData, eegdata_id)
     if orm_eeg_data is None:
-        raise ServiceError.not_found(Entity.EEGData)
+        raise ServiceError.not_found(Entity.eeg_data)
     eeg_data_info = convert.EEGData_orm_2_info(orm_eeg_data)
     return eeg_data_info
 
@@ -56,7 +56,7 @@ def get_eeg_data_by_page(search: EEGDataSearch = Depends(), ctx: HumanSubjectCon
 def update_eeg_data(request: UpdateEEGDataRequest, ctx: ResearcherContext = Depends()) -> None:
     orm_eeg_data = common_crud.get_row_by_id(ctx.db, EEGData, request.id)
     if orm_eeg_data is None:
-        raise ServiceError.not_found(Entity.EEGData)
+        raise ServiceError.not_found(Entity.eeg_data)
     dataset_dict = request.dict(exclude_unset=True)
     success = common_crud.update_row(ctx.db, EEGData, dataset_dict, id_=request.id, commit=True)
     if not success:
@@ -72,11 +72,10 @@ def delete_eeg_data(request: DeleteModelRequest, ctx: ResearcherContext = Depend
 
 
 def eeg_data_file_path(eeg_data_id: int, *parts: str) -> PurePosixPath:
-    file_path = PurePosixPath(f"/EEGdata_{eeg_data_id}")
+    file_path = PurePosixPath(f"/eeg_data_{eeg_data_id}")
     for part in parts:
         file_path = file_path / part.lstrip("/")
     return file_path
-
 
 @router.post("/api/uploadEEGDataFile", description="上传脑电数据文件", response_model=NoneResponse)
 @wrap_api_response
@@ -92,7 +91,6 @@ def upload_eeg_data_file(
         client.upload(str(directory_path), file.file, file.filename, mkdir=True, allow_overwrite=True)
 
 
-
 @router.get("/api/downloadEEGDataFile", description="下载脑电数据文件")
 def download_eeg_data_file(
     eeg_data_id: Annotated[int, Query(description="脑电数据ID")],
@@ -100,7 +98,7 @@ def download_eeg_data_file(
     ctx: HumanSubjectContext = Depends(),
 ) -> StreamingResponse:
     check_eegdata_exists(ctx.db, eeg_data_id)
-    file_path = eeg_data_file_path(eeg_data_id, path)
+    file_path = eeg_data_file_path(eeg_data_id,path)
     with Client(config.FILE_SERVER_URL) as client:
         file_server_response = client.inner.post("/download-file", params={"path": str(file_path)})
         if file_server_response.status_code != 200:
