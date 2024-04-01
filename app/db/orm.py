@@ -400,12 +400,10 @@ class DatasetFile(Base, ModelMixin):
 
 
 class EEGData(Base, ModelMixin):
-    __tablename__ = "eegdata"
+    __tablename__ = "eeg_data"
     __table_args__ = {"comment": "脑电数据"}
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, index=True, comment="用户ID")
     gender: Mapped[Gender | None] = mapped_column(Enum(Gender), nullable=False, comment="性别")
-    age: Mapped[int] = mapped_column(Integer, nullable=False,comment="年龄")
-    data_update_year: Mapped[DateTime] = mapped_column(DateTime, nullable = False, comment="数据上传时间")
-    #
-
+    age: Mapped[int] = mapped_column(Integer, nullable=False, comment="年龄")
+    data_update_year: Mapped[date] = mapped_column(Date, nullable=False, comment="数据上传时间")
