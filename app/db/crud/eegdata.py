@@ -17,7 +17,7 @@ def search_eegdata(db: Session, search: EEGDataSearch) -> tuple[int, Sequence[EE
     if search.data_update_year is not None:
         base_stmt = base_stmt.where(EEGData.data_update_year == search.data_update_year)
     if search.age is not None:
-        base_stmt = base_stmt.where(EEGData.age.icontains(search.age))
+        base_stmt = base_stmt.where(EEGData.age == search.age)
     if not search.include_deleted:
         base_stmt = base_stmt.where(EEGData.is_deleted == False)
     return query_pages(db, base_stmt, search.offset, search.limit)

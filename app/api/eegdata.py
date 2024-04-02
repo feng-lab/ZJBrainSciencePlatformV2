@@ -2,7 +2,7 @@ from pathlib import PurePosixPath
 from typing import Annotated
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
+from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from zjbs_file_client import Client
 
@@ -20,30 +20,30 @@ from app.model.schema import CreateEEGDataRequest, EEGDataInfo, EEGDataSearch, U
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response
 
-router = APIRouter(tags=["eegdata"])
+router = APIRouter(tags=["eeg_data"])
 
 
 @router.post("/api/createEEGData", description="创建数据集", response_model=Response[int])
 @wrap_api_response
 def create_eeg_data(request: CreateEEGDataRequest, ctx: ResearcherContext = Depends()) -> int:
-    eegdata_dict = request.dict()
-    eegdata_id = common_crud.insert_row(ctx.db, EEGData, eegdata_dict, commit=True)
-    if eegdata_id is None:
+    eeg_data_dict = request.dict()
+    eeg_data_id = common_crud.insert_row(ctx.db, EEGData, eeg_data_dict, commit=True)
+    if eeg_data_id is None:
         raise ServiceError.database_fail()
-    return eegdata_id
+    return eeg_data_id
 
 
-@router.post("/api/getEEGDataInfo", description="获取数据集详情", response_model=Response[EEGDataInfo])
+@router.get("/api/getEEGDataInfo", description="获取数据集详情", response_model=Response[EEGDataInfo])
 @wrap_api_response
-def get_eeg_data_info(eegdata_id: int, ctx: HumanSubjectContext = Depends()) -> EEGDataInfo:
-    orm_eeg_data = common_crud.get_row_by_id(ctx.db, EEGData, eegdata_id)
+def get_eeg_data_info(eeg_data_id: int, ctx: HumanSubjectContext = Depends()) -> EEGDataInfo:
+    orm_eeg_data = common_crud.get_row_by_id(ctx.db, EEGData, eeg_data_id)
     if orm_eeg_data is None:
         raise ServiceError.not_found(Entity.eeg_data)
     eeg_data_info = convert.EEGData_orm_2_info(orm_eeg_data)
     return eeg_data_info
 
 
-@router.post("/api/getEEGDataByPag", description="获取数据集列表", response_model=Response[Page[EEGDataInfo]])
+@router.get("/api/getEEGDataByPag", description="获取数据集列表", response_model=Response[Page[EEGDataInfo]])
 @wrap_api_response
 def get_eeg_data_by_page(search: EEGDataSearch = Depends(), ctx: HumanSubjectContext = Depends()) -> Page[EEGDataInfo]:
     total, orm_eeg_data = crud.search_eegdata(ctx.db, search)
@@ -76,6 +76,7 @@ def eeg_data_file_path(eeg_data_id: int, *parts: str) -> PurePosixPath:
     for part in parts:
         file_path = file_path / part.lstrip("/")
     return file_path
+
 
 @router.post("/api/uploadEEGDataFile", description="上传脑电数据文件", response_model=NoneResponse)
 @wrap_api_response
@@ -112,8 +113,8 @@ def download_eeg_data_file(
 @router.delete("/api/deleteEEGDataFile", description="删除脑电文件", response_model=NoneResponse)
 @wrap_api_response
 def delete_eeg_data_file(
-    eeg_data_id: Annotated[int, Form(description="脑电数据ID")],
-    path: Annotated[str, Form(description="文件路径")],
+    eeg_data_id: Annotated[int, Body(description="脑电数据ID")],
+    path: Annotated[str, Body(description="文件路径")],
     ctx: ResearcherContext = Depends(),
 ) -> None:
     check_eegdata_exists(ctx.db, eeg_data_id)
