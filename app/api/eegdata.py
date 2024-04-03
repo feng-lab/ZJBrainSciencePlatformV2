@@ -4,21 +4,21 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
 from fastapi.responses import StreamingResponse
+from starlette.responses import guess_type
 from zjbs_file_client import Client
 
 import app.db.crud.eegdata as crud
 from app.api import check_eegdata_exists, wrap_api_response
+from app.common.config import config
+from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.localization import Entity
-from app.common.context import HumanSubjectContext, ResearcherContext
-from app.common.config import config
 from app.db import common_crud
 from app.db.orm import EEGData
-
 from app.model import convert
-from app.model.schema import CreateEEGDataRequest, EEGDataInfo, EEGDataSearch, UpdateEEGDataRequest
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response
+from app.model.schema import CreateEEGDataRequest, EEGDataInfo, EEGDataSearch, UpdateEEGDataRequest
 
 router = APIRouter(tags=["eeg_data"])
 
@@ -27,9 +27,18 @@ router = APIRouter(tags=["eeg_data"])
 @wrap_api_response
 def create_eeg_data(request: CreateEEGDataRequest, ctx: ResearcherContext = Depends()) -> int:
     eeg_data_dict = request.dict()
-    eeg_data_id = common_crud.insert_row(ctx.db, EEGData, eeg_data_dict, commit=True)
+    eeg_data_id = common_crud.insert_row(ctx.db, EEGData, eeg_data_dict, commit=False)
     if eeg_data_id is None:
         raise ServiceError.database_fail()
+
+    with Client(config.FILE_SERVER_URL) as client:
+        file_server_response = client.inner.post(
+            "/create-directory", params={"path": eeg_data_file_path(eeg_data_id, "/"), "exists_ok": True}
+        )
+        if not file_server_response.is_success:
+            raise ServiceError.remote_service_error(file_server_response.reason_phrase)
+
+    ctx.db.commit()
     return eeg_data_id
 
 
@@ -43,7 +52,7 @@ def get_eeg_data_info(eeg_data_id: int, ctx: HumanSubjectContext = Depends()) ->
     return eeg_data_info
 
 
-@router.get("/api/getEEGDataByPag", description="获取数据集列表", response_model=Response[Page[EEGDataInfo]])
+@router.get("/api/getEEGDataByPage", description="获取数据集列表", response_model=Response[Page[EEGDataInfo]])
 @wrap_api_response
 def get_eeg_data_by_page(search: EEGDataSearch = Depends(), ctx: HumanSubjectContext = Depends()) -> Page[EEGDataInfo]:
     total, orm_eeg_data = crud.search_eegdata(ctx.db, search)
@@ -99,14 +108,17 @@ def download_eeg_data_file(
     ctx: HumanSubjectContext = Depends(),
 ) -> StreamingResponse:
     check_eegdata_exists(ctx.db, eeg_data_id)
-    file_path = eeg_data_file_path(eeg_data_id,path)
+    file_path = eeg_data_file_path(eeg_data_id, path)
     with Client(config.FILE_SERVER_URL) as client:
         file_server_response = client.inner.post("/download-file", params={"path": str(file_path)})
         if file_server_response.status_code != 200:
             raise ServiceError.remote_service_error(file_server_response.text)
         return StreamingResponse(
             file_server_response.iter_bytes(1024),
-            headers={"Content-Disposition": f"attachment; filename={quote(file_path.name)}"},
+            headers={
+                "Content-Disposition": f"attachment; filename={quote(file_path.name)}",
+                "Content-Type": guess_type(file_path.name)[0] or "text/plain",
+            },
         )
 
 

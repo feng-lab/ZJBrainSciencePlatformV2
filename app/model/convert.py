@@ -12,6 +12,7 @@ from app.db.orm import (
     AtlasRegionLink,
     Dataset,
     Device,
+    EEGData,
     Experiment,
     HumanSubject,
     Notification,
@@ -20,7 +21,6 @@ from app.db.orm import (
     TaskStep,
     User,
     VirtualFile,
-    EEGData,
 )
 from app.model.field import LongVarchar
 from app.model.schema import (
@@ -36,6 +36,7 @@ from app.model.schema import (
     DatasetInfo,
     DeviceInfo,
     DeviceInfoWithIndex,
+    EEGDataInfo,
     ExperimentResponse,
     ExperimentSimpleResponse,
     FileResponse,
@@ -49,7 +50,6 @@ from app.model.schema import (
     TaskStepInfo,
     UserInfo,
     UserResponse,
-    EEGDataInfo,
 )
 
 A = TypeVar("A")

@@ -559,7 +559,7 @@ class DatasetDirectoryTreeNode(BaseModel):
 
 class CreateEEGDataRequest(BaseModel):
     user_id: ID
-    gender:  Gender | None
+    gender: Gender | None
     age: int | None
     data_update_year: date | None
 
@@ -576,5 +576,5 @@ class UpdateEEGDataRequest(CreateEEGDataRequest, ModelId):
 class EEGDataSearch(PageParm):
     user_id: ID | None
     data_update_year: int | None
-    gender:  Gender | None
+    gender: Gender | None
     age: int | None

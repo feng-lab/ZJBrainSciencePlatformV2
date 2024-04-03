@@ -18,6 +18,7 @@ from app.api.atlas import router as atlas_router
 from app.api.auth import router as auth_router
 from app.api.dataset import router as dataset_router
 from app.api.device import router as device_router
+from app.api.eegdata import router as eeg_data_router
 from app.api.experiment import router as experiment_router
 from app.api.file import router as file_router
 from app.api.human_subject import router as human_subject_router
@@ -26,7 +27,6 @@ from app.api.paradigm import router as paradigm_router
 from app.api.task import router as task_router
 from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
 from app.api.user import router as user_router
-from app.api.eegdata import router as eeg_data_router
 from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.localization import MessageLocale, locale_ctxvar, translate_message
@@ -59,7 +59,7 @@ app = FastAPI(
         {"name": "algorithm"},
         {"name": "task"},
         {"name": "dataset"},
-        {"name": "eeg_data"}
+        {"name": "eeg_data"},
     ],
     debug=config.DEBUG_MODE,
 )
