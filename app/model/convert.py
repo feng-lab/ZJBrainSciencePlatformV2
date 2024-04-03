@@ -12,6 +12,7 @@ from app.db.orm import (
     AtlasRegionLink,
     Dataset,
     Device,
+    EEGData,
     Experiment,
     HumanSubject,
     Notification,
@@ -35,6 +36,7 @@ from app.model.schema import (
     DatasetInfo,
     DeviceInfo,
     DeviceInfoWithIndex,
+    EEGDataInfo,
     ExperimentResponse,
     ExperimentSimpleResponse,
     FileResponse,
@@ -311,3 +313,7 @@ def atlas_paradigm_class_tree_node_2_info(paradigm_class: AtlasParadigmClassTree
 
 def dataset_orm_2_info(dataset: Dataset) -> DatasetInfo:
     return DatasetInfo.from_orm(dataset)
+
+
+def EEGData_orm_2_info(eegdata: EEGData) -> EEGDataInfo:
+    return EEGDataInfo.from_orm(eegdata)

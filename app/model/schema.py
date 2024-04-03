@@ -555,3 +555,26 @@ class UpdateDatasetRequest(CreateDatasetRequest, ModelId):
 class DatasetDirectoryTreeNode(BaseModel):
     name: str
     dirs: list["DatasetDirectoryTreeNode"]
+
+
+class CreateEEGDataRequest(BaseModel):
+    user_id: ID
+    gender: Gender | None
+    age: int | None
+    data_update_year: date | None
+
+
+class EEGDataInfo(CreateEEGDataRequest, BaseModelInDB):
+    class Config:
+        orm_mode = True
+
+
+class UpdateEEGDataRequest(CreateEEGDataRequest, ModelId):
+    pass
+
+
+class EEGDataSearch(PageParm):
+    user_id: ID | None
+    data_update_year: int | None
+    gender: Gender | None
+    age: int | None
