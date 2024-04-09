@@ -5,5 +5,7 @@ services:
     deploy:
       replicas: 1
       restart_policy:
-        condition: on-failure
-        delay: 3s
+        condition: any
+        delay: 10s
+    healthcheck:
+      test: redis-cli ping || exit 1

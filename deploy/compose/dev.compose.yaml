@@ -19,6 +19,8 @@ services:
     depends_on:
       - database
       - cache
+    healthcheck:
+      test: curl --fail http://localhost/openapi.json || exit 1
 
   database:
     image: ${DATABASE_IMAGE_TAG}
@@ -35,9 +37,26 @@ services:
       - /data/ZJBrainSciencePlatform/mysql/backup:/backup
       - /data/ZJBrainSciencePlatform/mysql/log:/var/log/mysql
     restart: always
+    healthcheck:
+      test: mysqladmin ping -h localhost || exit 1
 
   cache:
     image: ${CACHE_IMAGE_TAG}
     ports:
       - "8200:6379"
     restart: always
+    healthcheck:
+      test: redis-cli ping
+
+  file-server:
+    image: ${FILE_SERVER_IMAGE_TAG}
+    ports:
+      - "8300:80"
+    environment:
+      ZJBS_FILE_FILE_DIR: /data/file
+      ZJBS_FILE_LOG_DIR: /data/log
+    volumes:
+      - ${FILE_DIR:-/data/ZJBrainSciencePlatform/file_server/file}:/data/file
+      - ${LOG_DIR:-/data/ZJBrainSciencePlatform/file_server/log}:/data/log
+    healthcheck:
+      test: curl --fail http://localhost/openapi.json || exit 1

@@ -4,31 +4,16 @@ on: push
 
 jobs:
 
-  check-skip:
-    runs-on: ubuntu-latest
-    outputs:
-      shouldSkip: ${{ steps.checkSkip.outputs.should_skip }}
-
-    steps:
-      - name: 检查是否要跳过本次Action
-        id: checkSkip
-        uses: fkirc/skip-duplicate-actions@v5
-        with:
-          skip_after_successful_duplicate: 'true'
-          concurrent_skipping: same_content_newer
-
   pytest:
-    needs: check-skip
-    if: needs.check-skip.outputs.shouldSkip != 'true'
     runs-on: ubuntu-latest
 
     services:
       cache:
-        image: redis:7.0
+        image: redis:7-alpine
         ports:
           - 8200:6379
       database:
-        image: cnife/zj-brain-science-platform-database:latest
+        image: caitaozjlab/zjbs-database:latest
         ports:
           - 8100:3306
         env:
@@ -40,19 +25,19 @@ jobs:
 
     steps:
       - name: 切换到推送的分支
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 安装Poetry
         run: pipx install poetry
 
       - name: 安装Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: poetry
 
       - name: 安装依赖项
-        run: poetry install --with test
+        run: poetry install --without dev
 
       - name: 创建文件夹
         run: mkdir -p "${HOME}/log" "${HOME}/file"
@@ -76,10 +61,10 @@ jobs:
 
     steps:
       - name: 切换到推送的分支
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 设置时区
-        uses: szenius/set-timezone@v1.1
+        uses: szenius/set-timezone@v1.2
         with:
           timezoneLinux: Asia/Shanghai
 
@@ -88,7 +73,7 @@ jobs:
         shell: bash
         run: |
           baseImageVersion="$(head -n 1 ./deploy/image-version/base.version)"
-          baseImageTag="cnife/zj-brain-science-platform-base:${baseImageVersion}"
+          baseImageTag="caitaozjlab/zjbs-base:${baseImageVersion}"
           echo "baseImageTag=${baseImageTag}" >> $GITHUB_OUTPUT
 
       - name: 生成镜像版本
@@ -101,16 +86,16 @@ jobs:
           echo "imageVersion=${imageVersion}" | tee -a $GITHUB_OUTPUT
 
       - name: 设置Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: 登录到Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
-          username: cnife
-          password: dckr_pat_IJKxGMNI_c-n54Fral-saNmZv-A
+          username: caitaozjlab
+          password: dckr_pat_3vHgyUohktPfh6AkThPE88CUzIs
 
       - name: 构建并推送镜像
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./deploy/dockerfile/platform.Dockerfile
@@ -118,9 +103,9 @@ jobs:
             BASE_IMAGE_TAG=${{ steps.getBaseImageTag.outputs.baseImageTag }}
           push: true
           tags: |
-            cnife/zj-brain-science-platform-platform:${{ steps.generateImageVersion.outputs.imageVersion }}
-            cnife/zj-brain-science-platform-platform:latest
-          cache-from: type=registry,ref=cnife/zj-brain-science-platform-platform:latest
+            caitaozjlab/zjbs-platform:${{ steps.generateImageVersion.outputs.imageVersion }}
+            caitaozjlab/zjbs-platform:latest
+          cache-from: type=registry,ref=caitaozjlab/zjbs-platform:latest
           cache-to: type=inline
 
       - name: 生成镜像结果报告
@@ -129,4 +114,4 @@ jobs:
           echo '# Docker 镜像版本' >> $GITHUB_STEP_SUMMARY
           echo '|Repo|Version|' >> $GITHUB_STEP_SUMMARY
           echo '|---|---|' >> $GITHUB_STEP_SUMMARY
-          echo '|`cnife/zj-brain-science-platform-platform`|`${{ steps.generateImageVersion.outputs.imageVersion }}`|' >> $GITHUB_STEP_SUMMARY
+          echo '|`caitaozjlab/zjbs-platform`|`${{ steps.generateImageVersion.outputs.imageVersion }}`|' >> $GITHUB_STEP_SUMMARY

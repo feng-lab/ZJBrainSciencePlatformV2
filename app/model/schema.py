@@ -510,3 +510,71 @@ class AtlasRegionParadigmClassUpdate(AtlasRegionParadigmClassCreate, ModelId):
 
 
 AtlasRegionParadigmClassDict: TypeAlias = dict[LongVarchar, float]
+
+
+class DatasetBase(BaseModel):
+    data_publisher: str | None
+    experiment_platform: str | None
+    project: str | None
+
+
+class CreateDatasetRequest(DatasetBase):
+    user_id: ID
+    description: str
+    species: str | None
+    paper_title: str | None
+    paper_doi: str | None
+    development_stage: str | None
+    data_update_year: date | None
+    file_format: str | None
+    sample_count: int | None
+    file_count: int | None
+    file_total_size_gb: float | None
+    file_acquired_size_gb: float | None
+    associated_diseases: str | None
+    organ: str | None
+    cell_count: int | None
+    data_type: str | None
+    fetch_url: str | None
+
+
+class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
+    class Config:
+        orm_mode = True
+
+
+class DatasetSearch(PageParm, DatasetBase):
+    user_id: ID | None
+    data_update_year: int | None
+
+
+class UpdateDatasetRequest(CreateDatasetRequest, ModelId):
+    pass
+
+
+class DatasetDirectoryTreeNode(BaseModel):
+    name: str
+    dirs: list["DatasetDirectoryTreeNode"]
+
+
+class CreateEEGDataRequest(BaseModel):
+    user_id: ID
+    gender: Gender | None
+    age: int | None
+    data_update_year: date | None
+
+
+class EEGDataInfo(CreateEEGDataRequest, BaseModelInDB):
+    class Config:
+        orm_mode = True
+
+
+class UpdateEEGDataRequest(CreateEEGDataRequest, ModelId):
+    pass
+
+
+class EEGDataSearch(PageParm):
+    user_id: ID | None
+    data_update_year: int | None
+    gender: Gender | None
+    age: int | None

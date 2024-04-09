@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  file-server:
+    image: ${IMAGE_TAG}
+    environment:
+      ZJBS_FILE_FILE_DIR: /data/file
+      ZJBS_FILE_LOG_DIR: /data/log
+    volumes:
+      - /data/ZJBrainSciencePlatform/file-server/file:/data/file
+      - /data/ZJBrainSciencePlatform/file-server/log:/data/log
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+    healthcheck:
+      test: curl --fail http://localhost/openapi.json || exit 1

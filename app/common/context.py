@@ -2,6 +2,7 @@ from fastapi import Depends
 from redis import Redis
 from sqlalchemy.orm import Session
 
+from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.user_auth import AccessLevel, oauth2_scheme, verify_current_user
 from app.db import get_db_session
@@ -12,7 +13,9 @@ class Context:
     def __init__(self, db: Session, token: str | None, api_access_level: int | None):
         self.db: Session = db
         self.cache: Redis = get_redis()
-        if token is None and api_access_level is None:
+        if not config.ENABLE_AUTH:
+            self.user_id = 1
+        elif token is None and api_access_level is None:
             self.user_id: int | None = None
         elif token is None:
             raise ServiceError.not_login()
