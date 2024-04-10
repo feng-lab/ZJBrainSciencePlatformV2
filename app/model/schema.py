@@ -546,6 +546,9 @@ class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
 class DatasetSearch(PageParm, DatasetBase):
     user_id: ID | None
     data_update_year: int | None
+    species: str | None
+    organ: str | None
+    development_stage: str | None
 
 
 class UpdateDatasetRequest(CreateDatasetRequest, ModelId):
