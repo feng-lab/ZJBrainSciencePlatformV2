@@ -584,8 +584,8 @@ class EEGDataSearch(PageParm):
 
 
 class CreateSpeciesRequest(BaseModel):
-    Chinese_name: str
-    English_name: str
+    chinese_name: str
+    english_name: str
     latin_name: str
 
 

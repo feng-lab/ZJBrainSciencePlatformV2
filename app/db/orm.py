@@ -413,6 +413,6 @@ class Species(Base, ModelMixin):
     __tablename__ = "species"
     __table_args__ = {"comment": "物种名称"}
 
-    Chinese_name: Mapped[str] = mapped_column(Text, nullable=False, comment="中文名称")
-    English_name: Mapped[str] = mapped_column(Text, nullable=False, comment="英文名称")
+    chinese_name: Mapped[str] = mapped_column(Text, nullable=False, comment="中文名称")
+    english_name: Mapped[str] = mapped_column(Text, nullable=False, comment="英文名称")
     latin_name: Mapped[str] = mapped_column(VarChar, nullable=False, unique=True, comment="拉丁文名称")
