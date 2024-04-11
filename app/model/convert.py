@@ -17,6 +17,7 @@ from app.db.orm import (
     HumanSubject,
     Notification,
     Paradigm,
+    Species,
     Task,
     TaskStep,
     User,
@@ -44,6 +45,7 @@ from app.model.schema import (
     NotificationResponse,
     ParadigmInDB,
     ParadigmResponse,
+    SpeciesInfo,
     TaskBaseInfo,
     TaskInfo,
     TaskSourceFileResponse,
@@ -317,3 +319,7 @@ def dataset_orm_2_info(dataset: Dataset) -> DatasetInfo:
 
 def EEGData_orm_2_info(eegdata: EEGData) -> EEGDataInfo:
     return EEGDataInfo.from_orm(eegdata)
+
+
+def species_orm_2_info(species: Species) -> SpeciesInfo:
+    return SpeciesInfo.from_orm(species)

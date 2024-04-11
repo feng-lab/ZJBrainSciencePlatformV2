@@ -409,10 +409,10 @@ class EEGData(Base, ModelMixin):
     data_update_year: Mapped[date] = mapped_column(Date, nullable=False, comment="数据上传时间")
 
 
-class Species(Base,ModelMixin):
+class Species(Base, ModelMixin):
     __tablename__ = "species"
     __table_args__ = {"comment": "物种名称"}
 
     Chinese_name: Mapped[str] = mapped_column(Text, nullable=False, comment="中文名称")
     English_name: Mapped[str] = mapped_column(Text, nullable=False, comment="英文名称")
-    latin_name:  Mapped[str] = mapped_column(Text, nullable=False, comment="拉丁文名称")
+    latin_name: Mapped[str] = mapped_column(VarChar, nullable=False, unique=True, comment="拉丁文名称")

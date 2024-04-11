@@ -57,3 +57,7 @@
 - entity_id: eeg_data
   zh-CN: 脑电数据
   en-US: eeg data
+
+- entity_id: species
+  zh-CN: 物种
+  en-US: species

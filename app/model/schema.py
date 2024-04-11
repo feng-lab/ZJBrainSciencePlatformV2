@@ -581,3 +581,18 @@ class EEGDataSearch(PageParm):
     data_update_year: int | None
     gender: Gender | None
     age: int | None
+
+
+class CreateSpeciesRequest(BaseModel):
+    Chinese_name: str
+    English_name: str
+    latin_name: str
+
+
+class SpeciesInfo(CreateSpeciesRequest, BaseModelInDB):
+    class Config:
+        orm_mode = True
+
+
+class UpdateSpeciesRequest(CreateSpeciesRequest, ModelId):
+    pass
