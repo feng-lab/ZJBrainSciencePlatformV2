@@ -546,6 +546,9 @@ class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
 class DatasetSearch(PageParm, DatasetBase):
     user_id: ID | None
     data_update_year: int | None
+    species: str | None
+    organ: str | None
+    development_stage: str | None
 
 
 class UpdateDatasetRequest(CreateDatasetRequest, ModelId):
@@ -578,3 +581,18 @@ class EEGDataSearch(PageParm):
     data_update_year: int | None
     gender: Gender | None
     age: int | None
+
+
+class CreateSpeciesRequest(BaseModel):
+    chinese_name: str
+    english_name: str
+    latin_name: str
+
+
+class SpeciesInfo(CreateSpeciesRequest, BaseModelInDB):
+    class Config:
+        orm_mode = True
+
+
+class UpdateSpeciesRequest(CreateSpeciesRequest, ModelId):
+    pass

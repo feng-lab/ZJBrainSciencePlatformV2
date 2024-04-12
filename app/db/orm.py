@@ -407,3 +407,12 @@ class EEGData(Base, ModelMixin):
     gender: Mapped[Gender | None] = mapped_column(Enum(Gender), nullable=False, comment="性别")
     age: Mapped[int] = mapped_column(Integer, nullable=False, comment="年龄")
     data_update_year: Mapped[date] = mapped_column(Date, nullable=False, comment="数据上传时间")
+
+
+class Species(Base, ModelMixin):
+    __tablename__ = "species"
+    __table_args__ = {"comment": "物种名称"}
+
+    chinese_name: Mapped[str] = mapped_column(Text, nullable=False, comment="中文名称")
+    english_name: Mapped[str] = mapped_column(Text, nullable=False, comment="英文名称")
+    latin_name: Mapped[str] = mapped_column(VarChar, nullable=False, unique=True, comment="拉丁文名称")

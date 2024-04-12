@@ -29,6 +29,7 @@ class Entity(StrEnum):
     dataset = "dataset"
     dataset_file = "dataset_file"
     eeg_data = "eeg_data"
+    species = "species"
 
 
 MessageTemplateKey: TypeAlias = tuple[str, MessageLocale]

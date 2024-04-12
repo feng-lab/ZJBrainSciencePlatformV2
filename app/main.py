@@ -24,6 +24,7 @@ from app.api.file import router as file_router
 from app.api.human_subject import router as human_subject_router
 from app.api.notification import router as notification_router
 from app.api.paradigm import router as paradigm_router
+from app.api.species import router as species_router
 from app.api.task import router as task_router
 from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
 from app.api.user import router as user_router
@@ -60,6 +61,7 @@ app = FastAPI(
         {"name": "task"},
         {"name": "dataset"},
         {"name": "eeg_data"},
+        {"name": "species"},
     ],
     debug=config.DEBUG_MODE,
 )
@@ -77,6 +79,7 @@ app.include_router(task_router)
 app.include_router(atlas_router)
 app.include_router(dataset_router)
 app.include_router(eeg_data_router)
+app.include_router(species_router)
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
