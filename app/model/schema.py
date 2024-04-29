@@ -530,12 +530,13 @@ class CreateDatasetRequest(DatasetBase):
     sample_count: int | None
     file_count: int | None
     file_total_size_gb: float | None
-    file_acquired_size_gb: float | None
     associated_diseases: str | None
     organ: str | None
     cell_count: int | None
     data_type: str | None
     fetch_url: str | None
+    start_acquisition_time: date | None
+    planed_acquisition_time: date | None
 
 
 class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
@@ -549,6 +550,8 @@ class DatasetSearch(PageParm, DatasetBase):
     species: str | None
     organ: str | None
     development_stage: str | None
+    description: str | None
+    id: ID | None
 
 
 class UpdateDatasetRequest(CreateDatasetRequest, ModelId):

@@ -28,4 +28,9 @@ def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[D
         base_stmt = base_stmt.where(Dataset.development_stage.icontains(search.development_stage))
     if not search.include_deleted:
         base_stmt = base_stmt.where(Dataset.is_deleted == False)
+    if search.id is not None:
+        base_stmt = base_stmt.where(Dataset.id == search.id)
+    if search.description is not None:
+        base_stmt = base_stmt.where(Dataset.description.icontains(search.description))
+
     return query_pages(db, base_stmt, search.offset, search.limit)
