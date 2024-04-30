@@ -78,6 +78,22 @@ def update_dataset(request: UpdateDatasetRequest, ctx: ResearcherContext = Depen
         raise ServiceError.database_fail()
 
 
+@router.post("/api/getAllDatasetSize", description="获取数据集大小", response_model=Response[int])
+@wrap_api_response
+def get_all_dataset_size(dataset_id: Annotated[int, Query(description="数据集ID")],
+    directory: Annotated[str, Query(description="文件夹路径")], ctx: ResearcherContext = Depends()) -> int:
+    file_server_response = 0
+    with Client(config.FILE_SERVER_URL) as client:
+        file_server_response =+ client.inner.post(
+            "/get-size", params={"path": dataset_file_path(dataset_id, "/")}
+        )
+        if not file_server_response.is_success:
+            raise ServiceError.remote_service_error(file_server_response.reason_phrase)
+    return file_server_response
+
+
+
+
 @router.delete("/api/deleteDataset", description="删除数据集", response_model=NoneResponse)
 @wrap_api_response
 def delete_dataset(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:

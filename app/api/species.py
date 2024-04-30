@@ -35,6 +35,10 @@ def get_species_info(species_id: int, ctx: HumanSubjectContext = Depends()) -> S
     species_info = convert.species_orm_2_info(orm_species)
     return species_info
 
+@router.post("/api/getAllSpeciesInfo", description="获取物种名称详情", response_model=Response[SpeciesInfo])
+
+
+
 
 @router.post("/api/updateSpecies", description="更新物种名称", response_model=NoneResponse)
 @wrap_api_response
