@@ -41,6 +41,41 @@ def get_row(
             raise ServiceError.not_found(not_found_entity)
         return row
 
+# def get_rows(
+#     db: Session,
+#     table: type[OrmModel],
+#     *where: WhereHavingRole,
+#     raise_on_fail: bool = False,
+#     not_found_entity: Entity | None = None,
+#     batch_size:int|None = None
+# ):
+#
+#     stmt = select(table).where(table.is_deleted == False, *where)
+#     if batch_size is None:
+#         try:
+#             rows = db.execute(stmt).fetchall()
+#         except DBAPIError as e:
+#             logger.error(f"get row from table {table.__name__} error, msg={e}")
+#             if raise_on_fail:
+#                 raise ServiceError.database_fail()
+#         else:
+#             if rows is None and raise_on_fail:
+#                 assert not_found_entity is not None
+#                 raise ServiceError.not_found(not_found_entity)
+#             return rows
+#     if batch_size is not None:
+#         try:
+#             rows = db.execute(stmt).fetchmany(batch_size)
+#         except DBAPIError as e:
+#             logger.error(f"get row from table {table.__name__} error, msg={e}")
+#             if raise_on_fail:
+#                 raise ServiceError.database_fail()
+#         else:
+#             if rows is None and raise_on_fail:
+#                 assert not_found_entity is not None
+#                 raise ServiceError.not_found(not_found_entity)
+#             return rows
+
 
 def exists_row(
     db: Session,

@@ -25,7 +25,8 @@ from app.model.schema import (
     DatasetSearch,
     UpdateDatasetRequest,
 )
-
+from sqlalchemy import select
+# from sqlalchemy.orm import Session, immediateload, joinedload, load_only, raiseload, subqueryload
 router = APIRouter(tags=["dataset"])
 
 
@@ -77,21 +78,28 @@ def update_dataset(request: UpdateDatasetRequest, ctx: ResearcherContext = Depen
     if not success:
         raise ServiceError.database_fail()
 
+from app.model.schema import DatasetSearch
+# @router.post("/api/getAllDatasetSize", description="获取数据集大小", response_model=Response[Page[DatasetInfo]])
+# @wrap_api_response
+# def get_all_dataset_size(user_id: int, search: DatasetSearch= Depends(), ctx: ResearcherContext = Depends()) -> Page[DatasetInfo]:
+#     search.user_id = user_id
+#     total, orm_datasets = crud.search_datasets(ctx.db, search)
+#     # print(orm_datasets)
+#     dataset_infos = convert.map_list(convert.dataset_orm_2_info, orm_datasets)
+#     # a = convert.dataset_orm_2_info()
+#     print(help(dataset_infos))
+# #
+#     return Page(total=total, items=dataset_infos)
 
-@router.post("/api/getAllDatasetSize", description="获取数据集大小", response_model=Response[int])
-@wrap_api_response
-def get_all_dataset_size(dataset_id: Annotated[int, Query(description="数据集ID")],
-    directory: Annotated[str, Query(description="文件夹路径")], ctx: ResearcherContext = Depends()) -> int:
-    file_server_response = 0
-    with Client(config.FILE_SERVER_URL) as client:
-        file_server_response =+ client.inner.post(
-            "/get-size", params={"path": dataset_file_path(dataset_id, "/")}
-        )
-        if not file_server_response.is_success:
-            raise ServiceError.remote_service_error(file_server_response.reason_phrase)
-    return file_server_response
-
-
+# @router.post("/api/getAllDatasetSize", description="获取数据集大小", response_model=Response[list])
+# @wrap_api_response
+# def get_all_dataset_size( ctx: ResearcherContext = Depends()) :
+#
+#     row = common_crud.get_rows(ctx.db, Dataset)
+#     # print(orm_datasets)
+#     dataset_info = convert.dataset_orm_2_info(row)
+#     # print(row.id)
+#     return dataset_info
 
 
 @router.delete("/api/deleteDataset", description="删除数据集", response_model=NoneResponse)
