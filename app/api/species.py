@@ -8,9 +8,9 @@ from app.db import common_crud
 from app.db.orm import Species
 from app.model import convert
 from app.model.request import DeleteModelRequest
-from app.model.response import NoneResponse, Response
-from app.model.schema import CreateSpeciesRequest, SpeciesInfo, UpdateSpeciesRequest
-
+from app.model.response import NoneResponse, Response,Page
+from app.model.schema import CreateSpeciesRequest, SpeciesInfo, UpdateSpeciesRequest,SpeciesSearch
+import app.db.crud.species as crud
 router = APIRouter(tags=["species"])
 
 
@@ -36,8 +36,11 @@ def get_species_info(species_id: int, ctx: HumanSubjectContext = Depends()) -> S
     return species_info
 
 @router.post("/api/getAllSpeciesInfo", description="获取物种名称详情", response_model=Response[SpeciesInfo])
-
-
+@wrap_api_response
+def get_dataset_by_page(search: SpeciesSearch = Depends(), ctx: HumanSubjectContext = Depends()) -> Page[SpeciesInfo]:
+    total, orm_species = crud.search_species(ctx.db, search)
+    dataset_infos = convert.map_list(convert.species_orm_2_info, orm_species)
+    return Page(total=total, items=dataset_infos)
 
 
 @router.post("/api/updateSpecies", description="更新物种名称", response_model=NoneResponse)

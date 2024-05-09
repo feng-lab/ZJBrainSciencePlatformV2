@@ -513,15 +513,13 @@ AtlasRegionParadigmClassDict: TypeAlias = dict[LongVarchar, float]
 
 
 class DatasetBase(BaseModel):
-    data_publisher: str | None
-    experiment_platform: str | None
-    project: str | None
-
+    species: str | None
+    data_type: str | None
 
 class CreateDatasetRequest(DatasetBase):
     user_id: ID
     description: str
-    species: str | None
+    # species: str | None
     paper_title: str | None
     paper_doi: str | None
     development_stage: str | None
@@ -533,10 +531,14 @@ class CreateDatasetRequest(DatasetBase):
     associated_diseases: str | None
     organ: str | None
     cell_count: int | None
-    data_type: str | None
+    # data_type: str | None
     fetch_url: str | None
     start_acquisition_time: date | None
     planed_acquisition_time: date | None
+
+    data_publisher: str | None
+    experiment_platform: str | None
+    project: str | None
 
 
 class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
@@ -547,11 +549,15 @@ class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
 class DatasetSearch(PageParm, DatasetBase):
     user_id: ID | None
     data_update_year: int | None
-    species: str | None
+    # species: str | None
     organ: str | None
     development_stage: str | None
     description: str | None
     id: ID | None
+
+    data_publisher: str | None
+    experiment_platform: str | None
+    project: str | None
 
 
 class UpdateDatasetRequest(CreateDatasetRequest, ModelId):
@@ -595,6 +601,12 @@ class CreateSpeciesRequest(BaseModel):
 class SpeciesInfo(CreateSpeciesRequest, BaseModelInDB):
     class Config:
         orm_mode = True
+
+
+class SpeciesSearch(PageParm, BaseModel):
+    chinese_name: str | None
+    english_name: str | None
+    latin_name: str | None
 
 
 class UpdateSpeciesRequest(CreateSpeciesRequest, ModelId):

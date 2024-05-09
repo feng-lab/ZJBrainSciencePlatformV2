@@ -34,3 +34,7 @@ def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[D
         base_stmt = base_stmt.where(Dataset.description.icontains(search.description))
 
     return query_pages(db, base_stmt, search.offset, search.limit)
+
+
+# def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[Dataset]]:
+
