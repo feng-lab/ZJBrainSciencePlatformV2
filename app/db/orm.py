@@ -377,8 +377,6 @@ class Dataset(Base, ModelMixin):
     data_update_year: Mapped[date | None] = mapped_column(Date, nullable=True, comment="数据更新年份")
     file_count: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="文件数量")
     file_total_size_gb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
-    start_acquisition_time: Mapped[date | None] = mapped_column(Date, nullable=True, comment="开始获取的日期")
-    planed_acquisition_time: Mapped[date | None] = mapped_column(Date, nullable=True, comment="计划完成日期")
     associated_diseases: Mapped[str | None] = mapped_column(Text, nullable=True, comment="相关疾病")
     organ: Mapped[str | None] = mapped_column(Text, nullable=True, comment="器官")
     cell_count: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="细胞数")
@@ -386,6 +384,13 @@ class Dataset(Base, ModelMixin):
     experiment_platform: Mapped[str | None] = mapped_column(Text, nullable=True, comment="实验、测序平台")
     fetch_url: Mapped[str | None] = mapped_column(Text, nullable=True, comment="下载路径")
     project: Mapped[str | None] = mapped_column(Text, nullable=True, comment="项目")
+    source: Mapped[str | None] = mapped_column(Text, nullable=True, comment="数据来源")
+    download_started_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="开始获取的日期")
+    planed_finish_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="计划完成日期")
+    contactor: Mapped[str | None] = mapped_column(Text, nullable=True, comment="联系人")
+    is_public: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否公开")
+    other_species: Mapped[str | None] = mapped_column(Text, nullable=True, comment="其他物种名称")
+    title: Mapped[str | None] = mapped_column(Text, nullable=True, comment="数据集名称")
 
     steps: Mapped[list["DatasetFile"]] = relationship("DatasetFile", viewonly=True)
 

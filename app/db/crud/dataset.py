@@ -32,6 +32,10 @@ def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[D
         base_stmt = base_stmt.where(Dataset.id == search.id)
     if search.description is not None:
         base_stmt = base_stmt.where(Dataset.description.icontains(search.description))
+    if search.data_type is not None:
+        base_stmt = base_stmt.where(Dataset.data_type.icontains(search.data_type))
+    if search.source is not None:
+        base_stmt = base_stmt.where(Dataset.source.icontains(search.source))
 
     return query_pages(db, base_stmt, search.offset, search.limit)
 

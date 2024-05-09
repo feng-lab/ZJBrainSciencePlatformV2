@@ -515,11 +515,11 @@ AtlasRegionParadigmClassDict: TypeAlias = dict[LongVarchar, float]
 class DatasetBase(BaseModel):
     species: str | None
     data_type: str | None
+    source: str | None
 
 class CreateDatasetRequest(DatasetBase):
     user_id: ID
     description: str
-    # species: str | None
     paper_title: str | None
     paper_doi: str | None
     development_stage: str | None
@@ -531,11 +531,13 @@ class CreateDatasetRequest(DatasetBase):
     associated_diseases: str | None
     organ: str | None
     cell_count: int | None
-    # data_type: str | None
     fetch_url: str | None
-    start_acquisition_time: date | None
-    planed_acquisition_time: date | None
-
+    download_started_date: date | None
+    planed_finish_date: date | None
+    contactor: str | None
+    is_public: bool | None
+    other_species: str | None
+    title: str | None
     data_publisher: str | None
     experiment_platform: str | None
     project: str | None
@@ -549,7 +551,6 @@ class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
 class DatasetSearch(PageParm, DatasetBase):
     user_id: ID | None
     data_update_year: int | None
-    # species: str | None
     organ: str | None
     development_stage: str | None
     description: str | None

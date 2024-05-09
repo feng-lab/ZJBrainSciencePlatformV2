@@ -17,5 +17,6 @@ def search_species(db: Session, search: SpeciesSearch) -> tuple[int, Sequence[Sp
         base_stmt = base_stmt.where(Species.english_name.icontains(search.english_name))
     if search.latin_name is not None:
         base_stmt = base_stmt.where(Species.english_name.icontains(search.latin_name))
-
+    if not search.include_deleted:
+        base_stmt = base_stmt.where(Species.is_deleted == False)
     return query_pages(db, base_stmt, search.offset, search.limit)
