@@ -41,17 +41,6 @@ def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[D
     return query_pages(db, base_stmt, search.offset, search.limit)
 
 
-def search_data_type(db: Session, table, search: DatasetBase) -> list:
-    where = []
-    if search.data_type is not None:
-        where.append(Dataset.data_type == search.data_type)
-    if search.species is not None:
-        where.append(Dataset.species == search.species)
-    if search.source is not None:
-        where.append(Dataset.source == search.source)
-    return common_crud.get_all_ids(db, table, where)
-
-
 def get_species_ids_mapping(db: Session, type: str) -> dict:
     if type == "species":
         query_type = Dataset.species
