@@ -45,7 +45,7 @@ def get_row(
 def get_all_ids(
         db: Session,
         table: type[OrmModel],
-        *where: WhereHavingRole,
+        where: list[WhereHavingRole] | None = None,
         raise_on_fail: bool = False,
         not_found_entity: Entity | None = None
                 ) -> list | None:
@@ -63,7 +63,6 @@ def get_all_ids(
 
         dataset_ids = [result[0] for result in results]
         return dataset_ids
-
 
 
 def exists_row(
