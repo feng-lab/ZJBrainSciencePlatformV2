@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 
+import app.db.crud.species as crud
 from app.api import wrap_api_response
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
@@ -8,9 +9,9 @@ from app.db import common_crud
 from app.db.orm import Species
 from app.model import convert
 from app.model.request import DeleteModelRequest
-from app.model.response import NoneResponse, Response,Page
-from app.model.schema import CreateSpeciesRequest, SpeciesInfo, UpdateSpeciesRequest,SpeciesSearch
-import app.db.crud.species as crud
+from app.model.response import NoneResponse, Page, Response
+from app.model.schema import CreateSpeciesRequest, SpeciesInfo, SpeciesSearch, UpdateSpeciesRequest
+
 router = APIRouter(tags=["species"])
 
 
@@ -34,6 +35,7 @@ def get_species_info(species_id: int, ctx: HumanSubjectContext = Depends()) -> S
         raise ServiceError.not_found(Entity.species)
     species_info = convert.species_orm_2_info(orm_species)
     return species_info
+
 
 @router.post("/api/getAllSpeciesInfo", description="获取物种名称详情", response_model=Response[SpeciesInfo])
 @wrap_api_response

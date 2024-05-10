@@ -24,10 +24,8 @@ from app.model.schema import (
     DatasetInfo,
     DatasetSearch,
     UpdateDatasetRequest,
-    DatasetBase
 )
-from sqlalchemy import select
-# from sqlalchemy.orm import Session, immediateload, joinedload, load_only, raiseload, subqueryload
+
 router = APIRouter(tags=["dataset"])
 
 
@@ -80,29 +78,25 @@ def update_dataset(request: UpdateDatasetRequest, ctx: ResearcherContext = Depen
         raise ServiceError.database_fail()
 
 
-@router.get("/api/getDatasetSize", description="获取单个数据集大小",response_model=Response[int])
+@router.get("/api/getDatasetSize", description="获取单个数据集大小", response_model=Response[int])
 @wrap_api_response
 def get_dataset_size(dataset_id: int, ctx: HumanSubjectContext = Depends()) -> int:
     check_dataset_exists(ctx.db, dataset_id)
     with Client(config.FILE_SERVER_URL) as client:
-        file_server_response = client.inner.get(
-            "/get-size", params={"path": dataset_file_path(dataset_id, "/")}
-        )
+        file_server_response = client.inner.get("/get-size", params={"path": dataset_file_path(dataset_id, "/")})
         if file_server_response.status_code != 200:
             raise ServiceError.remote_service_error(file_server_response.text)
         return file_server_response.json()
 
 
-@router.get("/api/getAllDatasetSize", description="获取数据集大小",response_model=Response[int])
+@router.get("/api/getAllDatasetSize", description="获取数据集大小", response_model=Response[int])
 @wrap_api_response
 def get_all_datasets_size(ctx: HumanSubjectContext = Depends()) -> int:
-    dataset_ids = common_crud.get_all_ids(ctx.db,Dataset)
+    dataset_ids = common_crud.get_all_ids(ctx.db, Dataset)
     dataset_size = 0
     with Client(config.FILE_SERVER_URL) as client:
         for dataset_id in dataset_ids:
-            file_server_response = client.inner.get(
-                "/get-size", params={"path": dataset_file_path(dataset_id, "/")}
-            )
+            file_server_response = client.inner.get("/get-size", params={"path": dataset_file_path(dataset_id, "/")})
             if file_server_response.status_code != 200:
                 raise ServiceError.remote_service_error(file_server_response.text)
             file_server_response_value = file_server_response.json()
@@ -112,9 +106,9 @@ def get_all_datasets_size(ctx: HumanSubjectContext = Depends()) -> int:
 
 @router.get("/api/getGroupDatasetSize", description="获取分组数据集大小", response_model=Response[list])
 @wrap_api_response
-def get_group_dataset_size(search:str,ctx: HumanSubjectContext = Depends()) -> list:
+def get_group_dataset_size(search: str, ctx: HumanSubjectContext = Depends()) -> list:
     fin_size = []
-    species_id_mapping = crud.get_species_ids_mapping(ctx.db,search)
+    species_id_mapping = crud.get_species_ids_mapping(ctx.db, search)
     with Client(config.FILE_SERVER_URL) as client:
         for key, dataset_ids in species_id_mapping.items():
             dataset_size = 0

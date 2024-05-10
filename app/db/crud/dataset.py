@@ -3,10 +3,10 @@ from typing import Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db import common_crud
 from app.db.crud import query_pages
 from app.db.orm import Dataset
-from app.model.schema import DatasetSearch, DatasetBase
-from app.db import common_crud
+from app.model.schema import DatasetBase, DatasetSearch
 
 
 def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[Dataset]]:
@@ -52,12 +52,12 @@ def search_data_type(db: Session, table, search: DatasetBase) -> list:
     return common_crud.get_all_ids(db, table, where)
 
 
-def get_species_ids_mapping(db: Session, type:str) -> dict:
-    if type =='species':
+def get_species_ids_mapping(db: Session, type: str) -> dict:
+    if type == "species":
         query_type = Dataset.species
-    if type == 'data_type':
+    if type == "data_type":
         query_type = Dataset.data_type
-    if type == 'source':
+    if type == "source":
         query_type = Dataset.source
 
     col_ids = db.query(query_type, Dataset.id).distinct(query_type).all()
@@ -69,4 +69,3 @@ def get_species_ids_mapping(db: Session, type:str) -> dict:
         col_ids_id_mapping[species].append(id_)
 
     return col_ids_id_mapping
-

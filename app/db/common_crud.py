@@ -43,12 +43,12 @@ def get_row(
 
 
 def get_all_ids(
-        db: Session,
-        table: type[OrmModel],
-        where: list[WhereHavingRole] | None = None,
-        raise_on_fail: bool = False,
-        not_found_entity: Entity | None = None
-                ) -> list | None:
+    db: Session,
+    table: type[OrmModel],
+    where: list[WhereHavingRole] | None = None,
+    raise_on_fail: bool = False,
+    not_found_entity: Entity | None = None,
+) -> list | None:
     stmt = select(table.id).where(table.is_deleted == False, *where)
     try:
         results = db.execute(stmt)
