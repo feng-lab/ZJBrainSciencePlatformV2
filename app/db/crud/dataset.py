@@ -48,8 +48,8 @@ def get_species_ids_mapping(db: Session, type: str) -> dict:
         query_type = Dataset.data_type
     if type == "source":
         query_type = Dataset.source
-
-    col_ids = db.query(query_type, Dataset.id).distinct(query_type).all()
+    stem = select(query_type, Dataset.id).where(Dataset.is_deleted == False)
+    col_ids = db.execute(stem).unique().all()
     col_ids_id_mapping = {}
 
     for species, id_ in col_ids:

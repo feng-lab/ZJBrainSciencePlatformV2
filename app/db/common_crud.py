@@ -49,10 +49,7 @@ def get_all_ids(
     raise_on_fail: bool = False,
     not_found_entity: Entity | None = None,
 ) -> list | None:
-    if where is not None:
-        stmt = select(table.id).where(table.is_deleted == False, *where)
-    else:
-        stmt = select(table.id).where(table.is_deleted == False)
+    stmt = select(table.id).where(table.is_deleted == False, *(where or []))
     try:
         results = db.execute(stmt)
     except DBAPIError as e:
@@ -64,7 +61,7 @@ def get_all_ids(
             assert not_found_entity is not None
             raise ServiceError.not_found(not_found_entity)
 
-        dataset_ids = [result[0] for result in results]
+        dataset_ids = [result.id for result in results]
         return dataset_ids
 
 
