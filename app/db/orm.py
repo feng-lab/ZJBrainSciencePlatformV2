@@ -422,3 +422,12 @@ class Species(Base, ModelMixin):
     chinese_name: Mapped[str] = mapped_column(Text, nullable=False, comment="中文名称")
     english_name: Mapped[str] = mapped_column(Text, nullable=False, comment="英文名称")
     latin_name: Mapped[str] = mapped_column(VarChar, nullable=False, unique=True, comment="拉丁文名称")
+
+class CumulativeDatasetSize(Base, ModelMixin):
+    __tablename__ = "cumulative_data_per_month"
+    __table_args__ = {"comment": "数据总量"}
+
+    date: Mapped[date] = mapped_column(Date, nullable=False, comment="日期")
+    full_data_size: Mapped[float] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
+    full_data_count: Mapped[float] = mapped_column(Float, nullable=True, comment="数据条目")
+
