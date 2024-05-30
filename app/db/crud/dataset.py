@@ -79,5 +79,5 @@ def get_species_cells_mapping(db: Session, type: str):
     return col_species_cells
 
 
-def get_dataset_collection_info(db: Session):
-    stem = select(Dataset.download_started_date, Dataset.planed_finish_date).where(Dataset.is_deleted == False)
+# def get_dataset_collection_info(db: Session):
+#     stem = select(Dataset.download_started_date, Dataset.planed_finish_date).where(Dataset.is_deleted == False)
