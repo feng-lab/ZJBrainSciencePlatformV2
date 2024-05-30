@@ -391,6 +391,8 @@ class Dataset(Base, ModelMixin):
     is_public: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否公开")
     other_species: Mapped[str | None] = mapped_column(Text, nullable=True, comment="其他物种名称")
     title: Mapped[str | None] = mapped_column(Text, nullable=True, comment="数据集名称")
+    planed_download_per_month: Mapped[float | None] = mapped_column(Float, nullable=True, comment="每月计划下载量")
+    is_cleaned: Mapped[bool | None] = mapped_column(Boolean,  nullable=True, comment="是否清洗过数据")
 
     steps: Mapped[list["DatasetFile"]] = relationship("DatasetFile", viewonly=True)
 

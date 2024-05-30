@@ -542,8 +542,8 @@ class CreateDatasetRequest(DatasetBase):
     data_publisher: str | None
     experiment_platform: str | None
     project: str | None
-
-
+    planed_download_per_month: float | None
+    is_cleaned : bool | None
 class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
     class Config:
         orm_mode = True

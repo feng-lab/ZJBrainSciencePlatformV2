@@ -1,12 +1,12 @@
 from typing import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
-from app.db import common_crud
 from app.db.crud import query_pages
-from app.db.orm import Dataset
-from app.model.schema import DatasetBase, DatasetSearch
+from app.db.orm import Dataset, CumulativeDatasetSize
+from app.model.schema import DatasetSearch
+
 
 
 def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[Dataset]]:
@@ -58,3 +58,26 @@ def get_species_ids_mapping(db: Session, type: str) -> dict:
         col_ids_id_mapping[species].append(id_)
 
     return col_ids_id_mapping
+
+
+def get_species_cells_mapping(db: Session, type: str):
+    if type == "species":
+        query_type = Dataset.species
+    if type == "data_type":
+        query_type = Dataset.data_type
+    if type == "source":
+        query_type = Dataset.source
+
+    stem = select(query_type, Dataset.cell_count).where(Dataset.is_deleted == False)
+    col_cells = db.execute(stem).all()
+    col_ids_id_mapping = {}
+    for species, cells in col_cells:
+        if species not in col_ids_id_mapping:
+            col_ids_id_mapping[species] = []
+        col_ids_id_mapping[species].append(cells)
+    col_species_cells = [{'name': key, 'value': sum(cell for cell in cells if cell is not None)}for key, cells in col_ids_id_mapping.items()]
+    return col_species_cells
+
+
+def get_dataset_collection_info(db: Session):
+    stem = select(Dataset.download_started_date, Dataset.planed_finish_date).where(Dataset.is_deleted == False)

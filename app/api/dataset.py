@@ -1,5 +1,5 @@
 from pathlib import PurePosixPath
-from typing import Annotated
+from typing import Annotated, List, Dict
 from urllib.parse import quote
 
 from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
@@ -104,16 +104,16 @@ def get_all_datasets_size(ctx: HumanSubjectContext = Depends()) -> int:
     return dataset_size
 
 
-@router.get("/api/getGroupDatasetSize", description="获取分组数据集大小", response_model=Response[list])
+@router.get("/api/getGroupDatasetSize", description="获取分组数据集大小", response_model=Response[dict])
 @wrap_api_response
-def get_group_dataset_size(search: str, ctx: HumanSubjectContext = Depends()) -> list:
+def get_group_dataset_size(search: str, ctx: HumanSubjectContext = Depends()) -> list[dict[str, int]]:
     fin_size = []
     species_id_mapping = crud.get_species_ids_mapping(ctx.db, search)
     with Client(config.FILE_SERVER_URL) as client:
         for key, dataset_ids in species_id_mapping.items():
+            species_counts = len(dataset_ids)
             dataset_size = 0
             for dataset_id in dataset_ids:
-                print(dataset_id)
                 file_server_response = client.inner.get(
                     "/get-size", params={"path": dataset_file_path(dataset_id, "/")}
                 )
@@ -121,8 +121,27 @@ def get_group_dataset_size(search: str, ctx: HumanSubjectContext = Depends()) ->
                     raise ServiceError.remote_service_error(file_server_response.text)
                 file_server_response_value = file_server_response.json()
                 dataset_size += file_server_response_value
-            fin_size.append((key, dataset_size))
+            fin_size.append({"name": key, "dataset_size": dataset_size, "counts": species_counts})
     return fin_size
+
+
+@router.get("/api/getGroupCells", description="获取分组细胞数目", response_model=Response[dict])
+@wrap_api_response
+def get_group_cells(search: str, ctx: HumanSubjectContext = Depends()) -> list[dict[str, int]]:
+    return crud.get_species_cells_mapping(ctx.db, search)
+
+
+# @router.get("/api/getDataSizePerMouth", description="获取分组细胞数目", response_model=Response[list])
+# @wrap_api_response
+# def get_data_size_per_mouth(ctx: HumanSubjectContext = Depends()):
+#     # 需要返回表的所有东西
+#     crud.search_datasets(ctx.db, search)
+#
+#     return []
+#
+# @router.get("/api/getDatasetCollectionInfo", description="获取分组细胞数目", response_model=Response[list])
+# @wrap_api_response
+# def get_dataset_collection_info( ctx: HumanSubjectContext = Depends()):
 
 
 @router.delete("/api/deleteDataset", description="删除数据集", response_model=NoneResponse)
