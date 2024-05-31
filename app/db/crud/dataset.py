@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.crud import query_pages
 from app.db.orm import Dataset, CumulativeDatasetSize
-from app.model.schema import DatasetSearch
+from app.model.schema import DatasetSearch,DatasetCollection
 
 
 
@@ -79,5 +79,13 @@ def get_species_cells_mapping(db: Session, type: str):
     return col_species_cells
 
 
-# def get_dataset_collection_info(db: Session):
-#     stem = select(Dataset.download_started_date, Dataset.planed_finish_date).where(Dataset.is_deleted == False)
+def get_dataset_collection_info(db: Session):
+    stem = select(
+        Dataset.id, Dataset.description, Dataset.planed_download_per_month,Dataset.title,
+        Dataset.planed_finish_date, Dataset.download_started_date
+    ).where(Dataset.is_deleted == False)
+    col_cells = db.execute(stem).fetchall()
+    total_stmt = stem.with_only_columns(func.count())
+    total = db.execute(total_stmt).scalar()
+    return total, col_cells
+

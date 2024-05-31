@@ -544,9 +544,20 @@ class CreateDatasetRequest(DatasetBase):
     project: str | None
     planed_download_per_month: float | None
     is_cleaned : bool | None
+
+
 class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
     class Config:
         orm_mode = True
+
+
+class DatasetCollection(BaseModel):
+    id :ID | None
+    description: str
+    title: str | None
+    planed_download_per_month: float | None
+    planed_finish_date: date | None
+    download_started_date: date | None
 
 
 class DatasetSearch(PageParm, DatasetBase):

@@ -24,6 +24,7 @@ from app.model.schema import (
     DatasetInfo,
     DatasetSearch,
     UpdateDatasetRequest,
+    DatasetCollection,
 )
 
 router = APIRouter(tags=["dataset"])
@@ -139,9 +140,14 @@ def get_group_cells(search: str, ctx: HumanSubjectContext = Depends()) -> list[d
 #
 #     return []
 #
-# @router.get("/api/getDatasetCollectionInfo", description="获取分组细胞数目", response_model=Response[list])
-# @wrap_api_response
-# def get_dataset_collection_info( ctx: HumanSubjectContext = Depends()):
+@router.get("/api/getDatasetCollectionInfo", description="获取细胞收集进度", response_model=Response[list])
+@wrap_api_response
+def get_dataset_collection_info(ctx: HumanSubjectContext = Depends()):
+    total, orm_datasets = crud.get_dataset_collection_info(ctx.db) # 没有search ，直接返回所有的东西
+
+    dataset_infos = convert.map_list(convert.dataset_collection_2_info, orm_datasets)
+    # print(dataset_infos)
+    return Page(total=total, items=dataset_infos)
 
 
 @router.delete("/api/deleteDataset", description="删除数据集", response_model=NoneResponse)

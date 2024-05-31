@@ -52,6 +52,7 @@ from app.model.schema import (
     TaskStepInfo,
     UserInfo,
     UserResponse,
+    DatasetCollection,
 )
 
 A = TypeVar("A")
@@ -316,6 +317,15 @@ def atlas_paradigm_class_tree_node_2_info(paradigm_class: AtlasParadigmClassTree
 def dataset_orm_2_info(dataset: Dataset) -> DatasetInfo:
     return DatasetInfo.from_orm(dataset)
 
+def dataset_collection_2_info(dataset: Dataset) -> DatasetCollection:
+    return DatasetCollection(
+        id = dataset.id,
+        description = dataset.description,
+        title = dataset.title,
+        planed_download_per_month = dataset.planed_download_per_month,
+        planed_finish_date=dataset.planed_download_per_month,
+        download_started_date = dataset.download_started_date
+    )
 
 def EEGData_orm_2_info(eegdata: EEGData) -> EEGDataInfo:
     return EEGDataInfo.from_orm(eegdata)
