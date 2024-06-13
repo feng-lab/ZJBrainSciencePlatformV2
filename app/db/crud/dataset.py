@@ -1,12 +1,11 @@
 from typing import Sequence
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.crud import query_pages
-from app.db.orm import Dataset, CumulativeDatasetSize
-from app.model.schema import DatasetSearch,DatasetCollection
-
+from app.db.orm import CumulativeDatasetSize, Dataset
+from app.model.schema import DatasetCollection, DatasetSearch, PageParm
 
 
 def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[Dataset]]:
@@ -75,17 +74,37 @@ def get_species_cells_mapping(db: Session, type: str):
         if species not in col_ids_id_mapping:
             col_ids_id_mapping[species] = []
         col_ids_id_mapping[species].append(cells)
-    col_species_cells = [{'name': key, 'value': sum(cell for cell in cells if cell is not None)}for key, cells in col_ids_id_mapping.items()]
+    col_species_cells = [
+        {"name": key, "value": sum(cell for cell in cells if cell is not None)}
+        for key, cells in col_ids_id_mapping.items()
+    ]
     return col_species_cells
 
 
-def get_dataset_collection_info(db: Session):
-    stem = select(
-        Dataset.id, Dataset.description, Dataset.planed_download_per_month,Dataset.title,
-        Dataset.planed_finish_date, Dataset.download_started_date
+def get_dataset_collection_info(db: Session, search: PageParm):
+    stem_base = select(
+        Dataset.id,
+        Dataset.description,
+        Dataset.planed_download_per_month,
+        Dataset.title,
+        Dataset.planed_finish_date,
+        Dataset.download_started_date,
     ).where(Dataset.is_deleted == False)
+    stem = stem_base.offset(search.offset).limit(search.limit)
     col_cells = db.execute(stem).fetchall()
     total_stmt = stem.with_only_columns(func.count())
     total = db.execute(total_stmt).scalar()
     return total, col_cells
 
+
+def get_dataset_size_month(db: Session):
+    stem = select(
+        CumulativeDatasetSize.id,
+        CumulativeDatasetSize.date,
+        CumulativeDatasetSize.full_data_size,
+        CumulativeDatasetSize.full_data_count,
+    ).where(CumulativeDatasetSize.is_deleted == False)
+    data_size_month = db.execute(stem).fetchall()
+    total_stmt = stem.with_only_columns(func.count())
+    total = db.execute(total_stmt).scalar()
+    return total, data_size_month

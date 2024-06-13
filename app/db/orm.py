@@ -392,7 +392,7 @@ class Dataset(Base, ModelMixin):
     other_species: Mapped[str | None] = mapped_column(Text, nullable=True, comment="其他物种名称")
     title: Mapped[str | None] = mapped_column(Text, nullable=True, comment="数据集名称")
     planed_download_per_month: Mapped[float | None] = mapped_column(Float, nullable=True, comment="每月计划下载量")
-    is_cleaned: Mapped[bool | None] = mapped_column(Boolean,  nullable=True, comment="是否清洗过数据")
+    is_cleaned: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否清洗过数据")
 
     steps: Mapped[list["DatasetFile"]] = relationship("DatasetFile", viewonly=True)
 
@@ -425,6 +425,7 @@ class Species(Base, ModelMixin):
     english_name: Mapped[str] = mapped_column(Text, nullable=False, comment="英文名称")
     latin_name: Mapped[str] = mapped_column(VarChar, nullable=False, unique=True, comment="拉丁文名称")
 
+
 class CumulativeDatasetSize(Base, ModelMixin):
     __tablename__ = "cumulative_data_per_month"
     __table_args__ = {"comment": "数据总量"}
@@ -432,4 +433,3 @@ class CumulativeDatasetSize(Base, ModelMixin):
     date: Mapped[date] = mapped_column(Date, nullable=False, comment="日期")
     full_data_size: Mapped[float] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
     full_data_count: Mapped[float] = mapped_column(Float, nullable=True, comment="数据条目")
-

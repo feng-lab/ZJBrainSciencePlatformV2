@@ -543,7 +543,7 @@ class CreateDatasetRequest(DatasetBase):
     experiment_platform: str | None
     project: str | None
     planed_download_per_month: float | None
-    is_cleaned : bool | None
+    is_cleaned: bool | None
 
 
 class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
@@ -552,12 +552,21 @@ class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
 
 
 class DatasetCollection(BaseModel):
-    id :ID | None
+    id: ID | None
     description: str
     title: str | None
     planed_download_per_month: float | None
     planed_finish_date: date | None
     download_started_date: date | None
+
+    dataset_size: int | None
+
+
+class CumulativeDatasetSizeInfo(BaseModel):
+    id: ID | None
+    date: date | None
+    full_data_size: float | None
+    full_data_count: float | None
 
 
 class DatasetSearch(PageParm, DatasetBase):

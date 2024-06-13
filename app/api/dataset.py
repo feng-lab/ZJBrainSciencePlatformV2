@@ -1,5 +1,5 @@
 from pathlib import PurePosixPath
-from typing import Annotated, List, Dict
+from typing import Annotated, Dict, List
 from urllib.parse import quote
 
 from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
@@ -23,8 +23,8 @@ from app.model.schema import (
     DatasetDirectoryTreeNode,
     DatasetInfo,
     DatasetSearch,
+    PageParm,
     UpdateDatasetRequest,
-    DatasetCollection,
 )
 
 router = APIRouter(tags=["dataset"])
@@ -132,22 +132,34 @@ def get_group_cells(search: str, ctx: HumanSubjectContext = Depends()) -> list[d
     return crud.get_species_cells_mapping(ctx.db, search)
 
 
-# @router.get("/api/getDataSizePerMouth", description="获取分组细胞数目", response_model=Response[list])
-# @wrap_api_response
-# def get_data_size_per_mouth(ctx: HumanSubjectContext = Depends()):
-#     # 需要返回表的所有东西
-#     crud.search_datasets(ctx.db, search)
-#
-#     return []
-#
-@router.get("/api/getDatasetCollectionInfo", description="获取细胞收集进度", response_model=Response[list])
+@router.get("/api/getDataSizePerMouth", description="获取每月数据量", response_model=Response[list])
 @wrap_api_response
-def get_dataset_collection_info(ctx: HumanSubjectContext = Depends()):
-    total, orm_datasets = crud.get_dataset_collection_info(ctx.db) # 没有search ，直接返回所有的东西
+def get_data_size_per_mouth(ctx: HumanSubjectContext = Depends()):
+    # 需要返回表的所有东西
+    total, orm_datasets_collection = crud.get_dataset_size_month(ctx.db)
+    dataset_infos = convert.map_list(convert.cumulative_dataset_size_2_info, orm_datasets_collection)
 
-    dataset_infos = convert.map_list(convert.dataset_collection_2_info, orm_datasets)
-    # print(dataset_infos)
     return Page(total=total, items=dataset_infos)
+
+
+#
+
+
+@router.get("/api/getDatasetCollectionInfo", description="获取数据收集信息", response_model=Response[list])
+@wrap_api_response
+def get_dataset_collection_info(search: PageParm = Depends(), ctx: HumanSubjectContext = Depends()):
+    total, orm_datasets = crud.get_dataset_collection_info(ctx.db, search)  # 没有search ，直接返回所有的东西
+    new_orm_datasets = []
+    with Client(config.FILE_SERVER_URL) as client:
+        for dataset_row in orm_datasets:
+            datset_id = dataset_row[0]
+            file_server_response = client.inner.get("/get-size", params={"path": dataset_file_path(datset_id, "/")})
+            if file_server_response.status_code != 200:
+                raise ServiceError.remote_service_error(file_server_response.text)
+            file_server_response_value = file_server_response.json()
+            new_orm_datasets.append((dataset_row, file_server_response_value))
+    dataset_collection_infos = convert.map_list(convert.dataset_collection_2_info, new_orm_datasets)
+    return Page(total=total, items=dataset_collection_infos)
 
 
 @router.delete("/api/deleteDataset", description="删除数据集", response_model=NoneResponse)
