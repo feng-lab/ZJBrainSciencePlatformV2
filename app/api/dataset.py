@@ -142,9 +142,6 @@ def get_data_size_per_mouth(ctx: HumanSubjectContext = Depends()):
     return Page(total=total, items=dataset_infos)
 
 
-#
-
-
 @router.get("/api/getDatasetCollectionInfo", description="获取数据收集信息", response_model=Response[list])
 @wrap_api_response
 def get_dataset_collection_info(search: PageParm = Depends(), ctx: HumanSubjectContext = Depends()):
@@ -168,6 +165,22 @@ def delete_dataset(request: DeleteModelRequest, ctx: ResearcherContext = Depends
     success = common_crud.bulk_update_rows_as_deleted(ctx.db, Dataset, ids=[request.id], commit=True)
     if not success:
         raise ServiceError.database_fail()
+
+
+@router.post("/api/CheckDatasetDir", description="检查数据条目", response_model=NoneResponse)
+@wrap_api_response
+def check_dataset_dir(ctx: ResearcherContext = Depends()) -> None:
+    dataset_ids = common_crud.get_all_ids(ctx.db, Dataset)
+    # print(dataset_ids)
+    with Client(config.FILE_SERVER_URL) as client:
+        for dataset_id in dataset_ids:
+            print(dataset_file_path(dataset_id, "/"))
+            file_server_response = client.inner.post(
+                "/create-directory", params={"path": dataset_file_path(dataset_id, "/"), "exists_ok": True}
+            )
+            if not file_server_response.is_success:
+                raise ServiceError.remote_service_error(file_server_response.reason_phrase)
+    ctx.db.commit()
 
 
 def dataset_file_path(dataset_id: int, *parts: str) -> PurePosixPath:
