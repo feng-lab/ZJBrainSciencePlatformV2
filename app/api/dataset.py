@@ -135,7 +135,6 @@ def get_group_cells(search: str, ctx: HumanSubjectContext = Depends()) -> list[d
 @router.get("/api/getDataSizePerMouth", description="获取每月数据量", response_model=Response[list])
 @wrap_api_response
 def get_data_size_per_mouth(ctx: HumanSubjectContext = Depends()):
-    # 需要返回表的所有东西
     total, orm_datasets_collection = crud.get_dataset_size_month(ctx.db)
     dataset_infos = convert.map_list(convert.cumulative_dataset_size_2_info, orm_datasets_collection)
 
@@ -145,7 +144,7 @@ def get_data_size_per_mouth(ctx: HumanSubjectContext = Depends()):
 @router.get("/api/getDatasetCollectionInfo", description="获取数据收集信息", response_model=Response[list])
 @wrap_api_response
 def get_dataset_collection_info(search: PageParm = Depends(), ctx: HumanSubjectContext = Depends()):
-    total, orm_datasets = crud.get_dataset_collection_info(ctx.db, search)  # 没有search ，直接返回所有的东西
+    total, orm_datasets = crud.get_dataset_collection_info(ctx.db, search)
     new_orm_datasets = []
     with Client(config.FILE_SERVER_URL) as client:
         for dataset_row in orm_datasets:
@@ -171,7 +170,6 @@ def delete_dataset(request: DeleteModelRequest, ctx: ResearcherContext = Depends
 @wrap_api_response
 def check_dataset_dir(ctx: ResearcherContext = Depends()) -> None:
     dataset_ids = common_crud.get_all_ids(ctx.db, Dataset)
-    # print(dataset_ids)
     with Client(config.FILE_SERVER_URL) as client:
         for dataset_id in dataset_ids:
             print(dataset_file_path(dataset_id, "/"))

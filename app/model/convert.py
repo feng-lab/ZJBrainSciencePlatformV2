@@ -327,7 +327,7 @@ def dataset_collection_2_info(input_data: tuple = (Dataset, int)) -> DatasetColl
         description=dataset.description,
         title=dataset.title,
         planed_download_per_month=dataset.planed_download_per_month,
-        planed_finish_date=dataset.planed_download_per_month,
+        planed_finish_date=dataset.planed_finish_date,
         download_started_date=dataset.download_started_date,
         dataset_size=dataset_size,
     )
