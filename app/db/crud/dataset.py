@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.crud import query_pages
 from app.db.orm import CumulativeDatasetSize, Dataset
-from app.model.schema import DatasetCollection, DatasetSearch, PageParm
+from app.model.schema import DatasetSearch, PageParm
 
 
 def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[Dataset]]:
