@@ -329,6 +329,7 @@ def dataset_collection_2_info(input_data: tuple = (Dataset, int)) -> DatasetColl
         planed_download_per_month=dataset.planed_download_per_month,
         planed_finish_date=dataset.planed_finish_date,
         download_started_date=dataset.download_started_date,
+        file_total_size_gb=dataset.file_total_size_gb,
         dataset_size=dataset_size,
     )
 
@@ -337,7 +338,7 @@ def cumulative_dataset_size_2_info(cumulativeDatasetSize: CumulativeDatasetSize)
     return CumulativeDatasetSizeInfo(
         id=cumulativeDatasetSize.id,
         date=cumulativeDatasetSize.date,
-        full_data_size=CumulativeDatasetSize.full_data_size,
+        full_data_size=cumulativeDatasetSize.full_data_size,
         full_data_count=cumulativeDatasetSize.full_data_count,
     )
 

@@ -558,6 +558,7 @@ class DatasetCollection(BaseModel):
     planed_download_per_month: float | None
     planed_finish_date: date | None
     download_started_date: date | None
+    file_total_size_gb: float | None
 
     dataset_size: int | None
 

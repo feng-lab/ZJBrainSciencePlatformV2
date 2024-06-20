@@ -89,6 +89,7 @@ def get_dataset_collection_info(db: Session, search: PageParm):
         Dataset.title,
         Dataset.planed_finish_date,
         Dataset.download_started_date,
+        Dataset.file_total_size_gb,
     ).where(Dataset.is_deleted == False)
     stem = stem_base.offset(search.offset).limit(search.limit)
     col_cells = db.execute(stem).fetchall()
