@@ -143,8 +143,10 @@ def get_data_size_per_mouth(ctx: HumanSubjectContext = Depends()):
 
 @router.get("/api/getDatasetCollectionInfo", description="获取数据收集信息", response_model=Response[list])
 @wrap_api_response
-def get_dataset_collection_info(search: PageParm = Depends(), ctx: HumanSubjectContext = Depends()):
-    total, orm_datasets = crud.get_dataset_collection_info(ctx.db, search)
+def get_dataset_collection_info(
+    search: PageParm = Depends(), ctx: HumanSubjectContext = Depends(), is_order: bool = True
+):
+    total, orm_datasets = crud.get_dataset_collection_info(ctx.db, search, is_order)
     new_orm_datasets = []
     with Client(config.FILE_SERVER_URL) as client:
         for dataset_row in orm_datasets:
@@ -155,6 +157,7 @@ def get_dataset_collection_info(search: PageParm = Depends(), ctx: HumanSubjectC
             file_server_response_value = file_server_response.json()
             new_orm_datasets.append((dataset_row, file_server_response_value))
     dataset_collection_infos = convert.map_list(convert.dataset_collection_2_info, new_orm_datasets)
+    print(dataset_collection_infos, total)
     return Page(total=total, items=dataset_collection_infos)
 
 

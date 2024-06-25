@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Any, Sequence
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -81,7 +81,7 @@ def get_species_cells_mapping(db: Session, type: str):
     return col_species_cells
 
 
-def get_dataset_collection_info(db: Session, search: PageParm):
+def get_dataset_collection_info(db: Session, search: PageParm, is_order: bool = True) -> tuple[int, Sequence[Any]]:
     stem_base = select(
         Dataset.id,
         Dataset.description,
@@ -91,14 +91,16 @@ def get_dataset_collection_info(db: Session, search: PageParm):
         Dataset.download_started_date,
         Dataset.file_total_size_gb,
     ).where(Dataset.is_deleted == False)
+    if is_order:
+        stem_base = stem_base.order_by(Dataset.planed_finish_date.desc())
     stem = stem_base.offset(search.offset).limit(search.limit)
     col_cells = db.execute(stem).fetchall()
-    total_stmt = stem.with_only_columns(func.count())
+    total_stmt = stem_base.with_only_columns(func.count())
     total = db.execute(total_stmt).scalar()
     return total, col_cells
 
 
-def get_dataset_size_month(db: Session):
+def get_dataset_size_month(db: Session) -> tuple[int, Sequence[Any]]:
     stem = select(
         CumulativeDatasetSize.id,
         CumulativeDatasetSize.date,
