@@ -157,7 +157,6 @@ def get_dataset_collection_info(
             file_server_response_value = file_server_response.json()
             new_orm_datasets.append((dataset_row, file_server_response_value))
     dataset_collection_infos = convert.map_list(convert.dataset_collection_2_info, new_orm_datasets)
-    print(dataset_collection_infos, total)
     return Page(total=total, items=dataset_collection_infos)
 
 
@@ -175,7 +174,6 @@ def check_dataset_dir(ctx: ResearcherContext = Depends()) -> None:
     dataset_ids = common_crud.get_all_ids(ctx.db, Dataset)
     with Client(config.FILE_SERVER_URL) as client:
         for dataset_id in dataset_ids:
-            print(dataset_file_path(dataset_id, "/"))
             file_server_response = client.inner.post(
                 "/create-directory", params={"path": dataset_file_path(dataset_id, "/"), "exists_ok": True}
             )
