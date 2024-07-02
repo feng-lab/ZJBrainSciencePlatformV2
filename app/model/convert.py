@@ -10,6 +10,7 @@ from app.db.orm import (
     AtlasParadigmClass,
     AtlasRegion,
     AtlasRegionLink,
+    CumulativeDatasetSize,
     Dataset,
     Device,
     EEGData,
@@ -34,6 +35,8 @@ from app.model.schema import (
     AtlasRegionLinkInfo,
     AtlasRegionTreeInfo,
     AtlasRegionTreeNode,
+    CumulativeDatasetSizeInfo,
+    DatasetCollection,
     DatasetInfo,
     DeviceInfo,
     DeviceInfoWithIndex,
@@ -315,6 +318,29 @@ def atlas_paradigm_class_tree_node_2_info(paradigm_class: AtlasParadigmClassTree
 
 def dataset_orm_2_info(dataset: Dataset) -> DatasetInfo:
     return DatasetInfo.from_orm(dataset)
+
+
+def dataset_collection_2_info(input_data: tuple = (Dataset, int)) -> DatasetCollection:
+    dataset, dataset_size = input_data
+    return DatasetCollection(
+        id=dataset.id,
+        description=dataset.description,
+        title=dataset.title,
+        planed_download_per_month=dataset.planed_download_per_month,
+        planed_finish_date=dataset.planed_finish_date,
+        download_started_date=dataset.download_started_date,
+        file_total_size_gb=dataset.file_total_size_gb,
+        dataset_size=dataset_size,
+    )
+
+
+def cumulative_dataset_size_2_info(cumulativeDatasetSize: CumulativeDatasetSize) -> CumulativeDatasetSizeInfo:
+    return CumulativeDatasetSizeInfo(
+        id=cumulativeDatasetSize.id,
+        date=cumulativeDatasetSize.date,
+        full_data_size=cumulativeDatasetSize.full_data_size,
+        full_data_count=cumulativeDatasetSize.full_data_count,
+    )
 
 
 def EEGData_orm_2_info(eegdata: EEGData) -> EEGDataInfo:

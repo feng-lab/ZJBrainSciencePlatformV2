@@ -1,5 +1,5 @@
 from pathlib import PurePosixPath
-from typing import Annotated
+from typing import Annotated, Any, Dict, List
 from urllib.parse import quote
 
 from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
@@ -23,6 +23,7 @@ from app.model.schema import (
     DatasetDirectoryTreeNode,
     DatasetInfo,
     DatasetSearch,
+    PageParm,
     UpdateDatasetRequest,
 )
 
@@ -78,12 +79,107 @@ def update_dataset(request: UpdateDatasetRequest, ctx: ResearcherContext = Depen
         raise ServiceError.database_fail()
 
 
+@router.get("/api/getDatasetSize", description="获取单个数据集大小", response_model=Response[int])
+@wrap_api_response
+def get_dataset_size(dataset_id: int, ctx: HumanSubjectContext = Depends()) -> int:
+    check_dataset_exists(ctx.db, dataset_id)
+    with Client(config.FILE_SERVER_URL) as client:
+        file_server_response = client.inner.get("/get-size", params={"path": dataset_file_path(dataset_id, "/")})
+        if file_server_response.status_code != 200:
+            raise ServiceError.remote_service_error(file_server_response.text)
+        return file_server_response.json()
+
+
+@router.get("/api/getAllDatasetSize", description="获取数据集大小", response_model=Response[int])
+@wrap_api_response
+def get_all_datasets_size(ctx: HumanSubjectContext = Depends()) -> int:
+    dataset_ids = common_crud.get_all_ids(ctx.db, Dataset)
+    dataset_size = 0
+    with Client(config.FILE_SERVER_URL) as client:
+        for dataset_id in dataset_ids:
+            file_server_response = client.inner.get("/get-size", params={"path": dataset_file_path(dataset_id, "/")})
+            if file_server_response.status_code != 200:
+                raise ServiceError.remote_service_error(file_server_response.text)
+            file_server_response_value = file_server_response.json()
+            dataset_size += file_server_response_value
+    return dataset_size
+
+
+@router.get("/api/getGroupDatasetSize", description="获取分组数据集大小", response_model=Response[dict])
+@wrap_api_response
+def get_group_dataset_size(search: str, ctx: HumanSubjectContext = Depends()) -> list[dict[str, int]]:
+    fin_size = []
+    species_id_mapping = crud.get_species_ids_mapping(ctx.db, search)
+    with Client(config.FILE_SERVER_URL) as client:
+        for key, dataset_ids in species_id_mapping.items():
+            species_counts = len(dataset_ids)
+            dataset_size = 0
+            for dataset_id in dataset_ids:
+                file_server_response = client.inner.get(
+                    "/get-size", params={"path": dataset_file_path(dataset_id, "/")}
+                )
+                if file_server_response.status_code != 200:
+                    raise ServiceError.remote_service_error(file_server_response.text)
+                file_server_response_value = file_server_response.json()
+                dataset_size += file_server_response_value
+            fin_size.append({"name": key, "dataset_size": dataset_size, "counts": species_counts})
+    return fin_size
+
+
+@router.get("/api/getGroupCells", description="获取分组细胞数目", response_model=Response[dict])
+@wrap_api_response
+def get_group_cells(search: str, ctx: HumanSubjectContext = Depends()) -> list[dict[str, int]]:
+    return crud.get_species_cells_mapping(ctx.db, search)
+
+
+@router.get("/api/getDataSizePerMouth", description="获取每月数据量", response_model=Response[list])
+@wrap_api_response
+def get_data_size_per_mouth(ctx: HumanSubjectContext = Depends()):
+    total, orm_datasets_collection = crud.get_dataset_size_month(ctx.db)
+    dataset_infos = convert.map_list(convert.cumulative_dataset_size_2_info, orm_datasets_collection)
+
+    return Page(total=total, items=dataset_infos)
+
+
+@router.get("/api/getDatasetCollectionInfo", description="获取数据收集信息", response_model=Response[list])
+@wrap_api_response
+def get_dataset_collection_info(
+    search: PageParm = Depends(), ctx: HumanSubjectContext = Depends(), is_order: bool = True
+):
+    total, orm_datasets = crud.get_dataset_collection_info(ctx.db, search, is_order)
+    new_orm_datasets = []
+    with Client(config.FILE_SERVER_URL) as client:
+        for dataset_row in orm_datasets:
+            datset_id = dataset_row[0]
+            file_server_response = client.inner.get("/get-size", params={"path": dataset_file_path(datset_id, "/")})
+            if file_server_response.status_code != 200:
+                raise ServiceError.remote_service_error(file_server_response.text)
+            file_server_response_value = file_server_response.json()
+            new_orm_datasets.append((dataset_row, file_server_response_value))
+    dataset_collection_infos = convert.map_list(convert.dataset_collection_2_info, new_orm_datasets)
+    return Page(total=total, items=dataset_collection_infos)
+
+
 @router.delete("/api/deleteDataset", description="删除数据集", response_model=NoneResponse)
 @wrap_api_response
 def delete_dataset(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
     success = common_crud.bulk_update_rows_as_deleted(ctx.db, Dataset, ids=[request.id], commit=True)
     if not success:
         raise ServiceError.database_fail()
+
+
+@router.post("/api/CheckDatasetDir", description="检查数据条目", response_model=NoneResponse)
+@wrap_api_response
+def check_dataset_dir(ctx: ResearcherContext = Depends()) -> None:
+    dataset_ids = common_crud.get_all_ids(ctx.db, Dataset)
+    with Client(config.FILE_SERVER_URL) as client:
+        for dataset_id in dataset_ids:
+            file_server_response = client.inner.post(
+                "/create-directory", params={"path": dataset_file_path(dataset_id, "/"), "exists_ok": True}
+            )
+            if not file_server_response.is_success:
+                raise ServiceError.remote_service_error(file_server_response.reason_phrase)
+    ctx.db.commit()
 
 
 def dataset_file_path(dataset_id: int, *parts: str) -> PurePosixPath:
@@ -134,20 +230,47 @@ def download_dataset_file(
         )
 
 
-@router.get("/api/listDatasetFiles", description="获取数据集文件列表")
+@router.get("/api/getDatasetFilesType", description="获取数据集文件类型", response_model=Response[list])
 @wrap_api_response
-def list_dataset_files(
+def get_dataset_files_type(
     dataset_id: Annotated[int, Query(description="数据集ID")],
     directory: Annotated[str, Query(description="文件夹路径")],
     ctx: HumanSubjectContext = Depends(),
-):
+) -> list:
     check_dataset_exists(ctx.db, dataset_id)
     directory_path = dataset_file_path(dataset_id, directory)
     with Client(config.FILE_SERVER_URL) as client:
         file_server_response = client.inner.post("/list-directory", params={"directory": str(directory_path)})
         if file_server_response.status_code != 200:
             raise ServiceError.remote_service_error(file_server_response.text)
-        return file_server_response.json()
+        files = file_server_response.json()
+
+        file_name = set(
+            file_info.get("name").split(".")[-1].lower() for file_info in files if file_info.get("type") == "file"
+        )
+        return list(file_name)
+
+
+@router.get("/api/listDatasetFiles", description="获取数据集文件列表", response_model=Response[list[dict[str, int]]])
+@wrap_api_response
+def list_dataset_files(
+    dataset_id: Annotated[int, Query(description="数据集ID")],
+    directory: Annotated[str, Query(description="文件夹路径")],
+    file_type: Annotated[str, Query(description="文件夹路径")] = None,
+    ctx: HumanSubjectContext = Depends(),
+) -> list[dict[str, int]]:
+    check_dataset_exists(ctx.db, dataset_id)
+    directory_path = dataset_file_path(dataset_id, directory)
+    with Client(config.FILE_SERVER_URL) as client:
+        file_server_response = client.inner.post("/list-directory", params={"directory": str(directory_path)})
+        if file_server_response.status_code != 200:
+            raise ServiceError.remote_service_error(file_server_response.text)
+        files = file_server_response.json()
+        if file_type is None:
+            return [{"counts": len(files)}, files]
+        else:
+            filtered_files = [f for f in files if f.get("name").endswith(f".{file_type}")]
+            return [{"counts": len(filtered_files)}, filtered_files]
 
 
 @router.get(

@@ -513,15 +513,14 @@ AtlasRegionParadigmClassDict: TypeAlias = dict[LongVarchar, float]
 
 
 class DatasetBase(BaseModel):
-    data_publisher: str | None
-    experiment_platform: str | None
-    project: str | None
+    species: str | None
+    data_type: str | None
+    source: str | None
 
 
 class CreateDatasetRequest(DatasetBase):
     user_id: ID
     description: str
-    species: str | None
     paper_title: str | None
     paper_doi: str | None
     development_stage: str | None
@@ -530,12 +529,21 @@ class CreateDatasetRequest(DatasetBase):
     sample_count: int | None
     file_count: int | None
     file_total_size_gb: float | None
-    file_acquired_size_gb: float | None
     associated_diseases: str | None
     organ: str | None
     cell_count: int | None
-    data_type: str | None
     fetch_url: str | None
+    download_started_date: date | None
+    planed_finish_date: date | None
+    contactor: str | None
+    is_public: bool | None
+    other_species: str | None
+    title: str | None
+    data_publisher: str | None
+    experiment_platform: str | None
+    project: str | None
+    planed_download_per_month: float | None
+    is_cleaned: bool | None
 
 
 class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
@@ -543,12 +551,36 @@ class DatasetInfo(CreateDatasetRequest, BaseModelInDB):
         orm_mode = True
 
 
+class DatasetCollection(BaseModel):
+    id: ID | None
+    description: str
+    title: str | None
+    planed_download_per_month: float | None
+    planed_finish_date: date | None
+    download_started_date: date | None
+    file_total_size_gb: float | None
+
+    dataset_size: int | None
+
+
+class CumulativeDatasetSizeInfo(BaseModel):
+    id: ID | None
+    date: date | None
+    full_data_size: float | None
+    full_data_count: float | None
+
+
 class DatasetSearch(PageParm, DatasetBase):
     user_id: ID | None
     data_update_year: int | None
-    species: str | None
     organ: str | None
     development_stage: str | None
+    description: str | None
+    id: ID | None
+
+    data_publisher: str | None
+    experiment_platform: str | None
+    project: str | None
 
 
 class UpdateDatasetRequest(CreateDatasetRequest, ModelId):
@@ -592,6 +624,12 @@ class CreateSpeciesRequest(BaseModel):
 class SpeciesInfo(CreateSpeciesRequest, BaseModelInDB):
     class Config:
         orm_mode = True
+
+
+class SpeciesSearch(PageParm, BaseModel):
+    chinese_name: str | None
+    english_name: str | None
+    latin_name: str | None
 
 
 class UpdateSpeciesRequest(CreateSpeciesRequest, ModelId):
