@@ -230,7 +230,7 @@ def download_dataset_file(
         )
 
 
-@router.get("/api/getDatasetFilesType", description="获取数据集文件类型")
+@router.get("/api/getDatasetFilesType", description="获取数据集文件类型", response_model=Response[list])
 @wrap_api_response
 def get_dataset_files_type(
     dataset_id: Annotated[int, Query(description="数据集ID")],
@@ -251,14 +251,14 @@ def get_dataset_files_type(
         return list(file_name)
 
 
-@router.get("/api/listDatasetFiles", description="获取数据集文件列表")
+@router.get("/api/listDatasetFiles", description="获取数据集文件列表", response_model=Response[list[dict[str, int]]])
 @wrap_api_response
 def list_dataset_files(
     dataset_id: Annotated[int, Query(description="数据集ID")],
     directory: Annotated[str, Query(description="文件夹路径")],
     file_type: Annotated[str, Query(description="文件夹路径")] = None,
     ctx: HumanSubjectContext = Depends(),
-) -> list[dict[str, int] | list[Any]]:
+) -> list[dict[str, int]]:
     check_dataset_exists(ctx.db, dataset_id)
     directory_path = dataset_file_path(dataset_id, directory)
     with Client(config.FILE_SERVER_URL) as client:
