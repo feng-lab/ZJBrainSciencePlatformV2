@@ -1,5 +1,5 @@
 from pathlib import PurePosixPath
-from typing import Annotated
+from typing import Annotated, Any, Dict, List
 from urllib.parse import quote
 
 from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
@@ -235,15 +235,18 @@ def download_dataset_file(
 def list_dataset_files(
     dataset_id: Annotated[int, Query(description="数据集ID")],
     directory: Annotated[str, Query(description="文件夹路径")],
+    file_type: Annotated[str, Query(description="文件类型")],
     ctx: HumanSubjectContext = Depends(),
-):
+) -> list[dict[str, int] | list[Any]]:
     check_dataset_exists(ctx.db, dataset_id)
     directory_path = dataset_file_path(dataset_id, directory)
     with Client(config.FILE_SERVER_URL) as client:
         file_server_response = client.inner.post("/list-directory", params={"directory": str(directory_path)})
         if file_server_response.status_code != 200:
             raise ServiceError.remote_service_error(file_server_response.text)
-        return file_server_response.json()
+        files = file_server_response.json()
+        filtered_files = [f for f in files if f.get("name").endswith(f".{file_type}")]
+        return [{"counts": len(filtered_files)}, filtered_files]
 
 
 @router.get(
