@@ -235,7 +235,7 @@ def download_dataset_file(
 def list_dataset_files(
     dataset_id: Annotated[int, Query(description="数据集ID")],
     directory: Annotated[str, Query(description="文件夹路径")],
-    file_type: Annotated[str, Query(description="文件类型")],
+    file_type: Annotated[str, Query(description="文件夹路径")] = None,
     ctx: HumanSubjectContext = Depends(),
 ) -> list[dict[str, int] | list[Any]]:
     check_dataset_exists(ctx.db, dataset_id)
@@ -245,8 +245,11 @@ def list_dataset_files(
         if file_server_response.status_code != 200:
             raise ServiceError.remote_service_error(file_server_response.text)
         files = file_server_response.json()
-        filtered_files = [f for f in files if f.get("name").endswith(f".{file_type}")]
-        return [{"counts": len(filtered_files)}, filtered_files]
+        if file_type is None:
+            return [{"counts": len(files)}, files]
+        else:
+            filtered_files = [f for f in files if f.get("name").endswith(f".{file_type}")]
+            return [{"counts": len(filtered_files)}, filtered_files]
 
 
 @router.get(
