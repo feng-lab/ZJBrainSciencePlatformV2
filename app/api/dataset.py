@@ -1,5 +1,5 @@
 from pathlib import PurePosixPath
-from typing import Annotated, Any, Dict, List
+from typing import Annotated
 from urllib.parse import quote
 
 from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
@@ -213,7 +213,7 @@ def upload_dataset_file(
 def download_dataset_file(
     dataset_id: Annotated[int, Query(description="数据集ID")],
     path: Annotated[str, Query(description="文件路径")],
-    ctx: HumanSubjectContext = Depends(),
+    ctx: ResearcherContext = Depends(),
 ) -> StreamingResponse:
     check_dataset_exists(ctx.db, dataset_id)
     file_path = dataset_file_path(dataset_id, path)
