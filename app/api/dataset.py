@@ -212,9 +212,9 @@ def upload_dataset_file(
 def download_dataset_file(
     dataset_id: Annotated[int, Query(description="数据集ID")],
     path: Annotated[str, Query(description="文件路径")],
-    # ctx: ResearcherContext = Depends(),
+    ctx: ResearcherContext = Depends(),
 ) -> StreamingResponse:
-    # check_dataset_exists(ctx.db, dataset_id)
+    check_dataset_exists(ctx.db, dataset_id)
     file_path = dataset_file_path(dataset_id, path)
     with Client(config.FILE_SERVER_URL) as client:
         file_server_response = client.inner.post("/download-file", params={"path": str(file_path)})
@@ -228,7 +228,7 @@ def download_dataset_file(
                 "Content-Type": guess_type(file_path.name)[0] or "text/plain",
             },
         )
-print(download_dataset_file(2700,'/tt.png'))
+
 
 @router.get("/api/getDatasetFilesType", description="获取数据集文件类型", response_model=Response[list])
 @wrap_api_response
