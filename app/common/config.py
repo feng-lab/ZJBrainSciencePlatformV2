@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 
 class Config(BaseSettings):
     # 是否处于开发环境
-    DEBUG_MODE: bool = False
+    DEBUG_MODE: bool = True
 
     # 是否开启用户权限验证
-    ENABLE_AUTH: bool = True
+    ENABLE_AUTH: bool = False
 
     # 时区，默认
     TIMEZONE: str = "Asia/Shanghai"
@@ -73,6 +73,28 @@ class Config(BaseSettings):
 
     # 文件服务器地址
     FILE_SERVER_URL: str = "http://localhost:8300"
+
+    # oss key id
+    ACCESS_KEY_ID: str = 'tC8qZsagYHc1nCK1'
+
+    # oss_Key_secret
+    ACCESS_KEY_SECRET: str = 'wETxBpzgozGxOMKqEfQ6L69D2Q5jFF'
+
+    # oss_end_point
+    ENDPOINT_URL: str= 'http://oss-cn-hangzhou-zjy-d01-a.ops.cloud.zhejianglab.com/'
+
+    # bucket_name
+    BUCKET_NAME:str = 'data-huada'
+
+    # oss_base_file_dir
+    OSS_LOG_DIR: Path = Path( 'zjdata_storage','ZJBrainSciencePlatform/file-server/log/')
+
+    # 文件目录
+    # OSS_FILE_DIR: Path = Path('zjdata_storage','ZJBrainSciencePlatform/file-server/file')
+    OSS_FILE_DIR: Path = Path('exampledir/')
+
+    # 临时文件目录
+    OSS_TEMP_DIR: Path = Path('zjdata_storage','ZJBrainSciencePlatform/file-server/temp')
 
 
 config = Config()

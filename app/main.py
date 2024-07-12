@@ -28,6 +28,8 @@ from app.api.species import router as species_router
 from app.api.task import router as task_router
 from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
 from app.api.user import router as user_router
+from app.api.dataset_oss import router as dataset_oss_router
+
 from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.localization import MessageLocale, locale_ctxvar, translate_message
@@ -62,6 +64,7 @@ app = FastAPI(
         {"name": "dataset"},
         {"name": "eeg_data"},
         {"name": "species"},
+        {"name": "dataset_oss"},
     ],
     debug=config.DEBUG_MODE,
 )
@@ -80,6 +83,7 @@ app.include_router(atlas_router)
 app.include_router(dataset_router)
 app.include_router(eeg_data_router)
 app.include_router(species_router)
+app.include_router(dataset_oss_router)
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )

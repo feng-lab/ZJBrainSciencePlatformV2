@@ -188,7 +188,6 @@ def dataset_file_path(dataset_id: int, *parts: str) -> PurePosixPath:
         file_path = file_path / part.lstrip("/")
     return file_path
 
-
 @router.post("/api/uploadDatasetFile", description="上传数据集文件", response_model=NoneResponse)
 @wrap_api_response
 def upload_dataset_file(
@@ -213,14 +212,15 @@ def upload_dataset_file(
 def download_dataset_file(
     dataset_id: Annotated[int, Query(description="数据集ID")],
     path: Annotated[str, Query(description="文件路径")],
-    ctx: ResearcherContext = Depends(),
+    # ctx: ResearcherContext = Depends(),
 ) -> StreamingResponse:
-    check_dataset_exists(ctx.db, dataset_id)
+    # check_dataset_exists(ctx.db, dataset_id)
     file_path = dataset_file_path(dataset_id, path)
     with Client(config.FILE_SERVER_URL) as client:
         file_server_response = client.inner.post("/download-file", params={"path": str(file_path)})
         if file_server_response.status_code != 200:
             raise ServiceError.remote_service_error(file_server_response.text)
+        print(file_server_response.iter_bytes(1024))
         return StreamingResponse(
             file_server_response.iter_bytes(1024),
             headers={
@@ -228,7 +228,7 @@ def download_dataset_file(
                 "Content-Type": guess_type(file_path.name)[0] or "text/plain",
             },
         )
-
+print(download_dataset_file(2700,'/tt.png'))
 
 @router.get("/api/getDatasetFilesType", description="获取数据集文件类型", response_model=Response[list])
 @wrap_api_response
