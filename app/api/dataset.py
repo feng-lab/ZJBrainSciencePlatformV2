@@ -201,9 +201,11 @@ def upload_dataset_file(
     directory_path = dataset_file_path(dataset_id, directory)
     with Client(config.FILE_SERVER_URL) as client:
         client.upload(str(directory_path), file.file, file.filename, mkdir=True, allow_overwrite=True)
-
+        file_format = file.filename.split('.')[-1].lower()
     success = common_crud.insert_row(
-        ctx.db, DatasetFile, {"dataset_id": dataset_id, "path": str(directory_path)}, commit=True
+        ctx.db, DatasetFile, {
+            "dataset_id": dataset_id, "other_path": str(directory_path),"file_size":float(file.size),"file_format":str(file_format)},
+        commit=True
     )
     if not success:
         raise ServiceError.database_fail()
@@ -311,7 +313,7 @@ def rename_dataset_file(
     success = common_crud.update_row(
         ctx.db,
         DatasetFile,
-        {"path": str(path.with_name(new_name))},
+        {"other_path": str(path.with_name(new_name))},
         where=[DatasetFile.dataset_id == dataset_id],
         commit=True,
     )
@@ -332,7 +334,7 @@ def delete_dataset_file(
         client.delete(str(path))
 
     success = common_crud.update_row_as_deleted(
-        ctx.db, DatasetFile, where=[DatasetFile.dataset_id == dataset_id, DatasetFile.path == path], commit=True
+        ctx.db, DatasetFile, where=[DatasetFile.dataset_id == dataset_id, DatasetFile.other_path == path], commit=True
     )
     if not success:
         raise ServiceError.database_fail()

@@ -529,6 +529,7 @@ class CreateDatasetRequest(DatasetBase):
     sample_count: int | None
     file_count: int | None
     file_total_size_gb: float | None
+    file_acquired_size_gb: float | None
     associated_diseases: str | None
     organ: str | None
     cell_count: int | None
