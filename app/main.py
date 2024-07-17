@@ -17,6 +17,7 @@ from app.api.algorithm import router as algorithm_router
 from app.api.atlas import router as atlas_router
 from app.api.auth import router as auth_router
 from app.api.dataset import router as dataset_router
+from app.api.dataset_oss import router as dataset_oss_router
 from app.api.device import router as device_router
 from app.api.eegdata import router as eeg_data_router
 from app.api.experiment import router as experiment_router
@@ -28,8 +29,6 @@ from app.api.species import router as species_router
 from app.api.task import router as task_router
 from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
 from app.api.user import router as user_router
-from app.api.dataset_oss import router as dataset_oss_router
-
 from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.localization import MessageLocale, locale_ctxvar, translate_message

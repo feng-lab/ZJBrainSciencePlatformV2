@@ -188,6 +188,7 @@ def dataset_file_path(dataset_id: int, *parts: str) -> PurePosixPath:
         file_path = file_path / part.lstrip("/")
     return file_path
 
+
 @router.post("/api/uploadDatasetFile", description="上传数据集文件", response_model=NoneResponse)
 @wrap_api_response
 def upload_dataset_file(
@@ -220,7 +221,6 @@ def download_dataset_file(
         file_server_response = client.inner.post("/download-file", params={"path": str(file_path)})
         if file_server_response.status_code != 200:
             raise ServiceError.remote_service_error(file_server_response.text)
-        print(file_server_response.iter_bytes(1024))
         return StreamingResponse(
             file_server_response.iter_bytes(1024),
             headers={
