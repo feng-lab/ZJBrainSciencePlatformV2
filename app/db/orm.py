@@ -404,7 +404,25 @@ class DatasetFile(Base, ModelMixin):
     dataset_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("dataset.id"), nullable=False, index=True, comment="数据集id"
     )
-    path: Mapped[str] = mapped_column(Text, nullable=False, comment="文件路径")
+    oss_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="oss文件路径")
+    file_size: Mapped[float] = mapped_column(Float, nullable=False, comment="文件大小")
+    file_format: Mapped[str] = mapped_column(Text, nullable=False, comment="文件格式")
+    other_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="其他存储路径")
+    backup_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="备份存储路径")
+
+
+class DatasetFileVisualization(Base, ModelMixin):
+    __tablename__ = "dataset_file_visualization"
+    __table_args__ = {"comment": "数据集可视化文件"}
+
+    datafile_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("dataset_file.id"), nullable=False, index=True, comment="数据文件id"
+    )
+
+    umap_data_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="存储UMAP数据路径")
+    umap_img_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="存储UMAP图像路径")
+    qc_data_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="存储QC数据路径")
+    qc_img_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="存储QC图像路径")
 
 
 class EEGData(Base, ModelMixin):

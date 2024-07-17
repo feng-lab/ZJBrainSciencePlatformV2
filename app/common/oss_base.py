@@ -132,7 +132,6 @@ def upload_big_multipart_file(bucket, local_fp, remote_fp, partsize=500):
 
 
 def upload_oss_file(bucket, local_fp: str, remote_fp: str):
-
     if not os.path.exists(local_fp):
         raise ValueError(f"local_file {local_fp} is not exist")
     basename = os.path.basename(local_fp)
