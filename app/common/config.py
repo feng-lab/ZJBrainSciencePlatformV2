@@ -12,7 +12,7 @@ class Config(BaseSettings):
     DEBUG_MODE: bool = False
 
     # 是否开启用户权限验证
-    ENABLE_AUTH: bool = True
+    ENABLE_AUTH: bool = False
 
     # 时区，默认
     TIMEZONE: str = "Asia/Shanghai"

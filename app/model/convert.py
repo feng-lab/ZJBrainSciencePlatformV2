@@ -334,6 +334,19 @@ def dataset_collection_2_info(input_data: tuple = (Dataset, int)) -> DatasetColl
     )
 
 
+def dataset_collection_oss_table_2_info(dataset: Dataset) -> DatasetCollection:
+    return DatasetCollection(
+        id=dataset.id,
+        description=dataset.description,
+        title=dataset.title,
+        planed_download_per_month=dataset.planed_download_per_month,
+        planed_finish_date=dataset.planed_finish_date,
+        download_started_date=dataset.download_started_date,
+        file_total_size_gb=dataset.file_total_size_gb,
+        dataset_size=dataset.file_acquired_size_gb,
+    )
+
+
 def cumulative_dataset_size_2_info(cumulativeDatasetSize: CumulativeDatasetSize) -> CumulativeDatasetSizeInfo:
     return CumulativeDatasetSizeInfo(
         id=cumulativeDatasetSize.id,

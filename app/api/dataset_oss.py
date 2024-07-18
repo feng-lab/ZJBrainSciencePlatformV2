@@ -106,6 +106,13 @@ def get_group_dataset_size_oss(search: str, ctx: HumanSubjectContext = Depends()
     return fin_size
 
 
+@router.get("/api/getGroupDatasetSizeOssTable", description="获取oss分组数据集大小", response_model=Response[dict])
+@wrap_api_response
+def get_group_dataset_size_oss_table(search: str, ctx: HumanSubjectContext = Depends()) -> list[dict[str, int]]:
+    species_id_mapping = crud.get_species_cells_mapping_oss(ctx.db, search)
+    return species_id_mapping
+
+
 @router.get("/api/getDatasetCollectionInfoOss", description="获取oss数据收集信息", response_model=Response[list])
 @wrap_api_response
 def get_dataset_collection_info_oss(
@@ -118,6 +125,16 @@ def get_dataset_collection_info_oss(
         file_size = object_size_Byte(bucket_auth(), remote_fp=dataset_file_path(dataset_id, "/"))
         new_orm_datasets.append((dataset_row, file_size))
     dataset_collection_infos = convert.map_list(convert.dataset_collection_2_info, new_orm_datasets)
+    return Page(total=total, items=dataset_collection_infos)
+
+
+@router.get("/api/getDatasetCollectionInfoOssTable", description="获取oss数据收集信息", response_model=Response[list])
+@wrap_api_response
+def get_dataset_collection_info_oss_table(
+    search: PageParm = Depends(), ctx: HumanSubjectContext = Depends(), is_order: bool = True
+):
+    total, orm_datasets = crud.get_dataset_collection_info_oss_table(ctx.db, search, is_order)
+    dataset_collection_infos = convert.map_list(convert.dataset_collection_oss_table_2_info, orm_datasets)
     return Page(total=total, items=dataset_collection_infos)
 
 

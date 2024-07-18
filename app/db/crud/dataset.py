@@ -81,6 +81,29 @@ def get_species_cells_mapping(db: Session, type: str):
     return col_species_cells
 
 
+def get_species_cells_mapping_oss(db: Session, type: str):
+    if type == "species":
+        query_type = Dataset.species
+    if type == "data_type":
+        query_type = Dataset.data_type
+    if type == "source":
+        query_type = Dataset.source
+
+    stem = select(query_type).distinct().where(Dataset.is_deleted == False)
+    species_list = db.execute(stem).fetchall()
+    species_totals = []
+    for species in species_list:
+        species_name = species[0]
+        stem_size = select(func.sum(Dataset.file_acquired_size_gb)).where(
+            Dataset.is_deleted == False, query_type == species_name
+        )
+        sizes = db.execute(stem_size).scalar() or 0
+        stem_cells = select(func.sum(Dataset.cell_count)).where(Dataset.is_deleted == False, query_type == species_name)
+        cells = db.execute(stem_cells).scalar() or 0
+        species_totals.append({type: species_name, "cells": str(cells), "sizes": str(sizes)})
+    return species_totals
+
+
 def get_dataset_collection_info(db: Session, search: PageParm, is_order: bool = True) -> tuple[int, Sequence[Any]]:
     stem_base = select(
         Dataset.id,
@@ -90,6 +113,28 @@ def get_dataset_collection_info(db: Session, search: PageParm, is_order: bool = 
         Dataset.planed_finish_date,
         Dataset.download_started_date,
         Dataset.file_total_size_gb,
+    ).where(Dataset.is_deleted == False)
+    if is_order:
+        stem_base = stem_base.order_by(Dataset.planed_finish_date.desc())
+    stem = stem_base.offset(search.offset).limit(search.limit)
+    col_cells = db.execute(stem).fetchall()
+    total_stmt = stem_base.with_only_columns(func.count())
+    total = db.execute(total_stmt).scalar()
+    return total, col_cells
+
+
+def get_dataset_collection_info_oss_table(
+    db: Session, search: PageParm, is_order: bool = True
+) -> tuple[int, Sequence[Any]]:
+    stem_base = select(
+        Dataset.id,
+        Dataset.description,
+        Dataset.planed_download_per_month,
+        Dataset.title,
+        Dataset.planed_finish_date,
+        Dataset.download_started_date,
+        Dataset.file_total_size_gb,
+        Dataset.file_acquired_size_gb,
     ).where(Dataset.is_deleted == False)
     if is_order:
         stem_base = stem_base.order_by(Dataset.planed_finish_date.desc())
