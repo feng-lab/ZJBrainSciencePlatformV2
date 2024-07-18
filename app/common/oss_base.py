@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import datetime
 from itertools import islice
 from pathlib import Path, PurePath, PurePosixPath
 from urllib.parse import quote
@@ -7,6 +8,8 @@ from urllib.parse import quote
 import oss2
 
 from app.common.config import config
+from app.common.exception import ServiceError
+from app.common.localization import Entity
 
 logger = logging.getLogger(__name__)
 auth = oss2.Auth(config.ACCESS_KEY_ID, config.ACCESS_KEY_SECRET)
@@ -17,9 +20,8 @@ def bucket_auth(auth=auth, endpoint_url=config.ENDPOINT_URL, bucket_name=config.
 
 
 def create_dir(bucket, remote_fp=None):
-    if not isinstance(remote_fp, str) or not remote_fp.endswith("/"):
-        raise ValueError("romote_fp must be a string and end with /")
     bucket.put_object(remote_fp, "")
+    logger.info(f"create directory {remote_fp} success")
 
 
 def upload_file(bucket, remote_fp: str, local_fp: str):
@@ -62,24 +64,34 @@ def resumble_download(bucket, remote_fp: str, local_fp: str = None):
     oss2.resumable_download(bucket, remote_fp, local_fp, params=params)
 
 
-def object_ls(bucket, remote_fp="") -> list[str]:
-    objects = []
-    for b in oss2.ObjectIteratorV2(bucket, prefix=remote_fp):
-        objects.append(b.key)
-    return objects
+def object_ls(bucket, remote_fp="") -> list:
+    files_list = []
+    for obj in oss2.ObjectIteratorV2(bucket, prefix=remote_fp, delimiter="/", start_after=remote_fp):
+        file_name = obj.key.replace(remote_fp, "").rstrip("/")
+
+        if obj.last_modified is not None:
+            last_modified = datetime.utcfromtimestamp(obj.last_modified)
+            formatted_date = last_modified.strftime("%Y-%m-%dT%H:%M:%S")
+        else:
+            formatted_date = None
+        if obj.is_prefix():  # 判断obj为文件夹。
+            files_list.append({"type": "directory", "name": file_name, "last_modified": formatted_date, "size": None})
+        else:  # 判断obj为文件。
+            files_list.append({"type": "file", "name": file_name, "last_modified": formatted_date, "size": obj.size})
+    return files_list
 
 
 def object_size_Byte(bucket, remote_fp="") -> int:
     length = 0
     for obj in oss2.ObjectIteratorV2(bucket, prefix=remote_fp):
         length += obj.size
-        print(obj.key)
     return length
 
 
 def delete_object_oss(bucket, remote_fp: str) -> None:
-    bucket.delete_object(remote_fp)
-    assert not bucket.object_exists(remote_fp)
+    for b in oss2.ObjectIteratorV2(bucket, prefix=remote_fp):
+        bucket.delete_object(b.key)
+        logger.info(f"Deleted {b.key}")
 
 
 def delet_dir_oss(bucket, remote_fp: str) -> None:
@@ -89,12 +101,14 @@ def delet_dir_oss(bucket, remote_fp: str) -> None:
 
 def rename_object(bucket, remote_fp: str, new_name: str) -> None:
     # 实际执行 复制删除
-    result = bucket.copy_object(config.BUCKET_NAME, remote_fp, new_name)
-    if not result.status == 200:
-        raise ValueError("not success")
-    result_del = bucket.delete_object(remote_fp)
-    # if result_del.status ==200:
-    #     print('rename done')
+
+    if not bucket.object_exists(remote_fp):
+        logger.error(f"file {remote_fp} is not exist")
+        raise ServiceError.not_found(Entity.dataset)
+
+    bucket.copy_object(config.BUCKET_NAME, remote_fp, new_name)
+    bucket.delete_object(remote_fp)
+    logger.info(f"rename object {remote_fp} to {new_name}")
 
 
 def bucket_list_delete(bucket, list_name: list):
@@ -131,21 +145,20 @@ def upload_big_multipart_file(bucket, local_fp, remote_fp, partsize=500):
         bucket.complete_multipart_upload(remote_fp, upload_id, parts)
 
 
-def upload_oss_file(bucket, local_fp: str, remote_fp: str):
+def upload_oss_file(bucket, local_fp: str, remote_fp: str, allow_overwrite=True):
     if not os.path.exists(local_fp):
         raise ValueError(f"local_file {local_fp} is not exist")
     basename = os.path.basename(local_fp)
+    file_size = os.path.getsize(local_fp)
     remote_fp = str(PurePosixPath(remote_fp, basename))
-    print(local_fp, remote_fp)
     try:
-        print(1)
         upload_file(bucket, remote_fp, local_fp)
     except:
         upload_big_multipart_file(bucket, local_fp, remote_fp, partsize=500)
+    return file_size
 
 
 def upload_dir_folder(dir_lo_path="", dir_oss_path=""):
-    # 上传文件，为最后名新建文件夹子�?
     if not os.path.exists(dir_lo_path):
         raise ValueError("file path not exist")
     basename = os.path.basename(dir_lo_path.rstrip("/"))

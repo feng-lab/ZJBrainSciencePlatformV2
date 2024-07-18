@@ -377,7 +377,7 @@ class Dataset(Base, ModelMixin):
     data_update_year: Mapped[date | None] = mapped_column(Date, nullable=True, comment="数据更新年份")
     file_count: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="文件数量")
     file_total_size_gb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
-    file_acquired_size_gb:Mapped[float | None] = mapped_column(Float, nullable=True, comment="已获取数据量(GB)")
+    file_acquired_size_gb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="已获取数据量(GB)")
     associated_diseases: Mapped[str | None] = mapped_column(Text, nullable=True, comment="相关疾病")
     organ: Mapped[str | None] = mapped_column(Text, nullable=True, comment="器官")
     cell_count: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="细胞数")

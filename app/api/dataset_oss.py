@@ -17,6 +17,7 @@ from app.common.oss_base import (
     bucket_auth,
     create_dir,
     delete_object_oss,
+    object_ls,
     object_size_Byte,
     rename_object,
     stream_download,
@@ -60,7 +61,7 @@ def dataset_file_path(dataset_id: int | None, *parts: str) -> str:
     return file_path
 
 
-@router.get("/api/getDatasetSizeOss", description="获取oss单个数据集大小", response_model=Response[int])
+@router.get("/api/getDatasetSizeOss", description="获取oss单个数据集大小", response_model=Response[float])
 @wrap_api_response
 def get_dataset_size_oss(dataset_id: int, ctx: HumanSubjectContext = Depends()) -> int:
     check_dataset_exists(ctx.db, dataset_id)
@@ -68,12 +69,26 @@ def get_dataset_size_oss(dataset_id: int, ctx: HumanSubjectContext = Depends()) 
     return file_size
 
 
-@router.get("/api/getAllDatasetSizeOss", description="获取oss所有数据集大小", response_model=Response[int])
+@router.get("/api/getDatasetSizeOssTable", description="从表获取oss单个数据集大小", response_model=Response[float])
 @wrap_api_response
-def get_all_datasets_size_oss(ctx: HumanSubjectContext = Depends()) -> int:
-    dataset_ids = common_crud.get_all_ids(ctx.db, Dataset)
+def get_dataset_size_oss_table(dataset_id: int, ctx: HumanSubjectContext = Depends()) -> int | None:
+    check_dataset_exists(ctx.db, dataset_id)
+    file_size = crud.get_size_by_id(ctx.db, dataset_id)
+    return file_size
+
+
+@router.get("/api/getAllDatasetSizeOss", description="获取oss所有数据集大小", response_model=Response[float])
+@wrap_api_response
+def get_all_datasets_size_oss(ctx: HumanSubjectContext = Depends()) -> float:
     dataset_size = object_size_Byte(bucket_auth(), remote_fp=config.OSS_FILE_DIR)
     return dataset_size
+
+
+@router.get("/api/getAllDatasetSizeOssTable", description="获取oss所有数据集大小", response_model=Response[float])
+@wrap_api_response
+def get_all_datasets_size_oss_table(ctx: HumanSubjectContext = Depends()) -> float:
+    file_size = crud.get_sizes_all(ctx.db)
+    return file_size
 
 
 @router.get("/api/getGroupDatasetSizeOss", description="获取oss分组数据集大小", response_model=Response[dict])
@@ -111,14 +126,46 @@ def get_dataset_collection_info_oss(
 def upload_dataset_file_oss(
     dataset_id: Annotated[int, Form(description="数据集ID")],
     directory: Annotated[str, Form(description="目标文件夹路径")],
-    # file: Annotated[UploadFile, File(description="文件")],
     file_path: Annotated[str, Form(description="原文件路径")],
     ctx: ResearcherContext = Depends(),
 ) -> None:
     check_dataset_exists(ctx.db, dataset_id)
     directory_path = dataset_file_path(dataset_id, directory)
-    # print(directory,directory_path)
-    upload_oss_file(bucket_auth(), file_path, directory_path)
+    file_size = upload_oss_file(bucket_auth(), file_path, directory_path)
+    file_type = directory.split(".")[-1].lower()
+    success = common_crud.insert_row(
+        ctx.db,
+        DatasetFile,
+        {
+            "dataset_id": dataset_id,
+            "oss_path": str(directory_path),
+            "file_size": float(file_size),
+            "file_format": str(file_type),
+        },
+        commit=True,
+    )
+    if not success:
+        raise ServiceError.database_fail()
+
+
+@router.get("/api/listDatasetFilesOss", description="获取oss数据集文件列表", response_model=Response[list[dict[str, int]]])
+@wrap_api_response
+def list_dataset_files(
+    dataset_id: Annotated[int, Query(description="数据集ID")],
+    directory: Annotated[str, Query(description="文件夹路径")],
+    file_type: Annotated[str, Query(description="文件夹路径")] = None,
+    ctx: HumanSubjectContext = Depends(),
+) -> list[dict[str, int]]:
+    check_dataset_exists(ctx.db, dataset_id)
+    directory_path = dataset_file_path(dataset_id, directory)
+
+    files = object_ls(bucket_auth(), directory_path)
+
+    if file_type is None:
+        return [{"counts": len(files)}, files]
+    else:
+        filtered_files = [f for f in files if f.get("name").endswith(f".{file_type}")]
+        return [{"counts": len(filtered_files)}, filtered_files]
 
 
 @router.get("/api/downloadDatasetFileOss", description="下载oss数据集文件")
@@ -147,10 +194,19 @@ def rename_dataset_file_oss(
     ctx: ResearcherContext = Depends(),
 ) -> None:
     check_dataset_exists(ctx.db, dataset_id)
-    path = str(dataset_file_path(dataset_id, path))
-    new_path = str(dataset_file_path(dataset_id, new_name))
-    rename_object(bucket_auth(), path, new_path)
+    path = dataset_file_path(dataset_id, path)
+    new_path = dataset_file_path(dataset_id, new_name)
+    rename_object(bucket_auth(), str(path), str(new_path))
     # 数据库表要更新
+    success = common_crud.update_row(
+        ctx.db,
+        DatasetFile,
+        {"other_path": str(path.with_name(new_name))},
+        where=[DatasetFile.dataset_id == dataset_id],
+        commit=True,
+    )
+    if not success:
+        raise ServiceError.database_fail()
 
 
 @router.delete("/api/deleteDatasetFileOss", description="删除数据集文件", response_model=NoneResponse)
@@ -164,8 +220,8 @@ def delete_dataset_file_oss(
     path = dataset_file_path(dataset_id, path)
     delete_object_oss(bucket_auth(), str(path))
 
-    # success = common_crud.update_row_as_deleted(
-    #     ctx.db, DatasetFile, where=[DatasetFile.dataset_id == dataset_id, DatasetFile.path == path], commit=True
-    # )
-    # if not success:
-    #     raise ServiceError.database_fail()
+    success = common_crud.update_row_as_deleted(
+        ctx.db, DatasetFile, where=[DatasetFile.dataset_id == dataset_id, DatasetFile.oss_path == path], commit=True
+    )
+    if not success:
+        raise ServiceError.database_fail()

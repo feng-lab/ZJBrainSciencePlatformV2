@@ -201,11 +201,17 @@ def upload_dataset_file(
     directory_path = dataset_file_path(dataset_id, directory)
     with Client(config.FILE_SERVER_URL) as client:
         client.upload(str(directory_path), file.file, file.filename, mkdir=True, allow_overwrite=True)
-        file_format = file.filename.split('.')[-1].lower()
+        file_format = file.filename.split(".")[-1].lower()
     success = common_crud.insert_row(
-        ctx.db, DatasetFile, {
-            "dataset_id": dataset_id, "other_path": str(directory_path),"file_size":float(file.size),"file_format":str(file_format)},
-        commit=True
+        ctx.db,
+        DatasetFile,
+        {
+            "dataset_id": dataset_id,
+            "other_path": str(directory_path),
+            "file_size": float(file.size),
+            "file_format": str(file_format),
+        },
+        commit=True,
     )
     if not success:
         raise ServiceError.database_fail()
