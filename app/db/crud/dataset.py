@@ -167,6 +167,6 @@ def get_size_by_id(db: Session, dataset_id: int) -> float:
 
 def get_sizes_all(db: Session) -> float:
     stem_base = select(Dataset.file_acquired_size_gb).where(Dataset.is_deleted == False)
-    results = db.execute(stem_base).scalar()
-    size_sum = sum(row[0] for row in results) if results else 0.0
+    results = db.execute(stem_base).fetchall()
+    size_sum = sum(row[0] for row in results if row[0] or 0)
     return size_sum

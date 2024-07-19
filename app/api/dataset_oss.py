@@ -56,7 +56,7 @@ def dataset_file_path(dataset_id: int | None, *parts: str) -> str:
     file_path = PurePosixPath(config.OSS_FILE_DIR, f"dataset_{dataset_id}/")
     for part in parts:
         file_path = file_path / part.lstrip("/")
-    if part == "/":
+    if part.endswith("/") :
         file_path = file_path.as_posix() + "/"
     return file_path
 
@@ -148,6 +148,7 @@ def upload_dataset_file_oss(
 ) -> None:
     check_dataset_exists(ctx.db, dataset_id)
     directory_path = dataset_file_path(dataset_id, directory)
+    print(directory_path,file_path)
     file_size = upload_oss_file(bucket_auth(), file_path, directory_path)
     file_type = directory.split(".")[-1].lower()
     success = common_crud.insert_row(
@@ -175,8 +176,7 @@ def list_dataset_files(
 ) -> list[dict[str, int]]:
     check_dataset_exists(ctx.db, dataset_id)
     directory_path = dataset_file_path(dataset_id, directory)
-
-    files = object_ls(bucket_auth(), directory_path)
+    files = object_ls(bucket_auth(), str(directory_path))
 
     if file_type is None:
         return [{"counts": len(files)}, files]

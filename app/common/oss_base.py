@@ -66,8 +66,11 @@ def resumble_download(bucket, remote_fp: str, local_fp: str = None):
 
 def object_ls(bucket, remote_fp="") -> list:
     files_list = []
+    print(remote_fp)
     for obj in oss2.ObjectIteratorV2(bucket, prefix=remote_fp, delimiter="/", start_after=remote_fp):
-        file_name = obj.key.replace(remote_fp, "").rstrip("/")
+        obj_key = str(obj.key)
+        # print(obj_key)
+        file_name = obj_key.replace(str(remote_fp), "").rstrip("/")
 
         if obj.last_modified is not None:
             last_modified = datetime.utcfromtimestamp(obj.last_modified)
@@ -152,6 +155,7 @@ def upload_oss_file(bucket, local_fp: str, remote_fp: str, allow_overwrite=True)
     file_size = os.path.getsize(local_fp)
     remote_fp = str(PurePosixPath(remote_fp, basename))
     try:
+        print(remote_fp,local_fp)
         upload_file(bucket, remote_fp, local_fp)
     except:
         upload_big_multipart_file(bucket, local_fp, remote_fp, partsize=500)
