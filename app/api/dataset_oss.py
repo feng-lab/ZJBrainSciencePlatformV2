@@ -1,18 +1,17 @@
-from pathlib import Path, PurePath, PurePosixPath
+from pathlib import  PurePosixPath
 from typing import Annotated
-from urllib.parse import quote
 
-from fastapi import APIRouter, Body, Depends, Form, Query
+
+from fastapi import APIRouter, Body, Depends, Form, Query,UploadFile
 from fastapi.responses import StreamingResponse
-from starlette.responses import guess_type
-from zjbs_file_client import Client, FileType
+
 
 import app.db.crud.dataset as crud
 from app.api import check_dataset_exists, wrap_api_response
 from app.common.config import config
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
-from app.common.localization import Entity
+
 from app.common.oss_base import (
     bucket_auth,
     create_dir,
@@ -143,12 +142,12 @@ def get_dataset_collection_info_oss_table(
 def upload_dataset_file_oss(
     dataset_id: Annotated[int, Form(description="数据集ID")],
     directory: Annotated[str, Form(description="目标文件夹路径")],
-    file_path: Annotated[str, Form(description="原文件路径")],
+    file_path: Annotated[UploadFile, Form(description="原文件路径")],
     ctx: ResearcherContext = Depends(),
 ) -> None:
     check_dataset_exists(ctx.db, dataset_id)
     directory_path = dataset_file_path(dataset_id, directory)
-    print(directory_path,file_path)
+    # print(directory_path,file_path)
     file_size = upload_oss_file(bucket_auth(), file_path, directory_path)
     file_type = directory.split(".")[-1].lower()
     success = common_crud.insert_row(

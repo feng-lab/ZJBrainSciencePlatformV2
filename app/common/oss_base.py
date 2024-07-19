@@ -4,7 +4,7 @@ from datetime import datetime
 from itertools import islice
 from pathlib import Path, PurePath, PurePosixPath
 from urllib.parse import quote
-
+from fastapi import UploadFile
 import oss2
 
 from app.common.config import config
@@ -148,18 +148,29 @@ def upload_big_multipart_file(bucket, local_fp, remote_fp, partsize=500):
         bucket.complete_multipart_upload(remote_fp, upload_id, parts)
 
 
-def upload_oss_file(bucket, local_fp: str, remote_fp: str, allow_overwrite=True):
-    if not os.path.exists(local_fp):
-        raise ValueError(f"local_file {local_fp} is not exist")
-    basename = os.path.basename(local_fp)
-    file_size = os.path.getsize(local_fp)
-    remote_fp = str(PurePosixPath(remote_fp, basename))
+# def upload_oss_file(bucket, local_fp: str, remote_fp: str, allow_overwrite=True):
+#     if not os.path.exists(local_fp):
+#         raise ValueError(f"local_file {local_fp} is not exist")
+#     basename = os.path.basename(local_fp)
+#     file_size = os.path.getsize(local_fp)
+#     remote_fp = str(PurePosixPath(remote_fp, basename))
+#     try:
+#         print(remote_fp,local_fp)
+#         upload_file(bucket, remote_fp, local_fp)
+#     except:
+#         upload_big_multipart_file(bucket, local_fp, remote_fp, partsize=500)
+#     return file_size
+
+
+def upload_oss_file(bucket, local_file:UploadFile, remote_fp: str):
     try:
-        print(remote_fp,local_fp)
-        upload_file(bucket, remote_fp, local_fp)
-    except:
-        upload_big_multipart_file(bucket, local_fp, remote_fp, partsize=500)
-    return file_size
+        with open(local_file, 'rb') as fileobj:
+            bucket.put_object(remote_fp, fileobj)
+    except oss2.exceptions.OssError as e:
+        print(f'文件上传失败: {e}')
+
+
+
 
 
 def upload_dir_folder(dir_lo_path="", dir_oss_path=""):
