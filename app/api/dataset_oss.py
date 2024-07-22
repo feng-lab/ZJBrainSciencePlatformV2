@@ -1,17 +1,14 @@
-from pathlib import  PurePosixPath
+from pathlib import PurePosixPath
 from typing import Annotated
 
-
-from fastapi import APIRouter, Body, Depends, Form, Query,UploadFile
+from fastapi import APIRouter, Body, Depends, Form, Query, UploadFile
 from fastapi.responses import StreamingResponse
-
 
 import app.db.crud.dataset as crud
 from app.api import check_dataset_exists, wrap_api_response
 from app.common.config import config
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
-
 from app.common.oss_base import (
     bucket_auth,
     create_dir,
@@ -55,85 +52,69 @@ def dataset_file_path(dataset_id: int | None, *parts: str) -> str:
     file_path = PurePosixPath(config.OSS_FILE_DIR, f"dataset_{dataset_id}/")
     for part in parts:
         file_path = file_path / part.lstrip("/")
-    if part.endswith("/") :
+    if part.endswith("/"):
         file_path = file_path.as_posix() + "/"
     return file_path
 
 
 @router.get("/api/getDatasetSizeOss", description="获取oss单个数据集大小", response_model=Response[float])
 @wrap_api_response
-def get_dataset_size_oss(dataset_id: int, ctx: HumanSubjectContext = Depends()) -> int:
+def get_dataset_size_oss(dataset_id: int, from_table: bool = True, ctx: HumanSubjectContext = Depends()) -> float:
     check_dataset_exists(ctx.db, dataset_id)
-    file_size = object_size_Byte(bucket_auth(), remote_fp=dataset_file_path(dataset_id, "/"))
-    return file_size
-
-
-@router.get("/api/getDatasetSizeOssTable", description="从表获取oss单个数据集大小", response_model=Response[float])
-@wrap_api_response
-def get_dataset_size_oss_table(dataset_id: int, ctx: HumanSubjectContext = Depends()) -> int | None:
-    check_dataset_exists(ctx.db, dataset_id)
-    file_size = crud.get_size_by_id(ctx.db, dataset_id)
+    if from_table:
+        file_size = crud.get_size_by_id(ctx.db, dataset_id)
+    else:
+        file_size = object_size_Byte(bucket_auth(), remote_fp=dataset_file_path(dataset_id, "/"))
     return file_size
 
 
 @router.get("/api/getAllDatasetSizeOss", description="获取oss所有数据集大小", response_model=Response[float])
 @wrap_api_response
-def get_all_datasets_size_oss(ctx: HumanSubjectContext = Depends()) -> float:
-    dataset_size = object_size_Byte(bucket_auth(), remote_fp=config.OSS_FILE_DIR)
+def get_all_datasets_size_oss(from_table: bool = True, ctx: HumanSubjectContext = Depends()) -> float:
+    if from_table:
+        dataset_size = crud.get_sizes_all(ctx.db)
+    else:
+        oss_path = str(PurePosixPath(config.OSS_FILE_DIR / ""))
+        dataset_size = object_size_Byte(bucket_auth(), remote_fp=oss_path)
     return dataset_size
-
-
-@router.get("/api/getAllDatasetSizeOssTable", description="获取oss所有数据集大小", response_model=Response[float])
-@wrap_api_response
-def get_all_datasets_size_oss_table(ctx: HumanSubjectContext = Depends()) -> float:
-    file_size = crud.get_sizes_all(ctx.db)
-    return file_size
 
 
 @router.get("/api/getGroupDatasetSizeOss", description="获取oss分组数据集大小", response_model=Response[dict])
 @wrap_api_response
-def get_group_dataset_size_oss(search: str, ctx: HumanSubjectContext = Depends()) -> list[dict[str, int]]:
-    fin_size = []
-    species_id_mapping = crud.get_species_ids_mapping(ctx.db, search)
-    for key, dataset_ids in species_id_mapping.items():
-        species_counts = len(dataset_ids)
-        dataset_size = 0
-        for dataset_id in dataset_ids:
-            files_size = object_size_Byte(bucket_auth(), remote_fp=dataset_file_path(dataset_id, "/"))
-            dataset_size += files_size
-        fin_size.append({"name": key, "dataset_size": dataset_size, "counts": species_counts})
+def get_group_dataset_size_oss(
+    search: str, from_table: bool = True, ctx: HumanSubjectContext = Depends()
+) -> list[dict[str, int]]:
+    if from_table:
+        fin_size = crud.get_species_cells_mapping_oss(ctx.db, search)
+    else:
+        fin_size = []
+        species_id_mapping = crud.get_species_ids_mapping(ctx.db, search)
+        for key, dataset_ids in species_id_mapping.items():
+            species_counts = len(dataset_ids)
+            dataset_size = 0
+            for dataset_id in dataset_ids:
+                files_size = object_size_Byte(bucket_auth(), remote_fp=dataset_file_path(dataset_id, "/"))
+                dataset_size += files_size
+            fin_size.append({"name": key, "dataset_size": dataset_size, "counts": species_counts})
     return fin_size
-
-
-@router.get("/api/getGroupDatasetSizeOssTable", description="获取oss分组数据集大小", response_model=Response[dict])
-@wrap_api_response
-def get_group_dataset_size_oss_table(search: str, ctx: HumanSubjectContext = Depends()) -> list[dict[str, int]]:
-    species_id_mapping = crud.get_species_cells_mapping_oss(ctx.db, search)
-    return species_id_mapping
 
 
 @router.get("/api/getDatasetCollectionInfoOss", description="获取oss数据收集信息", response_model=Response[list])
 @wrap_api_response
 def get_dataset_collection_info_oss(
-    search: PageParm = Depends(), ctx: HumanSubjectContext = Depends(), is_order: bool = True
+    search: PageParm = Depends(), from_table: bool = True, ctx: HumanSubjectContext = Depends(), is_order: bool = True
 ):
-    total, orm_datasets = crud.get_dataset_collection_info(ctx.db, search, is_order)
-    new_orm_datasets = []
-    for dataset_row in orm_datasets:
-        dataset_id = dataset_row[0]
-        file_size = object_size_Byte(bucket_auth(), remote_fp=dataset_file_path(dataset_id, "/"))
-        new_orm_datasets.append((dataset_row, file_size))
-    dataset_collection_infos = convert.map_list(convert.dataset_collection_2_info, new_orm_datasets)
-    return Page(total=total, items=dataset_collection_infos)
-
-
-@router.get("/api/getDatasetCollectionInfoOssTable", description="获取oss数据收集信息", response_model=Response[list])
-@wrap_api_response
-def get_dataset_collection_info_oss_table(
-    search: PageParm = Depends(), ctx: HumanSubjectContext = Depends(), is_order: bool = True
-):
-    total, orm_datasets = crud.get_dataset_collection_info_oss_table(ctx.db, search, is_order)
-    dataset_collection_infos = convert.map_list(convert.dataset_collection_oss_table_2_info, orm_datasets)
+    if from_table:
+        total, orm_datasets = crud.get_dataset_collection_info_oss_table(ctx.db, search, is_order)
+        dataset_collection_infos = convert.map_list(convert.dataset_collection_oss_table_2_info, orm_datasets)
+    else:
+        total, orm_datasets = crud.get_dataset_collection_info(ctx.db, search, is_order)
+        new_orm_datasets = []
+        for dataset_row in orm_datasets:
+            dataset_id = dataset_row[0]
+            file_size = object_size_Byte(bucket_auth(), remote_fp=dataset_file_path(dataset_id, "/"))
+            new_orm_datasets.append((dataset_row, file_size))
+        dataset_collection_infos = convert.map_list(convert.dataset_collection_2_info, new_orm_datasets)
     return Page(total=total, items=dataset_collection_infos)
 
 

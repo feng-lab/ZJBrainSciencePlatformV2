@@ -1,5 +1,5 @@
 import logging
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from pydantic import BaseSettings
@@ -90,7 +90,7 @@ class Config(BaseSettings):
     # OSS_LOG_DIR: Path = Path("zjdata_storage", "ZJBrainSciencePlatform/file-server/log/")
 
     # 文件目录
-    OSS_FILE_DIR: Path = Path("zjdata_storage", "ZJBrainSciencePlatform/file-server/file/")
+    OSS_FILE_DIR: Path = PurePosixPath("zjdata_storage", "ZJBrainSciencePlatform/file-server/file/")
     # OSS_FILE_DIR: Path = Path("exampledir/")
 
     # # 临时文件目录

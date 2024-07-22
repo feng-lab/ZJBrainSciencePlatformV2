@@ -4,8 +4,9 @@ from datetime import datetime
 from itertools import islice
 from pathlib import Path, PurePath, PurePosixPath
 from urllib.parse import quote
-from fastapi import UploadFile
+
 import oss2
+from fastapi import UploadFile
 
 from app.common.config import config
 from app.common.exception import ServiceError
@@ -84,7 +85,7 @@ def object_ls(bucket, remote_fp="") -> list:
     return files_list
 
 
-def object_size_Byte(bucket, remote_fp="") -> int:
+def object_size_Byte(bucket, remote_fp: str = "") -> float:
     length = 0
     for obj in oss2.ObjectIteratorV2(bucket, prefix=remote_fp):
         length += obj.size
@@ -162,15 +163,12 @@ def upload_big_multipart_file(bucket, local_fp, remote_fp, partsize=500):
 #     return file_size
 
 
-def upload_oss_file(bucket, local_file:UploadFile, remote_fp: str):
+def upload_oss_file(bucket, local_file: UploadFile, remote_fp: str):
     try:
-        with open(local_file, 'rb') as fileobj:
+        with open(local_file, "rb") as fileobj:
             bucket.put_object(remote_fp, fileobj)
     except oss2.exceptions.OssError as e:
-        print(f'文件上传失败: {e}')
-
-
-
+        print(f"文件上传失败: {e}")
 
 
 def upload_dir_folder(dir_lo_path="", dir_oss_path=""):
