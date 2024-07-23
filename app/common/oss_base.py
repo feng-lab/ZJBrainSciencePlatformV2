@@ -4,10 +4,11 @@ from datetime import datetime
 from itertools import islice
 from pathlib import Path, PurePath, PurePosixPath
 from urllib.parse import quote
-
+from typing import BinaryIO
+from io import BytesIO
 import oss2
 from fastapi import UploadFile
-
+from oss2.compat import to_unicode
 from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.localization import Entity
@@ -34,6 +35,16 @@ def download_file(bucket, remote_fp: str, local_fp: str):
         raise ValueError(f"oss file {remote_fp} is not exist")
     bucket.get_object_to_file(remote_fp, local_fp)
 
+
+# (directory, file.filename, file.file, mkdir, allow_overwrite)
+def oos_file_upload(bucket, remote_fp: str, file:UploadFile,reader: BinaryIO,):#kdir: bool,allow_overwrite: bool)-> None:
+    try:
+
+        contents = file.file.read()
+        bucket.put_object(remote_fp, to_unicode(contents))
+        print(contents, file.filename)
+    except Exception as e:
+        print(str(e))
 
 def stream_download(bucket, remote_fp: str):
     # print(remote_fp)

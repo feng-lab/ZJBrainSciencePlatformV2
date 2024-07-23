@@ -1,9 +1,9 @@
 from pathlib import PurePosixPath
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Form, Query, UploadFile
+from fastapi import APIRouter, Body, Depends, Form, File, Query, UploadFile
 from fastapi.responses import StreamingResponse
-
+from typing import BinaryIO
 import app.db.crud.dataset as crud
 from app.api import check_dataset_exists, wrap_api_response
 from app.common.config import config
@@ -65,6 +65,7 @@ def get_dataset_size_oss(dataset_id: int, from_table: bool = True, ctx: HumanSub
         file_size = crud.get_size_by_id(ctx.db, dataset_id)
     else:
         file_size = object_size_Byte(bucket_auth(), remote_fp=dataset_file_path(dataset_id, "/"))
+        file_size = file_size/1024/1024/1024
     return file_size
 
 
@@ -76,6 +77,7 @@ def get_all_datasets_size_oss(from_table: bool = True, ctx: HumanSubjectContext 
     else:
         oss_path = str(PurePosixPath(config.OSS_FILE_DIR / ""))
         dataset_size = object_size_Byte(bucket_auth(), remote_fp=oss_path)
+        dataset_size = dataset_size/1024/1024/1024
     return dataset_size
 
 
@@ -94,6 +96,7 @@ def get_group_dataset_size_oss(
             dataset_size = 0
             for dataset_id in dataset_ids:
                 files_size = object_size_Byte(bucket_auth(), remote_fp=dataset_file_path(dataset_id, "/"))
+                files_size = files_size/1024/1024/1024
                 dataset_size += files_size
             fin_size.append({"name": key, "dataset_size": dataset_size, "counts": species_counts})
     return fin_size
@@ -113,37 +116,40 @@ def get_dataset_collection_info_oss(
         for dataset_row in orm_datasets:
             dataset_id = dataset_row[0]
             file_size = object_size_Byte(bucket_auth(), remote_fp=dataset_file_path(dataset_id, "/"))
+            file_size = file_size /1024/1024/1024
             new_orm_datasets.append((dataset_row, file_size))
         dataset_collection_infos = convert.map_list(convert.dataset_collection_2_info, new_orm_datasets)
     return Page(total=total, items=dataset_collection_infos)
 
+from app.common.oss_base import oos_file_upload
 
 @router.post("/api/uploadDatasetFileOss", description="上传oss数据集文件", response_model=NoneResponse)
 @wrap_api_response
 def upload_dataset_file_oss(
     dataset_id: Annotated[int, Form(description="数据集ID")],
     directory: Annotated[str, Form(description="目标文件夹路径")],
-    file_path: Annotated[UploadFile, Form(description="原文件路径")],
+    file: Annotated[UploadFile, File(description="文件")],
     ctx: ResearcherContext = Depends(),
 ) -> None:
-    check_dataset_exists(ctx.db, dataset_id)
-    directory_path = dataset_file_path(dataset_id, directory)
-    # print(directory_path,file_path)
-    file_size = upload_oss_file(bucket_auth(), file_path, directory_path)
-    file_type = directory.split(".")[-1].lower()
-    success = common_crud.insert_row(
-        ctx.db,
-        DatasetFile,
-        {
-            "dataset_id": dataset_id,
-            "oss_path": str(directory_path),
-            "file_size": float(file_size),
-            "file_format": str(file_type),
-        },
-        commit=True,
-    )
-    if not success:
-        raise ServiceError.database_fail()
+    print(dataset_id)
+    # check_dataset_exists(ctx.db, dataset_id)
+    directory_path = dataset_file_path(dataset_id, directory,file.filename)
+    print('完蛋',file.file,file.filename,directory_path)
+    oos_file_upload(bucket_auth(), remote_fp = directory_path,  file=file,reader=file.file)
+    # file_type = directory.split(".")[-1].lower()
+    # success = common_crud.insert_row(
+    #     ctx.db,
+    #     DatasetFile,
+    #     {
+    #         "dataset_id": dataset_id,
+    #         "oss_path": str(directory_path),
+    #         "file_size": float(file_size),
+    #         "file_format": str(file_type),
+    #     },
+    #     commit=True,
+    # )
+    # if not success:
+    #     raise ServiceError.database_fail()
 
 
 @router.get("/api/listDatasetFilesOss", description="获取oss数据集文件列表", response_model=Response[list[dict[str, int]]])
