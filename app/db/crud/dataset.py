@@ -101,9 +101,9 @@ def get_species_cells_mapping_oss(db: Session, type: str):
         stem_cells = select(func.sum(Dataset.cell_count)).where(Dataset.is_deleted == False, query_type == species_name)
         cells = db.execute(stem_cells).scalar() or 0
 
-        stem_counts = select(func.count()).where(Dataset.is_deleted ==False,query_type == species_name)
+        stem_counts = select(func.count()).where(Dataset.is_deleted == False, query_type == species_name)
         counts = db.execute(stem_counts).scalar()
-        species_totals.append({type: species_name, "cells": str(cells), "sizes": str(sizes),'counts': str(counts)})
+        species_totals.append({type: species_name, "cells": str(cells), "sizes": str(sizes), "counts": str(counts)})
     return species_totals
 
 

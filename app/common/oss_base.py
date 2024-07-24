@@ -1,14 +1,16 @@
 import logging
 import os
 from datetime import datetime
+from io import BytesIO
 from itertools import islice
 from pathlib import Path, PurePath, PurePosixPath
-from urllib.parse import quote
 from typing import BinaryIO
-from io import BytesIO
+from urllib.parse import quote
+
 import oss2
 from fastapi import UploadFile
 from oss2.compat import to_unicode
+
 from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.localization import Entity
@@ -37,14 +39,27 @@ def download_file(bucket, remote_fp: str, local_fp: str):
 
 
 # (directory, file.filename, file.file, mkdir, allow_overwrite)
-def oos_file_upload(bucket, remote_fp: str, file:UploadFile,reader: BinaryIO,):#kdir: bool,allow_overwrite: bool)-> None:
-    try:
+def oos_file_upload(bucket, remote_fp: str, reader: BinaryIO):  # kdir: bool,allow_overwrite: bool)-> None:
+    # try:
+    for chunk in iter(lambda: reader.read(1024 * 1024), b""):  # Read in 1MB chunks
+        print(chunk)
+        bucket.put_object(str(remote_fp), chunk)
+    print(remote_fp)
 
-        contents = file.file.read()
-        bucket.put_object(remote_fp, to_unicode(contents))
-        print(contents, file.filename)
-    except Exception as e:
-        print(str(e))
+    # file_location = f"/tmp/{file.filename}"
+    # with open(file_location, "wb") as f:
+    #     f.write(await file.read())
+    # print(contents, file.filename)
+    # with open(file.file, 'b') as fileobj:
+    # #     fileobj.write(contents)
+    #     bucket.put_object(remote_fp, fileobj)
+
+    # except Exception as e:
+    #     print(str(e))
+
+
+# Function to start multipart upload
+
 
 def stream_download(bucket, remote_fp: str):
     # print(remote_fp)
