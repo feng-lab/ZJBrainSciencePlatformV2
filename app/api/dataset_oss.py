@@ -4,7 +4,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
 from fastapi.responses import StreamingResponse
-from zjbs_file_client import Client
 
 import app.db.crud.dataset as crud
 from app.api import check_dataset_exists, wrap_api_response
@@ -24,16 +23,8 @@ from app.common.oss_base import (
 from app.db import common_crud
 from app.db.orm import Dataset, DatasetFile
 from app.model import convert
-from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response
-from app.model.schema import (
-    CreateDatasetRequest,
-    DatasetDirectoryTreeNode,
-    DatasetInfo,
-    DatasetSearch,
-    PageParm,
-    UpdateDatasetRequest,
-)
+from app.model.schema import CreateDatasetRequest, PageParm
 
 router = APIRouter(tags=["dataset_oss"])
 
@@ -126,21 +117,17 @@ def get_dataset_collection_info_oss(
 
 @router.post("/api/uploadDatasetFileOss", description="上传oss数据集文件", response_model=NoneResponse)
 @wrap_api_response
-async def upload_dataset_file_oss(
+def upload_dataset_file_oss(
     dataset_id: Annotated[int, Form(description="数据集ID")],
     directory: Annotated[str, Form(description="目标文件夹路径")],
     file: Annotated[UploadFile, File(description="文件")],
     ctx: ResearcherContext = Depends(),
 ) -> None:
-    print(dataset_id)
     check_dataset_exists(ctx.db, dataset_id)
-
     directory_path = dataset_file_path(dataset_id, directory, file.filename)
-
-    print(os.path.normpath(os.path.relpath(directory_path, config.OSS_FILE_DIR)))
-    oos_file_upload(bucket_auth(), remote_fp=directory_path, reader=file.file)
     file_type = directory.split(".")[-1].lower()
     file_size = file.size
+    oos_file_upload(bucket_auth(), remote_fp=str(directory_path), reader=file.file, file_size=file_size)
     success = common_crud.insert_row(
         ctx.db,
         DatasetFile,

@@ -1,15 +1,14 @@
 import logging
 import os
 from datetime import datetime
-from io import BytesIO
-from itertools import islice
 from pathlib import Path, PurePath, PurePosixPath
 from typing import BinaryIO
 from urllib.parse import quote
 
 import oss2
 from fastapi import UploadFile
-from oss2.compat import to_unicode
+from oss2 import SizedFileAdapter, determine_part_size
+from oss2.models import PartInfo
 
 from app.common.config import config
 from app.common.exception import ServiceError
@@ -38,27 +37,39 @@ def download_file(bucket, remote_fp: str, local_fp: str):
     bucket.get_object_to_file(remote_fp, local_fp)
 
 
-# (directory, file.filename, file.file, mkdir, allow_overwrite)
-def oos_file_upload(bucket, remote_fp: str, reader: BinaryIO):  # kdir: bool,allow_overwrite: bool)-> None:
-    # try:
-    for chunk in iter(lambda: reader.read(1024 * 1024), b""):  # Read in 1MB chunks
-        print(chunk)
-        bucket.put_object(str(remote_fp), chunk)
-    print(remote_fp)
+def oos_file_upload(bucket, remote_fp: str, reader: BinaryIO, file_size: int) -> None:
+    if bucket.object_exists(remote_fp) and bucket.head_object(remote_fp).content_length == file_size:
+        logger.info(f"the oos file{remote_fp} is existed")
+    else:
+        try:
+            bucket.put_object(str(remote_fp), reader)
+            logger.info(f"sample uploading oos file {remote_fp} successfully")
+        except oss2.exceptions.NoSuchKey as e:
+            logger.error(f"put_object failed,status={e.status}")
+            preferred_size = 10 * 1024 * 1024
+            part_size = determine_part_size(file_size, preferred_size=preferred_size)
+            upload_id = bucket.init_multipart_upload(remote_fp).upload_id
+            parts = []
 
-    # file_location = f"/tmp/{file.filename}"
-    # with open(file_location, "wb") as f:
-    #     f.write(await file.read())
-    # print(contents, file.filename)
-    # with open(file.file, 'b') as fileobj:
-    # #     fileobj.write(contents)
-    #     bucket.put_object(remote_fp, fileobj)
+            part_number = 1
+            offset = 0
+            while offset < file_size:
+                part_data = reader.read(preferred_size)
+                num_to_upload = min(part_size, file_size - offset)
+                # if not part_data:
+                #     break
+                # num_to_upload = min(part_size, file_size - offset)
+                # 调用SizedFileAdapter(fileobj, size)方法会生成一个新的文件对象，重新计算起始追加位置。
+                result = bucket.upload_part(remote_fp, upload_id, part_number, part_data)
+                parts.append(PartInfo(part_number, result.etag))
 
-    # except Exception as e:
-    #     print(str(e))
-
-
-# Function to start multipart upload
+                offset += num_to_upload
+                part_number += 1
+            headers = dict()
+            # 设置文件访问权限ACL。此处设置为OBJECT_ACL_PRIVATE，表示私有权限。
+            # headers["x-oss-object-acl"] = oss2.OBJECT_ACL_PRIVATE
+            bucket.complete_multipart_upload(remote_fp, upload_id, parts, headers=headers)
+            logger.info(f"multipart uploading oos file {remote_fp} successfully")
 
 
 def stream_download(bucket, remote_fp: str):
@@ -93,7 +104,7 @@ def resumble_download(bucket, remote_fp: str, local_fp: str = None):
 
 def object_ls(bucket, remote_fp="") -> list:
     files_list = []
-    print(remote_fp)
+
     for obj in oss2.ObjectIteratorV2(bucket, prefix=remote_fp, delimiter="/", start_after=remote_fp):
         obj_key = str(obj.key)
         # print(obj_key)
@@ -175,28 +186,6 @@ def upload_big_multipart_file(bucket, local_fp, remote_fp, partsize=500):
         bucket.complete_multipart_upload(remote_fp, upload_id, parts)
 
 
-# def upload_oss_file(bucket, local_fp: str, remote_fp: str, allow_overwrite=True):
-#     if not os.path.exists(local_fp):
-#         raise ValueError(f"local_file {local_fp} is not exist")
-#     basename = os.path.basename(local_fp)
-#     file_size = os.path.getsize(local_fp)
-#     remote_fp = str(PurePosixPath(remote_fp, basename))
-#     try:
-#         print(remote_fp,local_fp)
-#         upload_file(bucket, remote_fp, local_fp)
-#     except:
-#         upload_big_multipart_file(bucket, local_fp, remote_fp, partsize=500)
-#     return file_size
-
-
-def upload_oss_file(bucket, local_file: UploadFile, remote_fp: str):
-    try:
-        with open(local_file, "rb") as fileobj:
-            bucket.put_object(remote_fp, fileobj)
-    except oss2.exceptions.OssError as e:
-        print(f"文件上传失败: {e}")
-
-
 def upload_dir_folder(dir_lo_path="", dir_oss_path=""):
     if not os.path.exists(dir_lo_path):
         raise ValueError("file path not exist")
@@ -213,19 +202,15 @@ def upload_dir_folder(dir_lo_path="", dir_oss_path=""):
                 oss_file_dir = dir_oss_path + file_path
             else:
                 oss_file_dir = dir_oss_path + basename + "/" + file_path
-            # 上传
-            # print(oss_file_dir)
+
             if (
                 bucket.object_exists(oss_file_dir)
                 and os.path.getsize(local_fp) == bucket.get_object_meta(oss_file_dir).content_length
             ):
-                # print(f"{os.path.join(path, filename)} has existed")
                 continue
             try:
                 upload_file(bucket, oss_file_dir, local_fp)
             except Exception as e:
-                # print(f'try to use multipart upload, {e}')
-                # print(f'{os.path.join(path, filename)}')
                 upload_big_multipart_file(bucket, local_fp, oss_file_dir, 2048)
 
 
