@@ -588,6 +588,16 @@ class UpdateDatasetRequest(CreateDatasetRequest, ModelId):
     pass
 
 
+class CreateDatasetFileRequest(BaseModel):
+    dataset_id: ID | None
+    oss_path: str | None
+    file_size: float
+    file_format: str
+    other_path: str | None
+    backup_path: str | None
+class UpdateDatasetFileRequest(CreateDatasetFileRequest, ModelId):
+    pass
+
 class DatasetDirectoryTreeNode(BaseModel):
     name: str
     dirs: list["DatasetDirectoryTreeNode"]

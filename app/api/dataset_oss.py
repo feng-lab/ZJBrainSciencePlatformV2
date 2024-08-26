@@ -20,11 +20,12 @@ from app.common.oss_base import (
     rename_object,
     stream_download,
 )
+from app.common.localization import Entity
 from app.db import common_crud
 from app.db.orm import Dataset, DatasetFile
 from app.model import convert
 from app.model.response import NoneResponse, Page, Response
-from app.model.schema import CreateDatasetRequest, PageParm
+from app.model.schema import CreateDatasetRequest, PageParm,CreateDatasetFileRequest,UpdateDatasetFileRequest
 
 router = APIRouter(tags=["dataset_oss"])
 
@@ -219,3 +220,28 @@ def delete_dataset_file_oss(
     )
     if not success:
         raise ServiceError.database_fail()
+
+
+@router.post("/api/createDatasetFile", description="创建数据集文件", response_model=Response[int])
+@wrap_api_response
+def create_dataset_file(request: CreateDatasetFileRequest, ctx: ResearcherContext = Depends()) -> int:
+    dataset_file_dict = request.dict()
+    dataset_file_id = common_crud.insert_row(ctx.db, DatasetFile, dataset_file_dict, commit=False)
+    if dataset_file_id is None:
+        raise ServiceError.database_fail()
+    ctx.db.commit()
+    return dataset_file_id
+
+
+@router.post("/api/updateDatasetFile",description = '数据路径更新，response_model = NonResponse')
+@wrap_api_response
+def update_dataset_file(request:UpdateDatasetFileRequest, ctx: ResearcherContext = Depends())-> None:
+    orm_dataset_file = common_crud.get_row_by_id(ctx.db, DatasetFile, request.id)
+    if orm_dataset_file is None:
+        raise ServiceError.not_found(Entity.dataset)
+    dataset_file_dict = request.dict(exclude_unset=True)
+    success = common_crud.update_row(ctx.db, DatasetFile, dataset_file_dict, id_=request.id, commit=True)
+    if not success:
+        raise ServiceError.database_fail()
+
+
