@@ -233,7 +233,7 @@ def create_dataset_file(request: CreateDatasetFileRequest, ctx: ResearcherContex
     return dataset_file_id
 
 
-@router.post("/api/updateDatasetFile",description = '数据路径更新，response_model = NonResponse')
+@router.post("/api/updateDatasetFile",description = '数据路径更新',response_model = NonResponse)
 @wrap_api_response
 def update_dataset_file(request:UpdateDatasetFileRequest, ctx: ResearcherContext = Depends())-> None:
     orm_dataset_file = common_crud.get_row_by_id(ctx.db, DatasetFile, request.id)
