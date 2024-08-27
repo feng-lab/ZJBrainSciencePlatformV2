@@ -1,4 +1,46 @@
 {
+    "config": {
+        "corpora_props": null,
+        "displayNames": {
+            "dataset": "pbmc3k",
+            "engine": "cellxgene anndata adaptor version"
+        },
+        "library_versions": {
+            "anndata": "0.10.8",
+            "cellxgene": "cellxgene v1.2.0"
+        },
+        "limits": {
+            "column_request_max": 32,
+            "diffexp_cellcount_max": null
+        },
+        "links": {
+            "about-dataset": null
+        },
+        "parameters": {
+            "annotations": true,
+            "annotations-data-collection-is-read-only": false,
+            "annotations-data-collection-name": null,
+            "annotations-user-data-idhash": "RJHFCMA7",
+            "annotations_dir": null,
+            "annotations_file": null,
+            "annotations_genesets": true,
+            "annotations_genesets_name_is_read_only": false,
+            "annotations_genesets_readonly": false,
+            "annotations_genesets_summary_methods": [
+                "mean"
+            ],
+            "backed": false,
+            "custom_colors": true,
+            "diffexp-may-be-slow": false,
+            "diffexp_lfc_cutoff": 0.01,
+            "disable-diffexp": false,
+            "layout": [],
+            "max-category-items": 1000,
+            "obs_names": "name_0",
+            "user_annotation_collection_name_enabled": true,
+            "var_names": "name_0"
+        }
+    },
     "schema": {
         "annotations": {
             "obs": {
