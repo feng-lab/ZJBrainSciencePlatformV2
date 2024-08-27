@@ -12,6 +12,7 @@ from app.db.orm import (
     AtlasRegionLink,
     CumulativeDatasetSize,
     Dataset,
+    DatasetFileVisualization,
     Device,
     EEGData,
     Experiment,
@@ -37,6 +38,7 @@ from app.model.schema import (
     AtlasRegionTreeNode,
     CumulativeDatasetSizeInfo,
     DatasetCollection,
+    DatasetFileVisualizationInfo,
     DatasetInfo,
     DeviceInfo,
     DeviceInfoWithIndex,
@@ -362,3 +364,9 @@ def EEGData_orm_2_info(eegdata: EEGData) -> EEGDataInfo:
 
 def species_orm_2_info(species: Species) -> SpeciesInfo:
     return SpeciesInfo.from_orm(species)
+
+
+def dataset_file_visualization_orm_2_info(
+    datasetfilevisualization: DatasetFileVisualization,
+) -> DatasetFileVisualizationInfo:
+    return DatasetFileVisualizationInfo.from_orm(datasetfilevisualization)

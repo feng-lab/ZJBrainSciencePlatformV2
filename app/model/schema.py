@@ -571,6 +571,19 @@ class CumulativeDatasetSizeInfo(BaseModel):
     full_data_count: float | None
 
 
+class CreateDatasetFileVisualization(BaseModel):
+    datafile_id: ID
+    umap_data_path: str | None
+    umap_img_path: str | None
+    qc_data_path: str | None
+    qc_img_path: str | None
+
+
+class DatasetFileVisualizationInfo(CreateDatasetFileVisualization, BaseModelInDB):
+    class Config:
+        orm_mode = True
+
+
 class DatasetSearch(PageParm, DatasetBase):
     user_id: ID | None
     data_update_year: int | None
@@ -595,8 +608,11 @@ class CreateDatasetFileRequest(BaseModel):
     file_format: str
     other_path: str | None
     backup_path: str | None
+
+
 class UpdateDatasetFileRequest(CreateDatasetFileRequest, ModelId):
     pass
+
 
 class DatasetDirectoryTreeNode(BaseModel):
     name: str

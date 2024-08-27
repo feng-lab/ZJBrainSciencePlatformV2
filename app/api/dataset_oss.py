@@ -1,4 +1,3 @@
-import os.path
 from pathlib import PurePosixPath
 from typing import Annotated
 
@@ -10,6 +9,7 @@ from app.api import check_dataset_exists, wrap_api_response
 from app.common.config import config
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.common.oss_base import (
     bucket_auth,
     create_dir,
@@ -20,12 +20,11 @@ from app.common.oss_base import (
     rename_object,
     stream_download,
 )
-from app.common.localization import Entity
 from app.db import common_crud
-from app.db.orm import Dataset, DatasetFile
+from app.db.orm import Dataset, DatasetFile, DatasetFileVisualization
 from app.model import convert
 from app.model.response import NoneResponse, Page, Response
-from app.model.schema import CreateDatasetRequest, PageParm,CreateDatasetFileRequest,UpdateDatasetFileRequest
+from app.model.schema import CreateDatasetFileRequest, CreateDatasetRequest, PageParm, UpdateDatasetFileRequest
 
 router = APIRouter(tags=["dataset_oss"])
 
@@ -233,9 +232,9 @@ def create_dataset_file(request: CreateDatasetFileRequest, ctx: ResearcherContex
     return dataset_file_id
 
 
-@router.post("/api/updateDatasetFile",description = '数据路径更新',response_model = NoneResponse)
+@router.post("/api/updateDatasetFile", description="数据路径更新", response_model=NoneResponse)
 @wrap_api_response
-def update_dataset_file(request:UpdateDatasetFileRequest, ctx: ResearcherContext = Depends())-> None:
+def update_dataset_file(request: UpdateDatasetFileRequest, ctx: ResearcherContext = Depends()) -> None:
     orm_dataset_file = common_crud.get_row_by_id(ctx.db, DatasetFile, request.id)
     if orm_dataset_file is None:
         raise ServiceError.not_found(Entity.dataset)
@@ -245,3 +244,25 @@ def update_dataset_file(request:UpdateDatasetFileRequest, ctx: ResearcherContext
         raise ServiceError.database_fail()
 
 
+@router.get("/api/testGetH5adInfo", description="预览展示", response_model=Response[dict])
+@wrap_api_response
+def get_h5ad_info(dataset_id: int, keys: str, ctx: ResearcherContext = Depends()):
+    # schema genesets louvain tsne
+    ## test load file from database
+    # check_dataset_exists(ctx.db, dataset_id)
+    # orm_dataset = common_crud.get_row(ctx.db, DatasetFileVisualization, DatasetFileVisualization.datafile_id==dataset_id)
+    # # if orm_dataset is None:
+    # #     raise ServiceError.not_found(Entity.dataset)
+    # dataset_info = convert.dataset_file_visualization_orm_2_info(orm_dataset)
+    # print(str(dataset_info.umap_data_path))
+    # if dataset_info.umap_data_path is not None:
+    import json
+
+    with open(str(config.test_visualization), "r") as f:
+        data = json.load(f)
+    result = data.get(keys)
+    if result is None:
+        raise ServiceError.not_found(Entity.dataset)
+    else:
+        return result
+    ## 根据test 文件搞
