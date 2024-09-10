@@ -2,7 +2,7 @@ from pathlib import PurePosixPath
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse,Response,HTMLResponse
 
 import app.db.crud.dataset as crud
 from app.api import check_dataset_exists, wrap_api_response
@@ -247,7 +247,7 @@ def update_dataset_file(request: UpdateDatasetFileRequest, ctx: ResearcherContex
 @router.get("/api/testGetH5adInfo", description="预览展示", response_model=Response[dict])
 @wrap_api_response
 def get_h5ad_info(dataset_id: int, keys: str, ctx: ResearcherContext = Depends()):
-    # schema genesets louvain tsne
+    # schema genesets louvain tsne config
     ## test load file from database
     # check_dataset_exists(ctx.db, dataset_id)
     # orm_dataset = common_crud.get_row(ctx.db, DatasetFileVisualization, DatasetFileVisualization.datafile_id==dataset_id)
@@ -257,7 +257,6 @@ def get_h5ad_info(dataset_id: int, keys: str, ctx: ResearcherContext = Depends()
     # print(str(dataset_info.umap_data_path))
     # if dataset_info.umap_data_path is not None:
     import json
-
     with open(str(config.test_visualization), "r") as f:
         data = json.load(f)
     result = data.get(keys)
@@ -266,3 +265,69 @@ def get_h5ad_info(dataset_id: int, keys: str, ctx: ResearcherContext = Depends()
     else:
         return result
     ## 根据test 文件搞
+
+@router.get("/api/testGetObsLayoutInfo", description="layout" )
+def get_obs_layout_info(dataset_id: int, layout_name: str, ctx: ResearcherContext = Depends()):
+    # filed""X_pca, X_tsne, X_umap are available"""
+    ## test load file from database
+    # check_dataset_exists(ctx.db, dataset_id)
+    # orm_dataset = common_crud.get_row(ctx.db, DatasetFileVisualization, DatasetFileVisualization.datafile_id==dataset_id)
+    # # if orm_dataset is None:
+    # #     raise ServiceError.not_found(Entity.dataset)
+    # dataset_info = convert.dataset_file_visualization_orm_2_info(orm_dataset)
+    import json,io
+    import pandas as pd
+    import numpy as np
+    from app.common.test_data_visualization.test_data_visualization import encode_matrix_fbs
+    with open(str(config.test_visualization), "r") as f:
+        data = json.load(f)
+    result = data.get(layout_name)
+    tsne_array = np.array(result)
+    if layout_name not in ['tsne','umap','pca','draw_graph_fr']:
+        raise ServiceError.params_error(layout_name)
+    layout_data= []
+    layout_data.append(pd.DataFrame(tsne_array, columns=[f"{layout_name}_0", f"{layout_name}_1"]))
+    df = pd.concat(layout_data, axis=1, copy=False)
+    rs = encode_matrix_fbs(tsne_array,col_idx=df.columns, row_idx=None)
+    # Use BytesIO to handle the binary stream
+    buffer = io.BytesIO(rs)
+    return StreamingResponse(
+        buffer,
+        media_type="application/octet-stream",
+        headers={"Content-Type": "application/octet-stream"},
+    )
+
+@router.get("/api/testGetObsAnnotationInfo", description="annotation" )
+def get_annotation_info(dataset_id: int, annotation_name: str, ctx: ResearcherContext = Depends()):
+    # filed""obs_louvain, obs_n_counts, obs_n_genes,obs_percent_mito, var_name_0 are available"""
+    ## test load file from database
+    # check_dataset_exists(ctx.db, dataset_id)
+    # orm_dataset = common_crud.get_row(ctx.db, DatasetFileVisualization, DatasetFileVisualization.datafile_id==dataset_id)
+    # # if orm_dataset is None:
+    # #     raise ServiceError.not_found(Entity.dataset)
+    # dataset_info = convert.dataset_file_visualization_orm_2_info(orm_dataset)
+    import json,io
+    import pandas as pd
+    from app.common.test_data_visualization.test_data_visualization import encode_matrix_fbs
+    with open(str(config.test_visualization), "r") as f:
+        data = json.load(f)
+    result = data.get(annotation_name)
+    # tsne_array = np.array(result)
+    if annotation_name not in ['obs_louvain', 'obs_n_counts', 'obs_n_genes','obs_percent_mito', 'var_name_0']:
+        raise ServiceError.params_error(annotation_name)
+    if annotation_name.startswith('obs_'):
+        annotation_name = annotation_name[len('obs_'):]
+
+    # 去掉 'var_' 前缀
+    if annotation_name.startswith('var_'):
+        annotation_name = annotation_name[len('var_'):]
+    df = pd.DataFrame(result, columns=[f"{annotation_name}"])
+    # print(df)
+    rs = encode_matrix_fbs(df,col_idx=df.columns, row_idx=None)
+    # Use BytesIO to handle the binary stream
+    buffer = io.BytesIO(rs)
+    return StreamingResponse(
+        buffer,
+        media_type="application/octet-stream",
+        headers={"Content-Type": "application/octet-stream"},
+    )
