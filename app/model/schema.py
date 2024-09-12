@@ -46,7 +46,7 @@ class UserNameStaffId(BaseModel):
 
 class UserBase(UserNameStaffId):
     access_level: int = Field(ge=0)
-
+    institution: str
 
 class CreateUserRequest(UserBase):
     password: str = Field(max_length=255)
@@ -84,7 +84,7 @@ class UserSearch(PageParm):
     username: LongVarchar | None = None
     staff_id: LongVarchar | None = None
     access_level: int | None = Field(None, ge=0)
-
+    institution: str | None = None
 
 class NotificationBase(BaseModel):
     type: NotificationType

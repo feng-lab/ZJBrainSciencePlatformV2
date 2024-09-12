@@ -17,6 +17,7 @@ router = APIRouter(tags=["user"])
 
 ROOT_USERNAME = "root"
 ROOT_PASSWORD = "?L09G$7g5*j@.q*4go4d"
+ROOT_INSTITUTION ="zhejianglab"
 
 
 @router.post("/api/createUser", description="创建用户", response_model=Response[int])

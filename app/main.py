@@ -27,7 +27,7 @@ from app.api.notification import router as notification_router
 from app.api.paradigm import router as paradigm_router
 from app.api.species import router as species_router
 from app.api.task import router as task_router
-from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
+from app.api.user import ROOT_PASSWORD, ROOT_USERNAME,ROOT_INSTITUTION
 from app.api.user import router as user_router
 from app.common.config import config
 from app.common.exception import ServiceError
@@ -212,6 +212,7 @@ def create_root_user(db: Session) -> None:
         hashed_password=hash_password(ROOT_PASSWORD),
         staff_id=ROOT_USERNAME,
         access_level=AccessLevel.ADMINISTRATOR.value,
+        institution = ROOT_INSTITUTION
     )
     insert_or_update_user(db, root_user_create)
 
