@@ -16,6 +16,7 @@ def created_user(logon_root_headers) -> dict[str, Any]:
         "staff_id": f"test_user_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
         "password": encrypt_password("test_user_password"),
         "access_level": 10,
+        "institution": "test_institution",
     }
     r = client.post("/api/createUser", headers=logon_root_headers, json=create_user)
     assert r.is_success
