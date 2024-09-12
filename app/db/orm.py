@@ -7,11 +7,16 @@ from sqlalchemy.sql import expression
 from app.db import Base, table_repr
 from app.model.enum_filed import (
     ABOBloodType,
+    CEffects,
+    Chromosome,
     ExperimentType,
     Gender,
+    GeneFusion,
+    GeneMutation,
     MaritalStatus,
     NotificationStatus,
     NotificationType,
+    PatientDiagnose,
     TaskStatus,
     TaskStepType,
     TaskType,
@@ -41,6 +46,7 @@ class User(Base, ModelMixin):
     last_login_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="上次登录时间")
     last_logout_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="上次下线时间")
     access_level: Mapped[int] = mapped_column(Integer, nullable=False, comment="权限级别")
+    institution: Mapped[str] = mapped_column(String(255), nullable=False, index=True, comment="机构")
 
 
 @table_repr
@@ -452,3 +458,124 @@ class CumulativeDatasetSize(Base, ModelMixin):
     date: Mapped[date] = mapped_column(Date, nullable=False, comment="日期")
     full_data_size: Mapped[float] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
     full_data_count: Mapped[float] = mapped_column(Float, nullable=True, comment="数据条目")
+
+
+class CohortPatient(Base, ModelMixin):
+    __tablename__ = "cohort_patient"
+    __table_args__ = {"comment": " 队列患者表"}
+    domain_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("casbin_domain.id"), nullable=False, index=True, comment="队列患者id"
+    )
+    patient_name: Mapped[str] = mapped_column(Text, nullable=False, comment="患者姓名")
+    gender: Mapped[Gender | None] = mapped_column(Enum(Gender), nullable=True, comment="性别")
+    inhospital_id: Mapped[float] = mapped_column(Text, nullable=False, comment="院内编号")
+    doctor_name: Mapped[str | None] = mapped_column(Text, nullable=True, comment="填写医生")
+    date_birth: Mapped[date] = mapped_column(Date, nullable=False, comment="出生日期")
+    identity_id: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="身份证编号")
+    hospital: Mapped[str | None] = mapped_column(Text, nullable=True, comment="就诊医院")
+    family_address: Mapped[str | None] = mapped_column(Text, nullable=True, comment="家庭住址")
+    family_address_city: Mapped[str | None] = mapped_column(Text, nullable=True, comment="家庭住址-区县")
+    family_address_street: Mapped[str | None] = mapped_column(Text, nullable=True, comment="家庭住址-街道")
+    phone_number: Mapped[str | None] = mapped_column(Text, nullable=True, comment="电话号码")
+
+
+class CohortPatientFromData(Base, ModelMixin):
+    __tablename__ = "cohort_patient_from_data"
+    __table_arg__ = {"comment": "队列患者表单数据表"}
+
+    patient_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("cohort_patient.id"), nullable=False, index=True, comment="队列患者id"
+    )
+    timing_of_diagnosis: Mapped[date | None] = mapped_column(Date, nullable=True, comment="确诊时间")
+    large_classification: Mapped[str | None] = mapped_column(Text, nullable=True, comment="大分型")
+    small_classification: Mapped[str | None] = mapped_column(Text, nullable=True, comment="小分型")
+    diagnose: Mapped[PatientDiagnose] = mapped_column(Enum(PatientDiagnose), nullable=True, comment="诊断")  # 其分类需要添加
+    wcb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="入院时WBC（x10E9/L）")
+    hb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="Hb（g/L）")
+    plt: Mapped[float | None] = mapped_column(Float, nullable=True, comment="PLT（x10E9/L）")
+    bone_marrow_morphology: Mapped[float | None] = mapped_column(Float, nullable=True, comment="骨髓形态")
+    fcm: Mapped[str | None] = mapped_column(Text, nullable=True, comment="FCM%")
+    fusion: Mapped[GeneFusion] = mapped_column(Enum(GeneFusion), nullable=True, comment="融合基因")
+    fusion_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="融合基因详情")
+    mutation: Mapped[GeneMutation] = mapped_column(Enum(GeneMutation), nullable=True, comment="基因突变")
+    mutation_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="基因突变详情")
+    chromosome: Mapped[Chromosome] = mapped_column(Enum(Chromosome), nullable=True, comment="染色体")
+    is_therapy: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否治疗")
+    c1_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="C1治疗日期")
+    c1_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C1治疗方案")
+    c1_effects: Mapped[CEffects] = mapped_column(Enum(CEffects), nullable=True, comment="C1疗效评估")  # 分类需要添加
+    c1_mrd: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C1_MRD")
+    c2_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="C2治疗日期")
+    c2_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C2治疗方案")
+    c2_effects: Mapped[CEffects] = mapped_column(Enum(CEffects), nullable=True, comment="C2疗效评估")  # 分类需要添加
+    c2_mrd: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C2_MRD")
+    chemotherapy_counts: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="化疗总程数")
+    last_chemotherapy_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="末次化疗日期")
+    status_after_last_chemotherapy: Mapped[CEffects] = mapped_column(
+        Enum(CEffects), nullable=True, comment="末次化疗后状态"
+    )  # 分类需要添加
+    is_relapse: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否复发")
+    cr1_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="CR1时间")
+    frist_relapse_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="第一次复发时间")
+    cr2_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="CR2时间")
+    second_relapse_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="第二次复发时间")
+    cr3_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="CR3时间")
+    is_transplant: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否复发")
+    transplant_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="骨髓移植时间")
+    is_death: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否死亡")
+    date_of_death: Mapped[date | None] = mapped_column(Date, nullable=True, comment="死亡日期")
+    last_followup_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="死亡日期")
+
+
+class CohortPatientFile(Base, ModelMixin):
+    __tablename__ = "cohort_patient_file"
+    __table_arg__ = {"comment": "队列患者文件表"}
+
+    patient_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("cohort_patient.id"), nullable=False, index=True, comment="队列患者id"
+    )
+    oss_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="oss文件路径")
+    file_size: Mapped[float] = mapped_column(Float, nullable=False, comment="文件大小")
+    file_format: Mapped[str] = mapped_column(Text, nullable=False, comment="文件格式")
+    other_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="其他存储路径")
+    backup_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="备份存储路径")
+
+
+class CohortPatientMemo(Base, ModelMixin):
+    __tablename__ = "cohort_patient_memo"
+    __table_arg__ = {"comment": "队列患者备注信息表"}
+    patient_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("cohort_patient.id"), nullable=False, index=True, comment="队列患者id"
+    )
+    memo: Mapped[str | None] = mapped_column(Text, nullable=True, comment="备注内容")
+
+
+class CasbinDomain(Base, ModelMixin):
+    __tablename__ = "casbin_domain"
+    __table_arg__ = {"comment": "domain表"}
+
+    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, index=True, comment="创建者id")
+    domain_name: Mapped[str | None] = mapped_column(Text, nullable=True, comment="policy类型")
+    description: Mapped[str | None] = mapped_column(Text, nullable=True, comment="domain描述")
+
+
+class DomainUser(Base, ModelMixin):
+    __tablename__ = "domain_user"
+    __table_arg__ = {"comment": "domain_user"}
+
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, index=True, comment="创建者id")
+    domain_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("casbin_domain.id"), nullable=False, index=True, comment="policy类型id"
+    )
+
+
+class DomainFile(Base, ModelMixin):
+    __tablename__ = "domain_file"
+    __table_arg__ = {"comment": "domain_file"}
+
+    domain_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("casbin_domain.id"), nullable=False, index=True, comment="policy类型id"
+    )
+    file_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("dataset_file.id"), nullable=False, index=True, comment="文件id"
+    )

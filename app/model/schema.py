@@ -595,8 +595,11 @@ class CreateDatasetFileRequest(BaseModel):
     file_format: str
     other_path: str | None
     backup_path: str | None
+
+
 class UpdateDatasetFileRequest(CreateDatasetFileRequest, ModelId):
     pass
+
 
 class DatasetDirectoryTreeNode(BaseModel):
     name: str

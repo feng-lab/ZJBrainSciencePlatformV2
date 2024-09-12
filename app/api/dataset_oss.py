@@ -10,6 +10,7 @@ from app.api import check_dataset_exists, wrap_api_response
 from app.common.config import config
 from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
+from app.common.localization import Entity
 from app.common.oss_base import (
     bucket_auth,
     create_dir,
@@ -20,12 +21,11 @@ from app.common.oss_base import (
     rename_object,
     stream_download,
 )
-from app.common.localization import Entity
 from app.db import common_crud
 from app.db.orm import Dataset, DatasetFile
 from app.model import convert
 from app.model.response import NoneResponse, Page, Response
-from app.model.schema import CreateDatasetRequest, PageParm,CreateDatasetFileRequest,UpdateDatasetFileRequest
+from app.model.schema import CreateDatasetFileRequest, CreateDatasetRequest, PageParm, UpdateDatasetFileRequest
 
 router = APIRouter(tags=["dataset_oss"])
 
@@ -233,9 +233,9 @@ def create_dataset_file(request: CreateDatasetFileRequest, ctx: ResearcherContex
     return dataset_file_id
 
 
-@router.post("/api/updateDatasetFile",description = '数据路径更新',response_model = NoneResponse)
+@router.post("/api/updateDatasetFile", description="数据路径更新", response_model=NoneResponse)
 @wrap_api_response
-def update_dataset_file(request:UpdateDatasetFileRequest, ctx: ResearcherContext = Depends())-> None:
+def update_dataset_file(request: UpdateDatasetFileRequest, ctx: ResearcherContext = Depends()) -> None:
     orm_dataset_file = common_crud.get_row_by_id(ctx.db, DatasetFile, request.id)
     if orm_dataset_file is None:
         raise ServiceError.not_found(Entity.dataset)
@@ -243,5 +243,3 @@ def update_dataset_file(request:UpdateDatasetFileRequest, ctx: ResearcherContext
     success = common_crud.update_row(ctx.db, DatasetFile, dataset_file_dict, id_=request.id, commit=True)
     if not success:
         raise ServiceError.database_fail()
-
-
