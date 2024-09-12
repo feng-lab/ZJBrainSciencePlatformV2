@@ -152,6 +152,7 @@ def user_orm_2_response(user: User) -> UserResponse:
                 "username",
                 "staff_id",
                 "access_level",
+                "institution"
             },
         )
     )
