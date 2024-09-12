@@ -46,7 +46,7 @@ class UserNameStaffId(BaseModel):
 
 class UserBase(UserNameStaffId):
     access_level: int = Field(ge=0)
-    institution: str
+    institution: str =Field(max_length=255)
 
 class CreateUserRequest(UserBase):
     password: str = Field(max_length=255)
