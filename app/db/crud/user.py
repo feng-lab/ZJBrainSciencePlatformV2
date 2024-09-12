@@ -28,7 +28,7 @@ def get_user_access_level(db: Session, user_id: int) -> int | None:
 
 
 def get_user_auth_by_staff_id(db: Session, staff_id: str) -> UserAuth | None:
-    stmt = select(User.id, User.username, User.staff_id, User.access_level, User.hashed_password).where(
+    stmt = select(User.id, User.username, User.staff_id, User.access_level, User.hashed_password,User.institution).where(
         User.staff_id == staff_id, User.is_deleted == False
     )
     row = db.execute(stmt).first()
