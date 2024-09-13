@@ -22,6 +22,7 @@ from app.db.orm import (
     AtlasParadigmClass,
     AtlasRegion,
     AtlasRegionLink,
+    CohortPatient,
     Dataset,
     Device,
     EEGData,
@@ -154,3 +155,7 @@ def _check_exists(
     exists = common_crud.exists_row(db, table, id_=id_, where=where)
     if not exists:
         raise ServiceError.not_found(entity)
+
+
+def check_cohort_patient_exists(db: Session, cohort_patient_id: int) -> None:
+    _check_exists(db, CohortPatient, Entity.cohort_patient, id_=cohort_patient_id)

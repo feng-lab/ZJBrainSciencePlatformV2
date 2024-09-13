@@ -46,7 +46,8 @@ class UserNameStaffId(BaseModel):
 
 class UserBase(UserNameStaffId):
     access_level: int = Field(ge=0)
-    institution: str =Field(max_length=255)
+    institution: str = Field(max_length=255)
+
 
 class CreateUserRequest(UserBase):
     password: str = Field(max_length=255)
@@ -85,6 +86,7 @@ class UserSearch(PageParm):
     staff_id: LongVarchar | None = None
     access_level: int | None = Field(None, ge=0)
     institution: str | None = None
+
 
 class NotificationBase(BaseModel):
     type: NotificationType
@@ -648,3 +650,40 @@ class SpeciesSearch(PageParm, BaseModel):
 
 class UpdateSpeciesRequest(CreateSpeciesRequest, ModelId):
     pass
+
+
+class CreateCohortPatient(BaseModel):
+    domain_id: int
+    patient_name: str
+    gender: Gender | None
+    inhospital_id: float
+    doctor_name: str | None
+    date_birth: date
+    identity_id: str | None = Field(None, max_length=50)
+    hospital: str
+    family_address: str
+    family_address_city: str
+    family_address_street: str
+    phone_number: str
+
+
+class CohortPatientInfo(CreateCohortPatient, BaseModelInDB):
+    class Config:
+        orm_mode = True
+
+
+class UpdateCohortPatientRequest(CreateCohortPatient, ModelId):
+    pass
+
+
+class CohortPatientSearch(PageParm):
+    domain_id: ID
+    patient_name: str | None
+    gender: Gender | None
+    hospital: str | None
+    date_birth: date | None
+    family_address: str | None
+    family_address_city: str | None
+    family_address_street: str | None
+    birth_start: date | None
+    birth_end: date | None

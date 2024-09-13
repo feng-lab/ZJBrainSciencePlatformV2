@@ -10,6 +10,7 @@ from app.db.orm import (
     AtlasParadigmClass,
     AtlasRegion,
     AtlasRegionLink,
+    CohortPatient,
     CumulativeDatasetSize,
     Dataset,
     Device,
@@ -35,6 +36,7 @@ from app.model.schema import (
     AtlasRegionLinkInfo,
     AtlasRegionTreeInfo,
     AtlasRegionTreeNode,
+    CohortPatientInfo,
     CumulativeDatasetSizeInfo,
     DatasetCollection,
     DatasetInfo,
@@ -152,7 +154,7 @@ def user_orm_2_response(user: User) -> UserResponse:
                 "username",
                 "staff_id",
                 "access_level",
-                "institution"
+                "institution",
             },
         )
     )
@@ -363,3 +365,7 @@ def EEGData_orm_2_info(eegdata: EEGData) -> EEGDataInfo:
 
 def species_orm_2_info(species: Species) -> SpeciesInfo:
     return SpeciesInfo.from_orm(species)
+
+
+def cohort_patient_orm_2_info(cohort_patient: CohortPatient) -> CohortPatientInfo:
+    return CohortPatientInfo.from_orm(cohort_patient)

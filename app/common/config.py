@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 
 class Config(BaseSettings):
     # 是否处于开发环境
-    DEBUG_MODE: bool = False
+    DEBUG_MODE: bool = True
 
     # 是否开启用户权限验证
-    ENABLE_AUTH: bool = True
+    ENABLE_AUTH: bool = False
 
     # 时区，默认
     TIMEZONE: str = "Asia/Shanghai"

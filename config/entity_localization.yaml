@@ -61,3 +61,7 @@
 - entity_id: species
   zh-CN: 物种
   en-US: species
+
+- entity_id: cohort_patient
+  zh-CN: 队列患者
+  en-US: cohort patient

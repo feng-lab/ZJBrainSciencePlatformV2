@@ -1,8 +1,8 @@
 """add patients and domain
 
-Revision ID: 3aaa5b061bf5
+Revision ID: 36db301f4501
 Revises: b49d41c2072b
-Create Date: 2024-09-12 13:47:06.291207
+Create Date: 2024-09-13 16:14:02.962099
 
 """
 import sqlalchemy as sa
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "3aaa5b061bf5"
+revision = "36db301f4501"
 down_revision = "b49d41c2072b"
 branch_labels = None
 depends_on = None
@@ -122,7 +122,7 @@ def upgrade() -> None:
             "mutation", sa.Enum("no_test", "partial_test", "other", name="genemutation"), nullable=True, comment="基因突变"
         ),
         sa.Column("mutation_detail", sa.Text(), nullable=True, comment="基因突变详情"),
-        sa.Column("chromosome", sa.Enum("no_test", "normal", "other", name="chromosome"), nullable=True, comment="染色体"),
+        sa.Column("chromosome", sa.Text(), nullable=True, comment="染色体"),
         sa.Column("is_therapy", sa.Boolean(), nullable=True, comment="是否治疗"),
         sa.Column("c1_date", sa.Date(), nullable=True, comment="C1治疗日期"),
         sa.Column("c1_detail", sa.Text(), nullable=True, comment="C1治疗方案"),

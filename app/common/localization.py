@@ -30,6 +30,7 @@ class Entity(StrEnum):
     dataset_file = "dataset_file"
     eeg_data = "eeg_data"
     species = "species"
+    cohort_patient = "cohort_patient"
 
 
 MessageTemplateKey: TypeAlias = tuple[str, MessageLocale]

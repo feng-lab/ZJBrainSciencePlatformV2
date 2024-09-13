@@ -16,6 +16,7 @@ from app.api import ApiJsonResponse
 from app.api.algorithm import router as algorithm_router
 from app.api.atlas import router as atlas_router
 from app.api.auth import router as auth_router
+from app.api.cohort_patient import router as cohort_patient_router
 from app.api.dataset import router as dataset_router
 from app.api.dataset_oss import router as dataset_oss_router
 from app.api.device import router as device_router
@@ -27,7 +28,7 @@ from app.api.notification import router as notification_router
 from app.api.paradigm import router as paradigm_router
 from app.api.species import router as species_router
 from app.api.task import router as task_router
-from app.api.user import ROOT_PASSWORD, ROOT_USERNAME,ROOT_INSTITUTION
+from app.api.user import ROOT_INSTITUTION, ROOT_PASSWORD, ROOT_USERNAME
 from app.api.user import router as user_router
 from app.common.config import config
 from app.common.exception import ServiceError
@@ -64,6 +65,7 @@ app = FastAPI(
         {"name": "eeg_data"},
         {"name": "species"},
         {"name": "dataset_oss"},
+        {"name": "cohort_patient"},
     ],
     debug=config.DEBUG_MODE,
 )
@@ -83,6 +85,8 @@ app.include_router(dataset_router)
 app.include_router(eeg_data_router)
 app.include_router(species_router)
 app.include_router(dataset_oss_router)
+app.include_router(cohort_patient_router)
+
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
@@ -212,7 +216,7 @@ def create_root_user(db: Session) -> None:
         hashed_password=hash_password(ROOT_PASSWORD),
         staff_id=ROOT_USERNAME,
         access_level=AccessLevel.ADMINISTRATOR.value,
-        institution = ROOT_INSTITUTION
+        institution=ROOT_INSTITUTION,
     )
     insert_or_update_user(db, root_user_create)
 

@@ -8,7 +8,6 @@ from app.db import Base, table_repr
 from app.model.enum_filed import (
     ABOBloodType,
     CEffects,
-    Chromosome,
     ExperimentType,
     Gender,
     GeneFusion,
@@ -489,7 +488,7 @@ class CohortPatientFromData(Base, ModelMixin):
     timing_of_diagnosis: Mapped[date | None] = mapped_column(Date, nullable=True, comment="确诊时间")
     large_classification: Mapped[str | None] = mapped_column(Text, nullable=True, comment="大分型")
     small_classification: Mapped[str | None] = mapped_column(Text, nullable=True, comment="小分型")
-    diagnose: Mapped[PatientDiagnose] = mapped_column(Enum(PatientDiagnose), nullable=True, comment="诊断")  # 其分类需要添加
+    diagnose: Mapped[PatientDiagnose] = mapped_column(Enum(PatientDiagnose), nullable=True, comment="诊断")
     wcb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="入院时WBC（x10E9/L）")
     hb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="Hb（g/L）")
     plt: Mapped[float | None] = mapped_column(Float, nullable=True, comment="PLT（x10E9/L）")
@@ -499,21 +498,19 @@ class CohortPatientFromData(Base, ModelMixin):
     fusion_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="融合基因详情")
     mutation: Mapped[GeneMutation] = mapped_column(Enum(GeneMutation), nullable=True, comment="基因突变")
     mutation_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="基因突变详情")
-    chromosome: Mapped[Chromosome] = mapped_column(Enum(Chromosome), nullable=True, comment="染色体")
+    chromosome: Mapped[str | None] = mapped_column(Text, nullable=True, comment="染色体")
     is_therapy: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否治疗")
     c1_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="C1治疗日期")
     c1_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C1治疗方案")
-    c1_effects: Mapped[CEffects] = mapped_column(Enum(CEffects), nullable=True, comment="C1疗效评估")  # 分类需要添加
+    c1_effects: Mapped[CEffects] = mapped_column(Enum(CEffects), nullable=True, comment="C1疗效评估")
     c1_mrd: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C1_MRD")
     c2_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="C2治疗日期")
     c2_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C2治疗方案")
-    c2_effects: Mapped[CEffects] = mapped_column(Enum(CEffects), nullable=True, comment="C2疗效评估")  # 分类需要添加
+    c2_effects: Mapped[CEffects] = mapped_column(Enum(CEffects), nullable=True, comment="C2疗效评估")
     c2_mrd: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C2_MRD")
     chemotherapy_counts: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="化疗总程数")
     last_chemotherapy_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="末次化疗日期")
-    status_after_last_chemotherapy: Mapped[CEffects] = mapped_column(
-        Enum(CEffects), nullable=True, comment="末次化疗后状态"
-    )  # 分类需要添加
+    status_after_last_chemotherapy: Mapped[CEffects] = mapped_column(Enum(CEffects), nullable=True, comment="末次化疗后状态")
     is_relapse: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否复发")
     cr1_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="CR1时间")
     frist_relapse_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="第一次复发时间")

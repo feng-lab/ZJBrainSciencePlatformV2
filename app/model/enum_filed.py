@@ -89,12 +89,6 @@ class GeneMutation(StrEnum):
     other = "NGS"
 
 
-class Chromosome(StrEnum):
-    no_test = "未做"
-    normal = "未见分裂相"
-    other = "具体结果"
-
-
 class CEffects(StrEnum):
     CR_CRi = "CR/CRi"
     PR = "PR"
