@@ -11,6 +11,8 @@ from app.db.orm import (
     AtlasRegion,
     AtlasRegionLink,
     CohortPatient,
+    CohortPatientFromData,
+    CohortPatientMemo,
     CumulativeDatasetSize,
     Dataset,
     Device,
@@ -50,6 +52,8 @@ from app.model.schema import (
     NotificationResponse,
     ParadigmInDB,
     ParadigmResponse,
+    PatientFormDataInfo,
+    PatientMemoInfo,
     SpeciesInfo,
     TaskBaseInfo,
     TaskInfo,
@@ -369,3 +373,11 @@ def species_orm_2_info(species: Species) -> SpeciesInfo:
 
 def cohort_patient_orm_2_info(cohort_patient: CohortPatient) -> CohortPatientInfo:
     return CohortPatientInfo.from_orm(cohort_patient)
+
+
+def patient_form_data_orm_2_info(patient_form_data: CohortPatientFromData) -> PatientFormDataInfo:
+    return PatientFormDataInfo.from_orm(patient_form_data)
+
+
+def patient_memo_orm_2_info(patient_memo: CohortPatientMemo) -> PatientMemoInfo:
+    return PatientMemoInfo.from_orm(patient_memo)

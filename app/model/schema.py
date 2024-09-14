@@ -5,13 +5,17 @@ from pydantic import BaseModel, Field, validator
 
 from app.model.enum_filed import (
     ABOBloodType,
+    CEffects,
     ExperimentType,
     Gender,
+    GeneFusion,
+    GeneMutation,
     GetExperimentsByPageSortBy,
     GetExperimentsByPageSortOrder,
     MaritalStatus,
     NotificationStatus,
     NotificationType,
+    PatientDiagnose,
     TaskStatus,
     TaskStepType,
     TaskType,
@@ -687,3 +691,71 @@ class CohortPatientSearch(PageParm):
     family_address_street: str | None
     birth_start: date | None
     birth_end: date | None
+
+
+class CohortPatientFormDataSearch(PageParm):
+    patient_id: ID | None
+
+
+class CreatePatientFormDataRequest(BaseModel):
+    patient_id: ID
+    timing_of_diagnosis: date | None
+    large_classification: str | None
+    small_classification: str | None
+    diagnose: PatientDiagnose | None
+    wcb: float | None
+    hb: float | None
+    plt: float | None
+    bone_marrow_morphology: float | None
+    fcm: str | None
+    fusion: GeneFusion | None
+    fusion_detail: str | None
+    mutation: GeneMutation | None
+    mutation_detail: str | None
+    chromosome: str | None
+    is_therapy: bool | None
+    c1_date: date | None
+    c1_detail: str | None
+    c1_effects: CEffects | None
+    c1_mrd: str | None
+    c2_date: date | None
+    c2_detail: str | None
+    c2_effects: CEffects | None
+    c2_mrd: str | None
+    chemotherapy_counts: int | None
+    last_chemotherapy_date: date | None
+    status_after_last_chemotherapy: CEffects | None
+    is_relapse: bool | None
+    cr1_date: date | None
+    frist_relapse_date: date | None
+    cr2_date: date | None
+    second_relapse_date: date | None
+    cr3_date: date | None
+    is_transplant: bool | None
+    transplant_date: date | None
+    is_death: bool | None
+    date_of_death: date | None
+    last_followup_date: date | None
+
+
+class PatientFormDataInfo(CreatePatientFormDataRequest, BaseModelInDB):
+    class Config:
+        orm_mode = True
+
+
+class UpdatePatientFormDataRequest(CreatePatientFormDataRequest, ModelId):
+    pass
+
+
+class CreatePatientMemoRequest(BaseModel):
+    patient_id: ID
+    memo: str | None
+
+
+class PatientMemoInfo(CreatePatientMemoRequest, BaseModelInDB):
+    class Config:
+        orm_mode = True
+
+
+class UpdatePatientMemoRequest(CreatePatientMemoRequest, ModelId):
+    pass

@@ -31,6 +31,8 @@ class Entity(StrEnum):
     eeg_data = "eeg_data"
     species = "species"
     cohort_patient = "cohort_patient"
+    patient_form_data = "patient_form_data"
+    patient_memo = "patient_memo"
 
 
 MessageTemplateKey: TypeAlias = tuple[str, MessageLocale]

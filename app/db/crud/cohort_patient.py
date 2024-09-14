@@ -4,8 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.crud import query_pages
-from app.db.orm import CohortPatient
-from app.model.schema import CohortPatientSearch
+from app.db.orm import CohortPatient, CohortPatientFromData, CohortPatientMemo
+from app.model.schema import CohortPatientFormDataSearch, CohortPatientSearch
 
 
 def search_cohort_patient(db: Session, search: CohortPatientSearch) -> tuple[int, Sequence[CohortPatient]]:
@@ -37,4 +37,20 @@ def search_cohort_patient(db: Session, search: CohortPatientSearch) -> tuple[int
         base_stmt = base_stmt.where(CohortPatient.date_birth >= search.birth_start)
     if search.birth_end is not None:
         base_stmt = base_stmt.where(CohortPatient.date_birth <= search.birth_end)
+    return query_pages(db, base_stmt, search.offset, search.limit)
+
+
+def search_patient_form_data(
+    db: Session, search: CohortPatientFormDataSearch
+) -> tuple[int, Sequence[CohortPatientFromData]]:
+    base_stmt = select(CohortPatientFromData).select_from(CohortPatientFromData)
+    if search.patient_id is not None:
+        base_stmt = base_stmt.where(CohortPatientFromData.patient_id == search.patient_id)
+    return query_pages(db, base_stmt, search.offset, search.limit)
+
+
+def search_patient_memo(db: Session, search: CohortPatientFormDataSearch) -> tuple[int, Sequence[CohortPatientMemo]]:
+    base_stmt = select(CohortPatientMemo).select_from(CohortPatientMemo)
+    if search.patient_id is not None:
+        base_stmt = base_stmt.where(CohortPatientMemo.patient_id == search.patient_id)
     return query_pages(db, base_stmt, search.offset, search.limit)

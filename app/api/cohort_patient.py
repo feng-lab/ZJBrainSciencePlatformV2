@@ -14,16 +14,23 @@ from app.common.context import HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.localization import Entity
 from app.db import common_crud
-from app.db.orm import CohortPatient, CohortPatientFile, CohortPatientFromData
+from app.db.orm import CohortPatient, CohortPatientFile, CohortPatientFromData, CohortPatientMemo
 from app.model import convert
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response
 from app.model.schema import (
+    CohortPatientFormDataSearch,
     CohortPatientInfo,
     CohortPatientSearch,
     CreateCohortPatient,
+    CreatePatientFormDataRequest,
+    CreatePatientMemoRequest,
     PageParm,
+    PatientFormDataInfo,
+    PatientMemoInfo,
     UpdateCohortPatientRequest,
+    UpdatePatientFormDataRequest,
+    UpdatePatientMemoRequest,
 )
 
 router = APIRouter(tags=["cohort_patient"])
@@ -59,7 +66,7 @@ def dataset_file_path(cohort_patient_id: int, *parts: str) -> PurePosixPath:
 def get_cohort_patient_info(cohort_patient_id: int, ctx: HumanSubjectContext = Depends()) -> CohortPatientInfo:
     orm_cohort_patient = common_crud.get_row_by_id(ctx.db, CohortPatient, cohort_patient_id)
     if orm_cohort_patient is None:
-        raise ServiceError.not_found(Entity.orm_cohort_patient)
+        raise ServiceError.not_found(Entity.cohort_patient)
     cohort_patient_info = convert.cohort_patient_orm_2_info(orm_cohort_patient)
     return cohort_patient_info
 
@@ -69,7 +76,6 @@ def get_cohort_patient_info(cohort_patient_id: int, ctx: HumanSubjectContext = D
 def get_cohort_patient_by_page(
     search: CohortPatientSearch = Depends(), ctx: HumanSubjectContext = Depends()
 ) -> Page[CohortPatientInfo]:
-    print(search.dict())
     total, orm_cohort_patient = crud.search_cohort_patient(ctx.db, search)
     cohort_patient_infos = convert.map_list(convert.cohort_patient_orm_2_info, orm_cohort_patient)
     return Page(total=total, items=cohort_patient_infos)
@@ -80,7 +86,7 @@ def get_cohort_patient_by_page(
 def update_dataset(request: UpdateCohortPatientRequest, ctx: ResearcherContext = Depends()) -> None:
     orm_cohort_patient = common_crud.get_row_by_id(ctx.db, CohortPatient, request.id)
     if orm_cohort_patient is None:
-        raise ServiceError.not_found(Entity.orm_cohort_patient)
+        raise ServiceError.not_found(Entity.cohort_patient)
     orm_cohort_dict = request.dict(exclude_unset=True)
     success = common_crud.update_row(ctx.db, CohortPatient, orm_cohort_dict, id_=request.id, commit=True)
     if not success:
@@ -89,23 +95,115 @@ def update_dataset(request: UpdateCohortPatientRequest, ctx: ResearcherContext =
 
 @router.delete("/api/deleteCohortPatient", description="删除病人信息", response_model=NoneResponse)
 @wrap_api_response
-def delete_dataset(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
+def delete_cohort_patient(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
     success = common_crud.bulk_update_rows_as_deleted(ctx.db, CohortPatient, ids=[request.id], commit=True)
     if not success:
         raise ServiceError.database_fail()
 
 
-### 其他表单建立
-# @router.post("/api/createPatientFormData", description="更新患者表单数据", response_model=Response[int])
-# @wrap_api_response
-# def create_cohort_patient(request: CreatePatientFormDataRequest, ctx: ResearcherContext = Depends())-> int:
-#
-#     orm_dataset = common_crud.get_row_by_id(ctx.db, Dataset, request.id)
-#
-# @router.post("/api/createPatientMemo", description="更新患者备注信息", response_model=Response[int])
-# @wrap_api_response
-# def create_cohort_patient(request: UpdateModelRequest, ctx: ResearcherContext = Depends())-> None:
-#     orm_dataset = common_crud.get_row_by_id(ctx.db, Dataset, request.id)
+## 其他表单建立
+@router.post("/api/createPatientFormData", description="创建患者表单数据", response_model=Response[int])
+@wrap_api_response
+def create_patient_form_data(request: CreatePatientFormDataRequest, ctx: ResearcherContext = Depends()) -> int:
+    check_cohort_patient_exists(ctx.db, request.patient_id)
+    patient_form_data_dict = request.dict()
+    patient_form_data_id = common_crud.insert_row(ctx.db, CohortPatientFromData, patient_form_data_dict, commit=False)
+    if patient_form_data_id is None:
+        raise ServiceError.database_fail()
+    ctx.db.commit()
+    return patient_form_data_id
+
+
+@router.post("/api/updatePatientFormData", description="更新患者表单数据", response_model=NoneResponse)
+@wrap_api_response
+def update_patient_form_data(request: UpdatePatientFormDataRequest, ctx: ResearcherContext = Depends()) -> None:
+    orm_patient_form_data = common_crud.get_row_by_id(ctx.db, CohortPatientFromData, request.id)
+    if orm_patient_form_data is None:
+        raise ServiceError.not_found(Entity.patient_form_data)
+    patient_memo_dict = request.dict(exclude_unset=True)
+    success = common_crud.update_row(ctx.db, CohortPatientFromData, patient_memo_dict, id_=request.id, commit=True)
+    if not success:
+        raise ServiceError.database_fail()
+
+
+@router.post("/api/getPatientFormData", description="获取数据集列表", response_model=Response[Page[PatientFormDataInfo]])
+@wrap_api_response
+def get_patient_form_data_by_page(
+    search: CohortPatientFormDataSearch = Depends(), ctx: HumanSubjectContext = Depends()
+) -> Page[PatientFormDataInfo]:
+    total, orm_patient_form_data = crud.search_patient_form_data(ctx.db, search)
+    patient_form_infos = convert.map_list(convert.patient_form_data_orm_2_info, orm_patient_form_data)
+    return Page(total=total, items=patient_form_infos)
+
+
+@router.post("/api/getPatientFormDataInfo", description="获取患者表单数据详情", response_model=Response[PatientFormDataInfo])
+@wrap_api_response
+def get_patient_form_data_info(patient_form_data_id: int, ctx: HumanSubjectContext = Depends()) -> PatientFormDataInfo:
+    orm_patient_form_data = common_crud.get_row_by_id(ctx.db, CohortPatientFromData, patient_form_data_id)
+    if orm_patient_form_data is None:
+        raise ServiceError.not_found(Entity.patient_form_data)
+    patient_form_data_info = convert.patient_form_data_orm_2_info(orm_patient_form_data)
+    return patient_form_data_info
+
+
+@router.delete("/api/deletePatientFormData", description="删除患者表单数据", response_model=NoneResponse)
+@wrap_api_response
+def delete_patient_form_data(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
+    success = common_crud.bulk_update_rows_as_deleted(ctx.db, CohortPatientFromData, ids=[request.id], commit=True)
+    if not success:
+        raise ServiceError.database_fail()
+
+
+@router.post("/api/createPatientMemo", description="创建患者备注信息", response_model=Response[int])
+@wrap_api_response
+def create_patient_memo(request: CreatePatientMemoRequest, ctx: ResearcherContext = Depends()) -> int:
+    check_cohort_patient_exists(ctx.db, request.patient_id)
+    patient_memo_dict = request.dict()
+    patient_form_data_id = common_crud.insert_row(ctx.db, CohortPatientMemo, patient_memo_dict, commit=False)
+    if patient_form_data_id is None:
+        raise ServiceError.database_fail()
+    ctx.db.commit()
+    return patient_form_data_id
+
+
+@router.post("/api/getPatientMemoByPage", description="获取患者备注列表", response_model=Response[Page[PatientMemoInfo]])
+@wrap_api_response
+def get_patient_memo_by_page(
+    search: CohortPatientFormDataSearch = Depends(), ctx: HumanSubjectContext = Depends()
+) -> Page[PatientMemoInfo]:
+    total, orm_patient_memo = crud.search_patient_memo(ctx.db, search)
+    patient_memo_infos = convert.map_list(convert.patient_memo_orm_2_info, orm_patient_memo)
+    return Page(total=total, items=patient_memo_infos)
+
+
+@router.post("/api/getPatientMemo", description="获取患者表单备注", response_model=Response[PatientMemoInfo])
+@wrap_api_response
+def get_patient_memo_info(patient_memo_id: int, ctx: HumanSubjectContext = Depends()) -> PatientMemoInfo:
+    orm_patient_memo = common_crud.get_row_by_id(ctx.db, CohortPatientMemo, patient_memo_id)
+    if orm_patient_memo is None:
+        raise ServiceError.not_found(Entity.patient_memo)
+    patient_memo_info = convert.patient_memo_orm_2_info(orm_patient_memo)
+    return patient_memo_info
+
+
+@router.post("/api/updatePatientMemo", description="更新患者表单备注", response_model=NoneResponse)
+@wrap_api_response
+def update_patient_memo(request: UpdatePatientMemoRequest, ctx: ResearcherContext = Depends()) -> None:
+    orm_patient_memo = common_crud.get_row_by_id(ctx.db, CohortPatientMemo, request.id)
+    if orm_patient_memo is None:
+        raise ServiceError.not_found(Entity.patient_memo)
+    patient_memo_dict = request.dict(exclude_unset=True)
+    success = common_crud.update_row(ctx.db, CohortPatientMemo, patient_memo_dict, id_=request.id, commit=True)
+    if not success:
+        raise ServiceError.database_fail()
+
+
+@router.delete("/api/deletePatientMemo", description="删除患者表单数据", response_model=NoneResponse)
+@wrap_api_response
+def delete_patient_memo(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
+    success = common_crud.bulk_update_rows_as_deleted(ctx.db, CohortPatientMemo, ids=[request.id], commit=True)
+    if not success:
+        raise ServiceError.database_fail()
 
 
 @router.post("/api/uploadCohortPatientFile", description="上传病人文件", response_model=NoneResponse)
@@ -134,6 +232,49 @@ def upload_cohort_patient_file(
     )
     if not success:
         raise ServiceError.database_fail()
+
+
+@router.get("/api/downloadCohortPatientFile", description="下载病人文件")
+def download_cohort_patient_file(
+    cohort_patient_id: Annotated[int, Query(description="数据集ID")],
+    path: Annotated[str, Query(description="文件路径")],
+    ctx: ResearcherContext = Depends(),
+) -> StreamingResponse:
+    check_cohort_patient_exists(ctx.db, cohort_patient_id)
+    file_path = dataset_file_path(cohort_patient_id, path)
+    with Client(config.FILE_SERVER_URL) as client:
+        file_server_response = client.inner.post("/download-file", params={"path": str(file_path)})
+        if file_server_response.status_code != 200:
+            raise ServiceError.remote_service_error(file_server_response.text)
+        return StreamingResponse(
+            file_server_response.iter_bytes(1024),
+            headers={
+                "Content-Disposition": f'attachment; filename="{quote(file_path.name)}"',
+                "Content-Type": guess_type(file_path.name)[0] or "text/plain",
+            },
+        )
+
+
+@router.get("/api/listCohortPatientFiles", description="获取病人文件列表", response_model=Response[list[dict[str, int]]])
+@wrap_api_response
+def list_cohort_patient_files(
+    cohort_patient_id: Annotated[int, Query(description="数据集ID")],
+    directory: Annotated[str, Query(description="文件夹路径")],
+    file_type: Annotated[str, Query(description="文件夹路径")] = None,
+    ctx: HumanSubjectContext = Depends(),
+) -> list[dict[str, int]]:
+    check_cohort_patient_exists(ctx.db, cohort_patient_id)
+    directory_path = dataset_file_path(cohort_patient_id, directory)
+    with Client(config.FILE_SERVER_URL) as client:
+        file_server_response = client.inner.post("/list-directory", params={"directory": str(directory_path)})
+        if file_server_response.status_code != 200:
+            raise ServiceError.remote_service_error(file_server_response.text)
+        files = file_server_response.json()
+        if file_type is None:
+            return [{"counts": len(files)}, files]
+        else:
+            filtered_files = [f for f in files if f.get("name").endswith(f".{file_type}")]
+            return [{"counts": len(filtered_files)}, filtered_files]
 
 
 @router.delete("/api/deleteCohortPatientFile", description="删除病人文件", response_model=NoneResponse)
