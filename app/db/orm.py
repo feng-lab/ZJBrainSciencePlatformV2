@@ -467,7 +467,7 @@ class CohortPatient(Base, ModelMixin):
     )
     patient_name: Mapped[str] = mapped_column(Text, nullable=False, comment="患者姓名")
     gender: Mapped[Gender | None] = mapped_column(Enum(Gender), nullable=True, comment="性别")
-    inhospital_id: Mapped[float] = mapped_column(Text, nullable=False, comment="院内编号")
+    inhospital_id: Mapped[str] = mapped_column(Text, nullable=False, comment="院内编号")
     doctor_name: Mapped[str | None] = mapped_column(Text, nullable=True, comment="填写医生")
     date_birth: Mapped[date] = mapped_column(Date, nullable=False, comment="出生日期")
     identity_id: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="身份证编号")
@@ -500,14 +500,6 @@ class CohortPatientFromData(Base, ModelMixin):
     mutation_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="基因突变详情")
     chromosome: Mapped[str | None] = mapped_column(Text, nullable=True, comment="染色体")
     is_therapy: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否治疗")
-    c1_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="C1治疗日期")
-    c1_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C1治疗方案")
-    c1_effects: Mapped[CEffects | None] = mapped_column(Enum(CEffects), nullable=True, comment="C1疗效评估")
-    c1_mrd: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C1_MRD")
-    c2_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="C2治疗日期")
-    c2_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C2治疗方案")
-    c2_effects: Mapped[CEffects | None] = mapped_column(Enum(CEffects), nullable=True, comment="C2疗效评估")
-    c2_mrd: Mapped[str | None] = mapped_column(Text, nullable=True, comment="C2_MRD")
     chemotherapy_counts: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="化疗总程数")
     last_chemotherapy_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="末次化疗日期")
     status_after_last_chemotherapy: Mapped[CEffects | None] = mapped_column(
@@ -515,7 +507,7 @@ class CohortPatientFromData(Base, ModelMixin):
     )
     is_relapse: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否复发")
     cr1_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="CR1时间")
-    frist_relapse_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="第一次复发时间")
+    first_relapse_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="第一次复发时间")
     cr2_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="CR2时间")
     second_relapse_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="第二次复发时间")
     cr3_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="CR3时间")
@@ -547,6 +539,20 @@ class CohortPatientMemo(Base, ModelMixin):
         Integer, ForeignKey("cohort_patient.id"), nullable=False, index=True, comment="队列患者id"
     )
     memo: Mapped[str | None] = mapped_column(Text, nullable=True, comment="备注内容")
+
+
+class CohortPatientCTherapyDetail(Base, ModelMixin):
+    __tablename__ = "cohort_patient_c_therapy_detail"
+    __table_arg__ = {"comment": "队列患者C治疗信息表"}
+
+    patient_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("cohort_patient.id"), nullable=False, index=True, comment="队列患者id"
+    )
+    c_index: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="治疗次序")
+    c_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="治疗日期")
+    c_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="治疗方案")
+    c_effects: Mapped[CEffects | None] = mapped_column(Enum(CEffects), nullable=True, comment="疗效评估")
+    c_mrd: Mapped[str | None] = mapped_column(Text, nullable=True, comment="MRD")
 
 
 class CasbinDomain(Base, ModelMixin):
