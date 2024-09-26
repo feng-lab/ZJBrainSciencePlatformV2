@@ -660,15 +660,15 @@ class CreateCohortPatient(BaseModel):
     domain_id: int
     patient_name: str
     gender: Gender | None
-    inhospital_id: float
+    inhospital_id: str
     doctor_name: str | None
     date_birth: date
     identity_id: str | None = Field(None, max_length=50)
-    hospital: str
-    family_address: str
-    family_address_city: str
-    family_address_street: str
-    phone_number: str
+    hospital: str | None
+    family_address: str | None
+    family_address_city: str | None
+    family_address_street: str | None
+    phone_number: str | None
 
 
 class CohortPatientInfo(CreateCohortPatient, BaseModelInDB):
@@ -693,7 +693,7 @@ class CohortPatientSearch(PageParm):
     birth_end: date | None
 
 
-class CohortPatientFormDataSearch(PageParm):
+class CohortPatientIdSearch(PageParm):
     patient_id: ID | None
 
 
@@ -714,20 +714,12 @@ class CreatePatientFormDataRequest(BaseModel):
     mutation_detail: str | None
     chromosome: str | None
     is_therapy: bool | None
-    c1_date: date | None
-    c1_detail: str | None
-    c1_effects: CEffects | None
-    c1_mrd: str | None
-    c2_date: date | None
-    c2_detail: str | None
-    c2_effects: CEffects | None
-    c2_mrd: str | None
     chemotherapy_counts: int | None
     last_chemotherapy_date: date | None
     status_after_last_chemotherapy: CEffects | None
     is_relapse: bool | None
     cr1_date: date | None
-    frist_relapse_date: date | None
+    first_relapse_date: date | None
     cr2_date: date | None
     second_relapse_date: date | None
     cr3_date: date | None
@@ -758,4 +750,22 @@ class PatientMemoInfo(CreatePatientMemoRequest, BaseModelInDB):
 
 
 class UpdatePatientMemoRequest(CreatePatientMemoRequest, ModelId):
+    pass
+
+
+class CreatePatientCTherapyDetailRequest(BaseModel):
+    patient_id: int
+    c_index: int
+    c_date: date | None
+    c_detail: str | None
+    c_effects: CEffects | None
+    c_mrd: str | None
+
+
+class PatientCTherapyDetailInfo(CreatePatientCTherapyDetailRequest, BaseModelInDB):
+    class Config:
+        orm_mode = True
+
+
+class UpdatePatientCTherapyDetailRequest(CreatePatientCTherapyDetailRequest, ModelId):
     pass

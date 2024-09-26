@@ -33,6 +33,7 @@ class Entity(StrEnum):
     cohort_patient = "cohort_patient"
     patient_form_data = "patient_form_data"
     patient_memo = "patient_memo"
+    patient_c_therapy_detail = "patient_c_therapy_detail"
 
 
 MessageTemplateKey: TypeAlias = tuple[str, MessageLocale]

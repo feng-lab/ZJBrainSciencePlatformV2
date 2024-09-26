@@ -65,3 +65,15 @@
 - entity_id: cohort_patient
   zh-CN: 队列患者
   en-US: cohort patient
+
+- entity_id: patient_form_data
+  zh-CN: 队列患者表单
+  en-US: patient form data
+
+- entity_id: patient_memo
+  zh-CN: 队列患者备注信息
+  en-US: patient memo
+
+- entity_id: patient_c_therapy_detail
+  zh-CN: 队列患者C治疗信息
+  en-US: patient c therapy detail

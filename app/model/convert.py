@@ -11,6 +11,7 @@ from app.db.orm import (
     AtlasRegion,
     AtlasRegionLink,
     CohortPatient,
+    CohortPatientCTherapyDetail,
     CohortPatientFromData,
     CohortPatientMemo,
     CumulativeDatasetSize,
@@ -52,6 +53,7 @@ from app.model.schema import (
     NotificationResponse,
     ParadigmInDB,
     ParadigmResponse,
+    PatientCTherapyDetailInfo,
     PatientFormDataInfo,
     PatientMemoInfo,
     SpeciesInfo,
@@ -381,3 +383,7 @@ def patient_form_data_orm_2_info(patient_form_data: CohortPatientFromData) -> Pa
 
 def patient_memo_orm_2_info(patient_memo: CohortPatientMemo) -> PatientMemoInfo:
     return PatientMemoInfo.from_orm(patient_memo)
+
+
+def patient_c_therapy_detail_2_info(patient_c_therapy_detail: CohortPatientCTherapyDetail) -> PatientCTherapyDetailInfo:
+    return PatientCTherapyDetailInfo.from_orm(patient_c_therapy_detail)

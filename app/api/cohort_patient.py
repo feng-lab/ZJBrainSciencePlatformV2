@@ -10,25 +10,35 @@ from zjbs_file_client import Client, FileType
 import app.db.crud.cohort_patient as crud
 from app.api import check_cohort_patient_exists, wrap_api_response
 from app.common.config import config
-from app.common.context import HumanSubjectContext, ResearcherContext
+from app.common.context import AdministratorContext, HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
 from app.common.localization import Entity
 from app.db import common_crud
-from app.db.orm import CohortPatient, CohortPatientFile, CohortPatientFromData, CohortPatientMemo
+from app.db.orm import (
+    CohortPatient,
+    CohortPatientCTherapyDetail,
+    CohortPatientFile,
+    CohortPatientFromData,
+    CohortPatientMemo,
+    User,
+)
 from app.model import convert
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response
 from app.model.schema import (
-    CohortPatientFormDataSearch,
+    CohortPatientIdSearch,
     CohortPatientInfo,
     CohortPatientSearch,
     CreateCohortPatient,
+    CreatePatientCTherapyDetailRequest,
     CreatePatientFormDataRequest,
     CreatePatientMemoRequest,
     PageParm,
+    PatientCTherapyDetailInfo,
     PatientFormDataInfo,
     PatientMemoInfo,
     UpdateCohortPatientRequest,
+    UpdatePatientCTherapyDetailRequest,
     UpdatePatientFormDataRequest,
     UpdatePatientMemoRequest,
 )
@@ -43,6 +53,7 @@ def create_cohort_patient(request: CreateCohortPatient, ctx: ResearcherContext =
     cohort_patient_id = common_crud.insert_row(ctx.db, CohortPatient, cohort_patient_dict, commit=False)
     if cohort_patient_id is None:
         raise ServiceError.database_fail()
+
     with Client(config.FILE_SERVER_URL) as client:
         file_server_response = client.inner.post(
             "/create-directory", params={"path": dataset_file_path(cohort_patient_id, "/"), "exists_ok": True}
@@ -65,9 +76,15 @@ def dataset_file_path(cohort_patient_id: int, *parts: str) -> PurePosixPath:
 @wrap_api_response
 def get_cohort_patient_info(cohort_patient_id: int, ctx: HumanSubjectContext = Depends()) -> CohortPatientInfo:
     orm_cohort_patient = common_crud.get_row_by_id(ctx.db, CohortPatient, cohort_patient_id)
+
     if orm_cohort_patient is None:
         raise ServiceError.not_found(Entity.cohort_patient)
     cohort_patient_info = convert.cohort_patient_orm_2_info(orm_cohort_patient)
+    orm_user = common_crud.get_row_by_id(ctx.db, User, ctx.user_id)
+    if orm_user.access_level != 1000:
+        cohort_patient_info.identity_id = None
+        cohort_patient_info.family_address_street = None
+        cohort_patient_info.phone_number = None
     return cohort_patient_info
 
 
@@ -95,13 +112,28 @@ def update_dataset(request: UpdateCohortPatientRequest, ctx: ResearcherContext =
 
 @router.delete("/api/deleteCohortPatient", description="删除病人信息", response_model=NoneResponse)
 @wrap_api_response
-def delete_cohort_patient(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
-    success = common_crud.bulk_update_rows_as_deleted(ctx.db, CohortPatient, ids=[request.id], commit=True)
-    if not success:
+def delete_cohort_patient(request: DeleteModelRequest, ctx: AdministratorContext = Depends()) -> None:
+    delete_patient_success = common_crud.bulk_update_rows_as_deleted(
+        ctx.db, CohortPatient, ids=[request.id], commit=True
+    )
+    delete_patient_from_data_success = common_crud.bulk_update_rows_as_deleted(
+        ctx.db, CohortPatientFromData, where=[CohortPatientFromData.patient_id == request.id], commit=True
+    )
+    delete_patient_c_therapy_detail_success = common_crud.bulk_update_rows_as_deleted(
+        ctx.db, CohortPatientCTherapyDetail, where=[CohortPatientCTherapyDetail.patient_id == request.id], commit=True
+    )
+    delete_patient_memo_success = common_crud.bulk_update_rows_as_deleted(
+        ctx.db, CohortPatientMemo, where=[CohortPatientMemo.patient_id == request.id], commit=True
+    )
+    if not (
+        delete_patient_success
+        and delete_patient_from_data_success
+        and delete_patient_c_therapy_detail_success
+        and delete_patient_memo_success
+    ):
         raise ServiceError.database_fail()
 
 
-## 其他表单建立
 @router.post("/api/createPatientFormData", description="创建患者表单数据", response_model=Response[int])
 @wrap_api_response
 def create_patient_form_data(request: CreatePatientFormDataRequest, ctx: ResearcherContext = Depends()) -> int:
@@ -129,7 +161,7 @@ def update_patient_form_data(request: UpdatePatientFormDataRequest, ctx: Researc
 @router.post("/api/getPatientFormData", description="获取数据集列表", response_model=Response[Page[PatientFormDataInfo]])
 @wrap_api_response
 def get_patient_form_data_by_page(
-    search: CohortPatientFormDataSearch = Depends(), ctx: HumanSubjectContext = Depends()
+    search: CohortPatientIdSearch = Depends(), ctx: HumanSubjectContext = Depends()
 ) -> Page[PatientFormDataInfo]:
     total, orm_patient_form_data = crud.search_patient_form_data(ctx.db, search)
     patient_form_infos = convert.map_list(convert.patient_form_data_orm_2_info, orm_patient_form_data)
@@ -148,8 +180,80 @@ def get_patient_form_data_info(patient_form_data_id: int, ctx: HumanSubjectConte
 
 @router.delete("/api/deletePatientFormData", description="删除患者表单数据", response_model=NoneResponse)
 @wrap_api_response
-def delete_patient_form_data(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
+def delete_patient_form_data(request: DeleteModelRequest, ctx: AdministratorContext = Depends()) -> None:
     success = common_crud.bulk_update_rows_as_deleted(ctx.db, CohortPatientFromData, ids=[request.id], commit=True)
+    if not success:
+        raise ServiceError.database_fail()
+
+
+@router.post("/api/createPatientCTherapyDetail", description="创建队列患者C治疗信息表", response_model=Response[int])
+@wrap_api_response
+def create_patient_c_therapy_detail(
+    request: CreatePatientCTherapyDetailRequest, ctx: ResearcherContext = Depends()
+) -> int:
+    check_cohort_patient_exists(ctx.db, request.patient_id)
+    patient_c_therapy_detail_dict = request.dict()
+    patient_therapy_detail_id = common_crud.insert_row(
+        ctx.db, CohortPatientCTherapyDetail, patient_c_therapy_detail_dict, commit=False
+    )
+    if patient_therapy_detail_id is None:
+        raise ServiceError.database_fail()
+    ctx.db.commit()
+    return patient_therapy_detail_id
+
+
+@router.post(
+    "/api/getPatientCTherapyDetailByPage",
+    description="获取患者C治疗信息列表",
+    response_model=Response[Page[PatientCTherapyDetailInfo]],
+)
+@wrap_api_response
+def get_patient_c_therapy_detail_by_page(
+    search: CohortPatientIdSearch = Depends(), ctx: HumanSubjectContext = Depends()
+) -> Page[PatientCTherapyDetailInfo]:
+    total, orm_patient_c_therapy_detail = crud.search_patient_therapy_detail(ctx.db, search)
+    patient_c_therapy_detail_infos = convert.map_list(
+        convert.patient_c_therapy_detail_2_info, orm_patient_c_therapy_detail
+    )
+    return Page(total=total, items=patient_c_therapy_detail_infos)
+
+
+@router.post(
+    "/api/getPatientCTherapyDetailInfo", description="获取患者C治疗信息", response_model=Response[PatientCTherapyDetailInfo]
+)
+@wrap_api_response
+def get_patient_c_therapy_detail_info(
+    patient_c_therapy_detail_id: int, ctx: HumanSubjectContext = Depends()
+) -> PatientCTherapyDetailInfo:
+    orm_patient_c_therapy_detail = common_crud.get_row_by_id(
+        ctx.db, CohortPatientCTherapyDetail, patient_c_therapy_detail_id
+    )
+    if orm_patient_c_therapy_detail is None:
+        raise ServiceError.not_found(Entity.patient_c_therapy_detail)
+    patient_c_therapy_detail_info = convert.patient_c_therapy_detail_2_info(orm_patient_c_therapy_detail)
+    return patient_c_therapy_detail_info
+
+
+@router.post("/api/updatePatientCTherapyDetail", description="更新患者C治疗信息", response_model=NoneResponse)
+@wrap_api_response
+def update_patient_c_therapy_detail(
+    request: UpdatePatientCTherapyDetailRequest, ctx: ResearcherContext = Depends()
+) -> None:
+    orm_patient_c_therapy_detail = common_crud.get_row_by_id(ctx.db, CohortPatientCTherapyDetail, request.id)
+    if orm_patient_c_therapy_detail is None:
+        raise ServiceError.not_found(Entity.patient_c_therapy_detail)
+    patient_c_therapy_detail_dict = request.dict(exclude_unset=True)
+    success = common_crud.update_row(
+        ctx.db, CohortPatientCTherapyDetail, patient_c_therapy_detail_dict, id_=request.id, commit=True
+    )
+    if not success:
+        raise ServiceError.database_fail()
+
+
+@router.delete("/api/deletePatientCTherapyDetail", description="删除患者患者C治疗信息", response_model=NoneResponse)
+@wrap_api_response
+def delete_patient_c_therapy_detail(request: DeleteModelRequest, ctx: AdministratorContext = Depends()) -> None:
+    success = common_crud.bulk_update_rows_as_deleted(ctx.db, CohortPatientMemo, ids=[request.id], commit=True)
     if not success:
         raise ServiceError.database_fail()
 
@@ -159,24 +263,24 @@ def delete_patient_form_data(request: DeleteModelRequest, ctx: ResearcherContext
 def create_patient_memo(request: CreatePatientMemoRequest, ctx: ResearcherContext = Depends()) -> int:
     check_cohort_patient_exists(ctx.db, request.patient_id)
     patient_memo_dict = request.dict()
-    patient_form_data_id = common_crud.insert_row(ctx.db, CohortPatientMemo, patient_memo_dict, commit=False)
-    if patient_form_data_id is None:
+    patient_memo_id = common_crud.insert_row(ctx.db, CohortPatientMemo, patient_memo_dict, commit=False)
+    if patient_memo_id is None:
         raise ServiceError.database_fail()
     ctx.db.commit()
-    return patient_form_data_id
+    return patient_memo_id
 
 
 @router.post("/api/getPatientMemoByPage", description="获取患者备注列表", response_model=Response[Page[PatientMemoInfo]])
 @wrap_api_response
 def get_patient_memo_by_page(
-    search: CohortPatientFormDataSearch = Depends(), ctx: HumanSubjectContext = Depends()
+    search: CohortPatientIdSearch = Depends(), ctx: HumanSubjectContext = Depends()
 ) -> Page[PatientMemoInfo]:
     total, orm_patient_memo = crud.search_patient_memo(ctx.db, search)
     patient_memo_infos = convert.map_list(convert.patient_memo_orm_2_info, orm_patient_memo)
     return Page(total=total, items=patient_memo_infos)
 
 
-@router.post("/api/getPatientMemo", description="获取患者表单备注", response_model=Response[PatientMemoInfo])
+@router.post("/api/getPatientMemoInfo", description="获取患者表单备注", response_model=Response[PatientMemoInfo])
 @wrap_api_response
 def get_patient_memo_info(patient_memo_id: int, ctx: HumanSubjectContext = Depends()) -> PatientMemoInfo:
     orm_patient_memo = common_crud.get_row_by_id(ctx.db, CohortPatientMemo, patient_memo_id)
@@ -200,7 +304,7 @@ def update_patient_memo(request: UpdatePatientMemoRequest, ctx: ResearcherContex
 
 @router.delete("/api/deletePatientMemo", description="删除患者表单数据", response_model=NoneResponse)
 @wrap_api_response
-def delete_patient_memo(request: DeleteModelRequest, ctx: ResearcherContext = Depends()) -> None:
+def delete_patient_memo(request: DeleteModelRequest, ctx: AdministratorContext = Depends()) -> None:
     success = common_crud.bulk_update_rows_as_deleted(ctx.db, CohortPatientMemo, ids=[request.id], commit=True)
     if not success:
         raise ServiceError.database_fail()

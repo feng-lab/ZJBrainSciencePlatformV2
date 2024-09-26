@@ -548,7 +548,7 @@ class CohortPatientCTherapyDetail(Base, ModelMixin):
     patient_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("cohort_patient.id"), nullable=False, index=True, comment="队列患者id"
     )
-    c_index: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="治疗次序")
+    c_index: Mapped[int] = mapped_column(Integer, nullable=False, comment="治疗次序")
     c_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="治疗日期")
     c_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="治疗方案")
     c_effects: Mapped[CEffects | None] = mapped_column(Enum(CEffects), nullable=True, comment="疗效评估")
