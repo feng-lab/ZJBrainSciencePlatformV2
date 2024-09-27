@@ -8,7 +8,7 @@ from starlette.responses import guess_type
 from zjbs_file_client import Client, FileType
 
 import app.db.crud.cohort_patient as crud
-from app.api import check_cohort_patient_exists, wrap_api_response
+from app.api import check_cohort_patient_exists, check_cohort_patient_form_data, wrap_api_response
 from app.common.config import config
 from app.common.context import AdministratorContext, HumanSubjectContext, ResearcherContext
 from app.common.exception import ServiceError
@@ -138,6 +138,12 @@ def delete_cohort_patient(request: DeleteModelRequest, ctx: AdministratorContext
 @wrap_api_response
 def create_patient_form_data(request: CreatePatientFormDataRequest, ctx: ResearcherContext = Depends()) -> int:
     check_cohort_patient_exists(ctx.db, request.patient_id)
+    exists = common_crud.exists_row(
+        ctx.db, CohortPatientFromData, where=[CohortPatientFromData.patient_id == request.patient_id]
+    )
+    if exists:
+        raise ServiceError.database_fail()
+
     patient_form_data_dict = request.dict()
     patient_form_data_id = common_crud.insert_row(ctx.db, CohortPatientFromData, patient_form_data_dict, commit=False)
     if patient_form_data_id is None:
@@ -149,29 +155,29 @@ def create_patient_form_data(request: CreatePatientFormDataRequest, ctx: Researc
 @router.post("/api/updatePatientFormData", description="更新患者表单数据", response_model=NoneResponse)
 @wrap_api_response
 def update_patient_form_data(request: UpdatePatientFormDataRequest, ctx: ResearcherContext = Depends()) -> None:
-    orm_patient_form_data = common_crud.get_row_by_id(ctx.db, CohortPatientFromData, request.id)
-    if orm_patient_form_data is None:
+    exists = common_crud.exists_row(
+        ctx.db, CohortPatientFromData, where=[CohortPatientFromData.patient_id == request.patient_id]
+    )
+    if exists is None:
         raise ServiceError.not_found(Entity.patient_form_data)
     patient_memo_dict = request.dict(exclude_unset=True)
-    success = common_crud.update_row(ctx.db, CohortPatientFromData, patient_memo_dict, id_=request.id, commit=True)
+    success = common_crud.update_row(
+        ctx.db,
+        CohortPatientFromData,
+        patient_memo_dict,
+        where=[CohortPatientFromData.patient_id == request.patient_id, CohortPatientFromData.is_deleted == False],
+        commit=True,
+    )
     if not success:
         raise ServiceError.database_fail()
 
 
-@router.post("/api/getPatientFormData", description="获取数据集列表", response_model=Response[Page[PatientFormDataInfo]])
-@wrap_api_response
-def get_patient_form_data_by_page(
-    search: CohortPatientIdSearch = Depends(), ctx: HumanSubjectContext = Depends()
-) -> Page[PatientFormDataInfo]:
-    total, orm_patient_form_data = crud.search_patient_form_data(ctx.db, search)
-    patient_form_infos = convert.map_list(convert.patient_form_data_orm_2_info, orm_patient_form_data)
-    return Page(total=total, items=patient_form_infos)
-
-
 @router.post("/api/getPatientFormDataInfo", description="获取患者表单数据详情", response_model=Response[PatientFormDataInfo])
 @wrap_api_response
-def get_patient_form_data_info(patient_form_data_id: int, ctx: HumanSubjectContext = Depends()) -> PatientFormDataInfo:
-    orm_patient_form_data = common_crud.get_row_by_id(ctx.db, CohortPatientFromData, patient_form_data_id)
+def get_patient_form_data_info(patient_id: int, ctx: HumanSubjectContext = Depends()) -> PatientFormDataInfo:
+    orm_patient_form_data = common_crud.get_row(
+        ctx.db, CohortPatientFromData, CohortPatientFromData.patient_id == patient_id
+    )
     if orm_patient_form_data is None:
         raise ServiceError.not_found(Entity.patient_form_data)
     patient_form_data_info = convert.patient_form_data_orm_2_info(orm_patient_form_data)

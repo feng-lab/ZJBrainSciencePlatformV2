@@ -735,7 +735,7 @@ class PatientFormDataInfo(CreatePatientFormDataRequest, BaseModelInDB):
         orm_mode = True
 
 
-class UpdatePatientFormDataRequest(CreatePatientFormDataRequest, ModelId):
+class UpdatePatientFormDataRequest(CreatePatientFormDataRequest):
     pass
 
 

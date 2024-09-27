@@ -23,6 +23,7 @@ from app.db.orm import (
     AtlasRegion,
     AtlasRegionLink,
     CohortPatient,
+    CohortPatientFromData,
     Dataset,
     Device,
     EEGData,
@@ -158,4 +159,14 @@ def _check_exists(
 
 
 def check_cohort_patient_exists(db: Session, cohort_patient_id: int) -> None:
+    print(cohort_patient_id)
     _check_exists(db, CohortPatient, Entity.cohort_patient, id_=cohort_patient_id)
+
+
+def check_cohort_patient_form_data(db: Session, cohort_patient_id: int) -> None:
+    _check_exists(
+        db,
+        CohortPatientFromData,
+        Entity.patient_form_data,
+        where=[CohortPatientFromData.patient_id == cohort_patient_id],
+    )
