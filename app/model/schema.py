@@ -739,9 +739,12 @@ class UpdatePatientFormDataRequest(CreatePatientFormDataRequest):
     pass
 
 
-class CreatePatientMemoRequest(BaseModel):
-    patient_id: ID
+class PatientMemo(BaseModel):
     memo: str | None
+
+
+class CreatePatientMemoRequest(PatientMemo):
+    patient_id: ID
 
 
 class PatientMemoInfo(CreatePatientMemoRequest, BaseModelInDB):
@@ -749,17 +752,21 @@ class PatientMemoInfo(CreatePatientMemoRequest, BaseModelInDB):
         orm_mode = True
 
 
-class UpdatePatientMemoRequest(CreatePatientMemoRequest, ModelId):
+class UpdatePatientMemoRequest(CreatePatientMemoRequest):
     pass
 
 
-class CreatePatientCTherapyDetailRequest(BaseModel):
-    patient_id: int
+class PatientCTherapyDetail(BaseModel):
+
     c_index: int
     c_date: date | None
     c_detail: str | None
     c_effects: CEffects | None
     c_mrd: str | None
+
+
+class CreatePatientCTherapyDetailRequest(PatientCTherapyDetail):
+    patient_id: ID
 
 
 class PatientCTherapyDetailInfo(CreatePatientCTherapyDetailRequest, BaseModelInDB):

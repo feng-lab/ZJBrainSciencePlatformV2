@@ -3,6 +3,7 @@ from typing import Sequence
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.db import common_crud
 from app.db.crud import query_pages
 from app.db.orm import CohortPatient, CohortPatientCTherapyDetail, CohortPatientFromData, CohortPatientMemo
 from app.model.schema import CohortPatientIdSearch, CohortPatientSearch
@@ -53,3 +54,56 @@ def search_patient_therapy_detail(
     if search.patient_id is not None:
         base_stmt = base_stmt.where(CohortPatientCTherapyDetail.patient_id == search.patient_id)
     return query_pages(db, base_stmt, search.offset, search.limit)
+
+
+def update_patient_memo(patient_id: int, new_memos: set[str], db: Session) -> bool:
+    old_memos = set(
+        db.execute(
+            select(CohortPatientMemo.memo).where(
+                CohortPatientMemo.patient_id == patient_id, CohortPatientMemo.is_deleted == False
+            )
+        )
+        .scalars()
+        .all()
+    )
+    delete_success = common_crud.bulk_delete_rows(
+        db,
+        CohortPatientMemo,
+        [CohortPatientMemo.patient_id == patient_id, CohortPatientMemo.memo.in_(old_memos - new_memos)],
+        commit=False,
+    )
+    insert_success = common_crud.bulk_insert_rows(
+        db,
+        CohortPatientMemo,
+        [{"patient_id": patient_id, "memo": memo} for memo in new_memos - old_memos],
+        commit=False,
+    )
+
+    return delete_success and insert_success
+
+
+def update_patient_c_therapy_detail(patient_id: int, new_c_therapy_details: list, db: Session) -> bool:
+    new_memos = set([a.dict()["c_index"] for a in new_c_therapy_details])
+    old_memos = set(
+        db.execute(
+            select(CohortPatientCTherapyDetail.c_index).where(
+                CohortPatientCTherapyDetail.patient_id == patient_id, CohortPatientCTherapyDetail.is_deleted == False
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    delete_success = common_crud.bulk_delete_rows(
+        db,
+        CohortPatientCTherapyDetail,
+        [CohortPatientCTherapyDetail.patient_id == patient_id, CohortPatientCTherapyDetail.c_index.in_(new_memos)],
+        commit=False,
+    )
+    temp_dict = [
+        {"patient_id": patient_id, **a.dict()}
+        for a in new_c_therapy_details
+        if a.dict()["c_index"] not in (old_memos - new_memos)
+    ]
+    insert_success = common_crud.bulk_insert_rows(db, CohortPatientCTherapyDetail, temp_dict, commit=False)
+    return delete_success and insert_success
