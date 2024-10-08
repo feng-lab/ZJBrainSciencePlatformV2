@@ -18,9 +18,9 @@ class Config(BaseSettings):
     TIMEZONE: str = "Asia/Shanghai"
 
     # 数据库URL
-    DATABASE_URL: str = "mysql+pymysql://zjlab:zjlab2022@localhost:8100/zj_brain_science_platform"
+    # DATABASE_URL: str = "mysql+pymysql://zjlab:zjlab2022@localhost:8100/zj_brain_science_platform"
     # DATABASE_URL: str = "mysql+pymysql://zjlab:J8ILKg0MnVRmgRwLsT4F@rm-bp127f6l8d5xs74264o.rwlb.rds.aliyuncs.com/zj_brain_science_platform"
-    # DATABASE_URL: str = "mysql+pymysql://zjlab:J8ILKg0MnVRmgRwLsT4F@rm-bp127f6l8d5xs7426.rwlb.rds.aliyuncs.com/zj_brain_science_platform"
+    DATABASE_URL: str = "mysql+pymysql://zjlab:J8ILKg0MnVRmgRwLsT4F@rm-bp127f6l8d5xs7426.rwlb.rds.aliyuncs.com/zj_brain_science_platform" # 外网
 
     # 数据库配置，JSON格式
     DATABASE_CONFIG: dict[str, Any] = {"echo": True}
