@@ -74,7 +74,8 @@ class Config(BaseSettings):
     ENTITY_LOCALIZATION_YAML_PATH: Path = Path(__file__).parent.parent.parent / "config" / "entity_localization.yaml"
 
     # 文件服务器地址
-    FILE_SERVER_URL: str = "http://localhost:8300"
+    # FILE_SERVER_URL: str = "http://localhost:8300"
+    FILE_SERVER_URL: str = "http://biodata-fileserver.biodata.svc.cluster.local"
 
     # oss key id
     ACCESS_KEY_ID: str = "tC8qZsagYHc1nCK1"
