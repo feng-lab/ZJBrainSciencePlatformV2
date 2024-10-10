@@ -776,3 +776,13 @@ class PatientCTherapyDetailInfo(CreatePatientCTherapyDetailRequest, BaseModelInD
 
 class UpdatePatientCTherapyDetailRequest(CreatePatientCTherapyDetailRequest, ModelId):
     pass
+
+
+class DomainUserCreate(BaseModel):
+    user_id: int
+    domain_id: int
+
+
+class DomainUserInfo(DomainUserCreate, BaseModelInDB):
+    class Config:
+        orm_mode = True

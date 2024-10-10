@@ -7,11 +7,11 @@ from app.common.exception import ServiceError
 from app.common.localization import Entity
 from app.common.user_auth import hash_password, verify_password
 from app.db import cache, common_crud
-from app.db.orm import User
+from app.db.orm import DomainUser, User
 from app.model import convert
 from app.model.request import DeleteModelRequest, UpdatePasswordRequest, UpdateUserAccessLevelRequest
 from app.model.response import NoneResponse, Page, Response
-from app.model.schema import CreateUserRequest, UserResponse, UserSearch
+from app.model.schema import CreateUserRequest, DomainUserInfo, UserResponse, UserSearch
 
 router = APIRouter(tags=["user"])
 
@@ -42,6 +42,14 @@ def create_user(request: CreateUserRequest, ctx: AdministratorContext = Depends(
 def get_current_user_info(ctx: AllUserContext = Depends()) -> UserResponse:
     orm_user = common_crud.get_row_by_id(ctx.db, User, ctx.user_id)
     user = UserResponse.from_orm(orm_user)
+    return user
+
+
+@router.get("/api/getCurrentUserDomain", description="获取当前用户阈", response_model=Response[DomainUserInfo])
+@wrap_api_response
+def get_current_user_info(ctx: AllUserContext = Depends()) -> DomainUserInfo:
+    orm_user = common_crud.get_row_by_id(ctx.db, DomainUser, ctx.user_id)
+    user = DomainUserInfo.from_orm(orm_user)
     return user
 
 
