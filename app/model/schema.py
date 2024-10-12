@@ -5,17 +5,13 @@ from pydantic import BaseModel, Field, validator
 
 from app.model.enum_filed import (
     ABOBloodType,
-    CEffects,
     ExperimentType,
     Gender,
-    GeneFusion,
-    GeneMutation,
     GetExperimentsByPageSortBy,
     GetExperimentsByPageSortOrder,
     MaritalStatus,
     NotificationStatus,
     NotificationType,
-    PatientDiagnose,
     TaskStatus,
     TaskStepType,
     TaskType,
@@ -702,21 +698,22 @@ class CreatePatientFormDataRequest(BaseModel):
     timing_of_diagnosis: date | None
     large_classification: str | None
     small_classification: str | None
-    diagnose: PatientDiagnose | None
+    diagnose: int | None
     wcb: float | None
     hb: float | None
     plt: float | None
     bone_marrow_morphology: float | None
     fcm: str | None
-    fusion: GeneFusion | None
+    fusion: int | None
     fusion_detail: str | None
-    mutation: GeneMutation | None
+    mutation: int | None
     mutation_detail: str | None
-    chromosome: str | None
+    chromosome: int | None
+    chromosome_detail: str | None
     is_therapy: bool | None
     chemotherapy_counts: int | None
     last_chemotherapy_date: date | None
-    status_after_last_chemotherapy: CEffects | None
+    status_after_last_chemotherapy: int | None
     is_relapse: bool | None
     cr1_date: date | None
     first_relapse_date: date | None
@@ -757,11 +754,10 @@ class UpdatePatientMemoRequest(CreatePatientMemoRequest):
 
 
 class PatientCTherapyDetail(BaseModel):
-
     c_index: int
     c_date: date | None
     c_detail: str | None
-    c_effects: CEffects | None
+    c_effects: int | None
     c_mrd: str | None
 
 

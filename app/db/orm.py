@@ -7,15 +7,11 @@ from sqlalchemy.sql import expression
 from app.db import Base, table_repr
 from app.model.enum_filed import (
     ABOBloodType,
-    CEffects,
     ExperimentType,
     Gender,
-    GeneFusion,
-    GeneMutation,
     MaritalStatus,
     NotificationStatus,
     NotificationType,
-    PatientDiagnose,
     TaskStatus,
     TaskStepType,
     TaskType,
@@ -488,34 +484,33 @@ class CohortPatientFromData(Base, ModelMixin):
     timing_of_diagnosis: Mapped[date | None] = mapped_column(Date, nullable=True, comment="确诊时间")
     large_classification: Mapped[str | None] = mapped_column(Text, nullable=True, comment="大分型")
     small_classification: Mapped[str | None] = mapped_column(Text, nullable=True, comment="小分型")
-    diagnose: Mapped[PatientDiagnose] = mapped_column(Enum(PatientDiagnose), nullable=True, comment="诊断")
+    diagnose: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="诊断")
     wcb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="入院时WBC（x10E9/L）")
     hb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="Hb（g/L）")
     plt: Mapped[float | None] = mapped_column(Float, nullable=True, comment="PLT（x10E9/L）")
     bone_marrow_morphology: Mapped[float | None] = mapped_column(Float, nullable=True, comment="骨髓形态")
     fcm: Mapped[str | None] = mapped_column(Text, nullable=True, comment="FCM%")
-    fusion: Mapped[GeneFusion | None] = mapped_column(Enum(GeneFusion), nullable=True, comment="融合基因")
+    fusion: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="融合基因")
     fusion_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="融合基因详情")
-    mutation: Mapped[GeneMutation | None] = mapped_column(Enum(GeneMutation), nullable=True, comment="基因突变")
+    mutation: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="基因突变")
     mutation_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="基因突变详情")
-    chromosome: Mapped[str | None] = mapped_column(Text, nullable=True, comment="染色体")
+    chromosome: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="染色体")
+    chromosome_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="染色体详情")
     is_therapy: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否治疗")
     chemotherapy_counts: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="化疗总程数")
     last_chemotherapy_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="末次化疗日期")
-    status_after_last_chemotherapy: Mapped[CEffects | None] = mapped_column(
-        Enum(CEffects), nullable=True, comment="末次化疗后状态"
-    )
+    status_after_last_chemotherapy: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="末次化疗后状态")
     is_relapse: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否复发")
     cr1_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="CR1时间")
     first_relapse_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="第一次复发时间")
     cr2_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="CR2时间")
     second_relapse_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="第二次复发时间")
     cr3_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="CR3时间")
-    is_transplant: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否复发")
+    is_transplant: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否骨髓移植")
     transplant_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="骨髓移植时间")
     is_death: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否死亡")
     date_of_death: Mapped[date | None] = mapped_column(Date, nullable=True, comment="死亡日期")
-    last_followup_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="死亡日期")
+    last_followup_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="末次随访日期")
 
 
 class CohortPatientFile(Base, ModelMixin):
@@ -551,7 +546,7 @@ class CohortPatientCTherapyDetail(Base, ModelMixin):
     c_index: Mapped[int] = mapped_column(Integer, nullable=False, comment="治疗次序")
     c_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="治疗日期")
     c_detail: Mapped[str | None] = mapped_column(Text, nullable=True, comment="治疗方案")
-    c_effects: Mapped[CEffects | None] = mapped_column(Enum(CEffects), nullable=True, comment="疗效评估")
+    c_effects: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="疗效评估")
     c_mrd: Mapped[str | None] = mapped_column(Text, nullable=True, comment="MRD")
 
 
