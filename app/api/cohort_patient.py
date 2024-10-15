@@ -22,6 +22,7 @@ from app.db.orm import (
     CohortPatientMemo,
     User,
 )
+from app.external.province import city
 from app.model import convert
 from app.model.request import DeleteModelRequest
 from app.model.response import NoneResponse, Page, Response
@@ -33,16 +34,12 @@ from app.model.schema import (
     CreatePatientCTherapyDetailRequest,
     CreatePatientFormDataRequest,
     CreatePatientMemoRequest,
-    PageParm,
     PatientCTherapyDetail,
     PatientCTherapyDetailInfo,
     PatientFormDataInfo,
-    PatientMemo,
     PatientMemoInfo,
     UpdateCohortPatientRequest,
-    UpdatePatientCTherapyDetailRequest,
     UpdatePatientFormDataRequest,
-    UpdatePatientMemoRequest,
 )
 
 router = APIRouter(tags=["cohort_patient"])
@@ -87,6 +84,7 @@ def get_cohort_patient_info(cohort_patient_id: int, ctx: HumanSubjectContext = D
         cohort_patient_info.identity_id = None
         cohort_patient_info.family_address_street = None
         cohort_patient_info.phone_number = None
+        cohort_patient_info.family_address = None
     return cohort_patient_info
 
 
@@ -136,6 +134,12 @@ def delete_cohort_patient(request: DeleteModelRequest, ctx: AdministratorContext
         raise ServiceError.database_fail()
 
 
+@router.get("/api/getProvinceCity", description="获取省市信息", response_model=Response[dict])
+@wrap_api_response
+def get_province_city() -> dict:
+    return city
+
+
 @router.post("/api/createPatientFormData", description="创建患者表单数据", response_model=Response[int])
 @wrap_api_response
 def create_patient_form_data(request: CreatePatientFormDataRequest, ctx: ResearcherContext = Depends()) -> int:
@@ -157,11 +161,20 @@ def create_patient_form_data(request: CreatePatientFormDataRequest, ctx: Researc
 @router.post("/api/updatePatientFormData", description="更新患者表单数据", response_model=NoneResponse)
 @wrap_api_response
 def update_patient_form_data(request: UpdatePatientFormDataRequest, ctx: ResearcherContext = Depends()) -> None:
+    check_cohort_patient_exists(ctx.db, request.patient_id)
     exists = common_crud.exists_row(
         ctx.db, CohortPatientFromData, where=[CohortPatientFromData.patient_id == request.patient_id]
     )
-    if exists is None:
-        raise ServiceError.not_found(Entity.patient_form_data)
+    if not exists:
+        patient_form_data_dict = request.dict()
+        patient_form_data_id = common_crud.insert_row(
+            ctx.db, CohortPatientFromData, patient_form_data_dict, commit=False
+        )
+        if patient_form_data_id is None:
+            raise ServiceError.database_fail()
+        ctx.db.commit()
+        return patient_form_data_id
+
     patient_memo_dict = request.dict(exclude_unset=True)
     success = common_crud.update_row(
         ctx.db,
@@ -181,7 +194,7 @@ def get_patient_form_data_info(patient_id: int, ctx: HumanSubjectContext = Depen
         ctx.db, CohortPatientFromData, CohortPatientFromData.patient_id == patient_id
     )
     if orm_patient_form_data is None:
-        raise ServiceError.not_found(Entity.patient_form_data)
+        return None
     patient_form_data_info = convert.patient_form_data_orm_2_info(orm_patient_form_data)
     return patient_form_data_info
 
@@ -247,6 +260,7 @@ def get_patient_c_therapy_detail_info(
 def update_patient_c_therapy_detail(
     patient_id: int, request: list[PatientCTherapyDetail], ctx: ResearcherContext = Depends()
 ) -> None:
+    check_cohort_patient_exists(ctx.db, patient_id)
     success = crud.update_patient_c_therapy_detail(patient_id, request, ctx.db)
     if not success:
         raise ServiceError.database_fail()
@@ -286,6 +300,7 @@ def get_patient_memo_by_page(
 @router.post("/api/updatePatientMemo", description="更新患者表单备注", response_model=NoneResponse)
 @wrap_api_response
 def update_patient_memo(request: list[str], patient_id: int, ctx: ResearcherContext = Depends()) -> None:
+    check_cohort_patient_exists(ctx.db, patient_id)
     success = crud.update_patient_memo(patient_id, set(request), ctx.db)
     if not success:
         raise ServiceError.database_fail()

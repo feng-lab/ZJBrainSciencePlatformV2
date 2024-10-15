@@ -30,6 +30,8 @@ def search_cohort_patient(db: Session, search: CohortPatientSearch) -> tuple[int
         base_stmt = base_stmt.where(CohortPatient.date_birth >= search.birth_start)
     if search.birth_end is not None:
         base_stmt = base_stmt.where(CohortPatient.date_birth <= search.birth_end)
+    if not search.include_deleted:
+        base_stmt = base_stmt.where(CohortPatient.is_deleted == False)
     return query_pages(db, base_stmt, search.offset, search.limit)
 
 
@@ -84,6 +86,7 @@ def update_patient_memo(patient_id: int, new_memos: set[str], db: Session) -> bo
 
 def update_patient_c_therapy_detail(patient_id: int, new_c_therapy_details: list, db: Session) -> bool:
     new_memos = set([a.dict()["c_index"] for a in new_c_therapy_details])
+    print(new_memos)
     old_memos = set(
         db.execute(
             select(CohortPatientCTherapyDetail.c_index).where(
@@ -93,11 +96,11 @@ def update_patient_c_therapy_detail(patient_id: int, new_c_therapy_details: list
         .scalars()
         .all()
     )
-
+    print(old_memos)
     delete_success = common_crud.bulk_delete_rows(
         db,
         CohortPatientCTherapyDetail,
-        [CohortPatientCTherapyDetail.patient_id == patient_id, CohortPatientCTherapyDetail.c_index.in_(new_memos)],
+        [CohortPatientCTherapyDetail.patient_id == patient_id, CohortPatientCTherapyDetail.c_index.in_(old_memos)],
         commit=False,
     )
     temp_dict = [
