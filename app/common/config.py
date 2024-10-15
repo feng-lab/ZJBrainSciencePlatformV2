@@ -18,9 +18,9 @@ class Config(BaseSettings):
     TIMEZONE: str = "Asia/Shanghai"
 
     # 数据库URL
-    DATABASE_URL: str = "mysql+pymysql://zjlab:zjlab2022@localhost:8100/zj_brain_science_platform"
+    # DATABASE_URL: str = "mysql+pymysql://zjlab:zjlab2022@localhost:8100/zj_brain_science_platform"
     # DATABASE_URL: str = "mysql+pymysql://zjlab:J8ILKg0MnVRmgRwLsT4F@rm-bp127f6l8d5xs74264o.rwlb.rds.aliyuncs.com/zj_brain_science_platform"
-    # DATABASE_URL: str = "mysql+pymysql://zjlab:J8ILKg0MnVRmgRwLsT4F@rm-bp127f6l8d5xs7426.rwlb.rds.aliyuncs.com/zj_brain_science_platform" # 内网
+    DATABASE_URL: str = "mysql+pymysql://zjlab:J8ILKg0MnVRmgRwLsT4F@rm-bp127f6l8d5xs7426.rwlb.rds.aliyuncs.com/zj_brain_science_platform" # 内网
 
     # 数据库配置，JSON格式
     DATABASE_CONFIG: dict[str, Any] = {"echo": True}
@@ -74,8 +74,8 @@ class Config(BaseSettings):
     ENTITY_LOCALIZATION_YAML_PATH: Path = Path(__file__).parent.parent.parent / "config" / "entity_localization.yaml"
 
     # 文件服务器地址
-    FILE_SERVER_URL: str = "http://localhost:8300"
-    # FILE_SERVER_URL: str = "http://biodata-fileserver.biodata.svc.cluster.local"
+    # FILE_SERVER_URL: str = "http://localhost:8300"
+    FILE_SERVER_URL: str = "http://biodata-fileserver.biodata.svc.cluster.local"
 
     # oss key id
     ACCESS_KEY_ID: str = "tC8qZsagYHc1nCK1"
