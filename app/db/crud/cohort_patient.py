@@ -39,6 +39,8 @@ def search_patient_form_data(db: Session, search: CohortPatientIdSearch) -> tupl
     base_stmt = select(CohortPatientFromData).select_from(CohortPatientFromData)
     if search.patient_id is not None:
         base_stmt = base_stmt.where(CohortPatientFromData.patient_id == search.patient_id)
+    if not search.include_deleted:
+        base_stmt = base_stmt.where(CohortPatientFromData.is_deleted == False)
     return query_pages(db, base_stmt, search.offset, search.limit)
 
 
@@ -46,6 +48,8 @@ def search_patient_memo(db: Session, search: CohortPatientIdSearch) -> tuple[int
     base_stmt = select(CohortPatientMemo).select_from(CohortPatientMemo)
     if search.patient_id is not None:
         base_stmt = base_stmt.where(CohortPatientMemo.patient_id == search.patient_id)
+    if not search.include_deleted:
+        base_stmt = base_stmt.where(CohortPatientMemo.is_deleted == False)
     return query_pages(db, base_stmt, search.offset, search.limit)
 
 
@@ -55,6 +59,8 @@ def search_patient_therapy_detail(
     base_stmt = select(CohortPatientCTherapyDetail).select_from(CohortPatientCTherapyDetail)
     if search.patient_id is not None:
         base_stmt = base_stmt.where(CohortPatientCTherapyDetail.patient_id == search.patient_id)
+    if not search.include_deleted:
+        base_stmt = base_stmt.where(CohortPatientCTherapyDetail.is_deleted == False)
     return query_pages(db, base_stmt, search.offset, search.limit)
 
 

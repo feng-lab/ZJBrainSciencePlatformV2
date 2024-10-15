@@ -271,7 +271,9 @@ def update_patient_c_therapy_detail(
 @router.delete("/api/deletePatientCTherapyDetail", description="删除患者患者C治疗信息", response_model=NoneResponse)
 @wrap_api_response
 def delete_patient_c_therapy_detail(request: DeleteModelRequest, ctx: AdministratorContext = Depends()) -> None:
-    success = common_crud.bulk_update_rows_as_deleted(ctx.db, CohortPatientMemo, ids=[request.id], commit=True)
+    success = common_crud.bulk_update_rows_as_deleted(
+        ctx.db, CohortPatientCTherapyDetail, ids=[request.id], commit=True
+    )
     if not success:
         raise ServiceError.database_fail()
 
