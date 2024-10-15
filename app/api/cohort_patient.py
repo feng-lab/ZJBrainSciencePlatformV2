@@ -190,6 +190,7 @@ def update_patient_form_data(request: UpdatePatientFormDataRequest, ctx: Researc
 @router.post("/api/getPatientFormDataInfo", description="获取患者表单数据详情", response_model=Response[PatientFormDataInfo])
 @wrap_api_response
 def get_patient_form_data_info(patient_id: int, ctx: HumanSubjectContext = Depends()) -> PatientFormDataInfo:
+    check_cohort_patient_exists(ctx.db, patient_id)
     orm_patient_form_data = common_crud.get_row(
         ctx.db, CohortPatientFromData, CohortPatientFromData.patient_id == patient_id
     )

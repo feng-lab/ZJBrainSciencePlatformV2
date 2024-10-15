@@ -86,7 +86,6 @@ def update_patient_memo(patient_id: int, new_memos: set[str], db: Session) -> bo
 
 def update_patient_c_therapy_detail(patient_id: int, new_c_therapy_details: list, db: Session) -> bool:
     new_memos = set([a.dict()["c_index"] for a in new_c_therapy_details])
-    print(new_memos)
     old_memos = set(
         db.execute(
             select(CohortPatientCTherapyDetail.c_index).where(
@@ -96,7 +95,6 @@ def update_patient_c_therapy_detail(patient_id: int, new_c_therapy_details: list
         .scalars()
         .all()
     )
-    print(old_memos)
     delete_success = common_crud.bulk_delete_rows(
         db,
         CohortPatientCTherapyDetail,
