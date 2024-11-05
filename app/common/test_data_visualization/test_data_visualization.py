@@ -5,8 +5,6 @@ import pandas as pd
 from flatbuffers import Builder
 from scipy import sparse
 
-from app.common.test_data_visualization.utils.type_conversion_utils import get_encoding_dtype_of_array
-
 import app.common.test_data_visualization.fbs.NetEncoding.Column as Column
 import app.common.test_data_visualization.fbs.NetEncoding.Float32Array as Float32Array
 import app.common.test_data_visualization.fbs.NetEncoding.Float64Array as Float64Array
@@ -15,6 +13,7 @@ import app.common.test_data_visualization.fbs.NetEncoding.JSONEncodedArray as JS
 import app.common.test_data_visualization.fbs.NetEncoding.Matrix as Matrix
 import app.common.test_data_visualization.fbs.NetEncoding.TypedArray as TypedArray
 import app.common.test_data_visualization.fbs.NetEncoding.Uint32Array as Uint32Array
+from app.common.test_data_visualization.utils.type_conversion_utils import get_encoding_dtype_of_array
 
 
 # Serialization helper

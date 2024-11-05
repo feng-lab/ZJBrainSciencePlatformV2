@@ -1,3 +1,5 @@
+import io
+import json
 import logging
 import os
 from datetime import datetime
@@ -5,7 +7,9 @@ from pathlib import Path, PurePath, PurePosixPath
 from typing import BinaryIO
 from urllib.parse import quote
 
+import numpy as np
 import oss2
+import pandas as pd
 from fastapi import UploadFile
 from oss2 import SizedFileAdapter, determine_part_size
 from oss2.models import PartInfo
@@ -13,6 +17,8 @@ from oss2.models import PartInfo
 from app.common.config import config
 from app.common.exception import ServiceError
 from app.common.localization import Entity
+from app.common.test_data_visualization.test_data_visualization import encode_matrix_fbs
+from app.model.schema import DatasetDirectoryTreeNode
 
 logger = logging.getLogger(__name__)
 auth = oss2.Auth(config.ACCESS_KEY_ID, config.ACCESS_KEY_SECRET)
@@ -33,7 +39,7 @@ def upload_file(bucket, remote_fp: str, local_fp: str):
 
 def download_file(bucket, remote_fp: str, local_fp: str):
     if not bucket.object_exists(remote_fp):
-        raise ValueError(f"oss file {remote_fp} is not exist")
+        raise ServiceError.not_found({remote_fp})
     bucket.get_object_to_file(remote_fp, local_fp)
 
 
@@ -107,7 +113,6 @@ def object_ls(bucket, remote_fp="") -> list:
 
     for obj in oss2.ObjectIteratorV2(bucket, prefix=remote_fp, delimiter="/", start_after=remote_fp):
         obj_key = str(obj.key)
-        # print(obj_key)
         file_name = obj_key.replace(str(remote_fp), "").rstrip("/")
 
         if obj.last_modified is not None:
@@ -120,6 +125,18 @@ def object_ls(bucket, remote_fp="") -> list:
         else:  # 判断obj为文件。
             files_list.append({"type": "file", "name": file_name, "last_modified": formatted_date, "size": obj.size})
     return files_list
+
+
+def walk_dataset_directory_tree_oss(bucket, prefix):
+    directory_tree = []
+    for obj in oss2.ObjectIteratorV2(bucket, prefix=prefix, delimiter="/"):
+        if obj.is_prefix():
+            node = DatasetDirectoryTreeNode(
+                name=obj.key.replace(str(prefix), "").rstrip("/"),
+                dirs=walk_dataset_directory_tree_oss(bucket, obj.key) or [],
+            )
+            directory_tree.append(node)
+    return directory_tree
 
 
 def object_size_Byte(bucket, remote_fp: str = "") -> float:
@@ -231,3 +248,78 @@ def list_directory_by_path(bucket, path) -> list:
         else:  # 判断obj为文件。
             result.append({"type": "file", "name": obj.key, "size": obj.size})
     return result
+
+
+def remove_extension2json(filename):
+    return os.path.splitext(filename)[0] + ".json"
+
+
+cached_data = {}
+
+
+def get_oss_object(bucket, remote_fp: str):
+    try:
+        c = bucket.get_object(remote_fp)
+        content = c.read()
+
+        # 将字节内容解码为字符串
+        json_str = content.decode("utf-8")
+
+        # 将 JSON 字符串解析为字典
+        # data = json.loads(json_str)
+        return json_str
+    except:
+        raise ServiceError.remote_service_error(f"fail to access")
+
+
+def cache_data(func):
+    global cached_data
+
+    def wrapper(*args, **kwargs):
+        global cached_data
+        if cached_data is None:
+            # Fetch data from OSS if it hasn't been cached yet
+            cached_data = func(*args, **kwargs)
+        return cached_data
+
+    return wrapper
+
+
+# @cache_data
+def get_data_from_oss(bucket, remote_fp: str) -> dict:
+    if remote_fp in cached_data:
+        return cached_data[remote_fp]
+    json_str = get_oss_object(bucket, remote_fp)
+    data = json.loads(json_str)
+    cached_data[remote_fp] = data
+    return data
+
+
+def data2bytes(json_info, layout_name: str):
+    try:
+        data = json_info.get(layout_name)
+
+        # print(layout_name)
+        # print(type(np.shape(data)))
+        if len(np.shape(data)) == 2:
+            tsne_array = np.array(data)
+            # print(tsne_array)
+            # layout_data = []
+            # layout_data.append(pd.DataFrame(tsne_array, columns=[f"{layout_name}_0", f"{layout_name}_1"]))
+            # df = pd.concat(layout_data, axis=1, copy=False)
+            # print(np.shape(tsne_array)[1])
+            df = pd.DataFrame(tsne_array, columns=[f"{layout_name}_0", f"{layout_name}_1"])
+            # print(df)
+
+        elif len(np.shape(data)) == 1:
+            # print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            df = pd.DataFrame(data, columns=[f"{layout_name}"])
+
+        else:
+            raise ServiceError.params_error(layout_name)
+        rs = encode_matrix_fbs(df, col_idx=df.columns, row_idx=None)
+        # print(rs)
+        return io.BytesIO(rs)
+
+    except:
+        raise ServiceError.params_error(layout_name)

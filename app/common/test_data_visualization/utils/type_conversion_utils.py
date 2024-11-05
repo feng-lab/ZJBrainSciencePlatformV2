@@ -1,5 +1,5 @@
-from typing import Union, Tuple
 import logging
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -128,10 +128,7 @@ def _get_type_info(array: Union[np.ndarray, pd.Series, pd.Index]) -> Tuple[np.dt
             # on its own.  Utilize Series.to_numpy() to do casting that handles categorical
             # NA/NaN (missing or undefined) categories.
             if dtype.categories.dtype.kind in ["f", "i", "u"]:
-                return (
-                    _get_type_info(array.to_numpy())[0],
-                    {"type": "categorical"},
-                )
+                return (_get_type_info(array.to_numpy())[0], {"type": "categorical"})
             else:
                 return (np.dtype(str), {"type": "categorical", "categories": dtype.categories.to_list()})
 

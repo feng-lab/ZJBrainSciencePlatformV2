@@ -1,15 +1,14 @@
 import contextlib
 import errno
 import importlib.util
+import json
 import logging
 import os
 import pkgutil
 import socket
-from urllib.parse import urlsplit, urljoin
+from urllib.parse import urljoin, urlsplit
 
 import numpy as np
-import json
-
 from server.common.errors import ConfigurationError
 
 

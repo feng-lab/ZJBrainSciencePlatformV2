@@ -93,10 +93,6 @@ class Config(BaseSettings):
     OSS_FILE_DIR: Path = PurePosixPath("zjdata_storage", "ZJBrainSciencePlatform/file-server/file/")
     # OSS_FILE_DIR: Path = Path("exampledir/")
 
-    # # 临时文件目录
-    # OSS_TEMP_DIR: Path = Path("zjdata_storage", "ZJBrainSciencePlatform/file-server/temp")
-    # test json
-    test_visualization: Path = Path(__file__).parent.parent.parent / "config" / "test.json"
 
 
 config = Config()
