@@ -1,10 +1,8 @@
-import json
-import os.path
 from pathlib import PurePosixPath
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
-from fastapi.responses import HTMLResponse, Response, StreamingResponse
+from fastapi.responses import StreamingResponse
 
 import app.db.crud.dataset as crud
 from app.api import check_dataset_exists, wrap_api_response
@@ -27,7 +25,7 @@ from app.common.oss_base import (
     walk_dataset_directory_tree_oss,
 )
 from app.db import common_crud
-from app.db.orm import Dataset, DatasetFile, DatasetFileVisualization
+from app.db.orm import Dataset, DatasetFile
 from app.model import convert
 from app.model.response import NoneResponse, Page, Response
 from app.model.schema import (
@@ -207,7 +205,6 @@ def list_dataset_files(
     check_dataset_exists(ctx.db, dataset_id)
     directory_path = dataset_file_path(dataset_id, directory)
     files = object_ls(bucket_auth(), str(directory_path))
-    print()
 
     if file_type is None:
         return [{"counts": len(files)}, files]
@@ -298,31 +295,13 @@ def update_dataset_file(request: UpdateDatasetFileRequest, ctx: ResearcherContex
         raise ServiceError.database_fail()
 
 
-@router.get("/api/testGetH5adInfo", description="预览展示", response_model=Response[dict])
-@wrap_api_response
-def test_get_h5ad_info(dataset_id: int, keys: str, ctx: ResearcherContext = Depends()):
-
-    import json
-
-    with open(str(config.test_visualization), "r") as f:
-        data = json.load(f)
-    result = data.get(keys)
-    if result is None:
-        raise ServiceError.not_found(Entity.dataset)
-    else:
-        return result
-
-
 @router.get("/api/GetH5adInfo", description="oss cellxgene预览展示")
 @wrap_api_response
 def get_h5ad_info(dataset_id: int, keys: str, path: str, ctx: ResearcherContext = Depends()):
-    # print("Getting")
+
     check_dataset_exists(ctx.db, dataset_id)
     dataset_file_dict = dataset_vis_file_path(dataset_id, path)
-    #
     data_json_info = get_data_from_oss(bucket_auth(), remove_extension2json(dataset_file_dict))
-
-    # data = get_oss_object(bucket_auth(), data_json_info)
     result = data_json_info.get(keys)
     if result is None:
         raise ServiceError.params_error(keys)
@@ -330,49 +309,8 @@ def get_h5ad_info(dataset_id: int, keys: str, path: str, ctx: ResearcherContext 
         return result
 
 
-@router.get("/api/testGetObsLayoutInfo", description="layout")
-def test_get_obs_layout_info(dataset_id: int, layout_name: str, ctx: ResearcherContext = Depends()):
-    # filed""X_pca, X_tsne, X_umap are available"""
-    ## test load file from database
-    # check_dataset_exists(ctx.db, dataset_id)
-    # orm_dataset = common_crud.get_row(ctx.db, DatasetFileVisualization, DatasetFileVisualization.datafile_id==dataset_id)
-    # # if orm_dataset is None:
-    # #     raise ServiceError.not_found(Entity.dataset)
-    # dataset_info = convert.dataset_file_visualization_orm_2_info(orm_dataset)
-    import io
-    import json
-
-    import numpy as np
-    import pandas as pd
-
-    from app.common.test_data_visualization.test_data_visualization import encode_matrix_fbs
-
-    with open(str(config.test_visualization), "r") as f:
-        data = json.load(f)
-    result = data.get(layout_name)
-    tsne_array = np.array(result)
-    if layout_name not in ["tsne", "umap", "pca", "draw_graph_fr"]:
-        raise ServiceError.params_error(layout_name)
-    layout_data = []
-    layout_data.append(pd.DataFrame(tsne_array, columns=[f"{layout_name}_0", f"{layout_name}_1"]))
-    df = pd.concat(layout_data, axis=1, copy=False)
-    rs = encode_matrix_fbs(tsne_array, col_idx=df.columns, row_idx=None)
-    # Use BytesIO to handle the binary stream
-    buffer = io.BytesIO(rs)
-    return StreamingResponse(
-        buffer, media_type="application/octet-stream", headers={"Content-Type": "application/octet-stream"}
-    )
-
-
 @router.get("/api/GetObsLayoutInfo", description="layout")
 def get_obs_layout_info(dataset_id: int, layout_name: str, path: str, ctx: ResearcherContext = Depends()):
-    # filed""X_pca, X_tsne, X_umap are available"""
-    ## test load file from database
-    # check_dataset_exists(ctx.db, dataset_id)
-    # orm_dataset = common_crud.get_row(ctx.db, DatasetFileVisualization, DatasetFileVisualization.datafile_id==dataset_id)
-    # # if orm_dataset is None:
-    # #     raise ServiceError.not_found(Entity.dataset)
-    # dataset_info = convert.dataset_file_visualization_orm_2_info(orm_dataset)
     check_dataset_exists(ctx.db, dataset_id)
     dataset_file_dict = dataset_vis_file_path(dataset_id, path)
     #
@@ -382,69 +320,3 @@ def get_obs_layout_info(dataset_id: int, layout_name: str, path: str, ctx: Resea
     return StreamingResponse(
         buffer, media_type="application/octet-stream", headers={"Content-Type": "application/octet-stream"}
     )
-
-
-@router.get("/api/testGetObsAnnotationInfo", description="annotation")
-def get_annotation_info(dataset_id: int, annotation_name: str, ctx: ResearcherContext = Depends()):
-    # filed""obs_louvain, obs_n_counts, obs_n_genes,obs_percent_mito, var_name_0 are available"""
-    ## test load file from database
-    # check_dataset_exists(ctx.db, dataset_id)
-    # orm_dataset = common_crud.get_row(ctx.db, DatasetFileVisualization, DatasetFileVisualization.datafile_id==dataset_id)
-    # # if orm_dataset is None:
-    # #     raise ServiceError.not_found(Entity.dataset)
-    # dataset_info = convert.dataset_file_visualization_orm_2_info(orm_dataset)
-    import io
-    import json
-
-    import pandas as pd
-
-    from app.common.test_data_visualization.test_data_visualization import encode_matrix_fbs
-
-    with open(str(config.test_visualization), "r") as f:
-        data = json.load(f)
-    # print(annotation_name)
-    # result = data.get(annotation_name)
-    # if annotation_name not in ['obs_louvain', 'obs_n_counts', 'obs_n_genes','obs_percent_mito', 'var_name_0']:
-    #     raise ServiceError.params_error(annotation_name)
-    if annotation_name.startswith("obs_"):
-        annotation_name = annotation_name[len("obs_") :]
-
-    # 去掉 'var_' 前缀
-    if annotation_name.startswith("var_"):
-        annotation_name = annotation_name[len("var_") :]
-    # result = list(int(i) for i in data.get(annotation_name))
-    result = data.get(annotation_name)
-    # print(result)
-    df = pd.DataFrame(result, columns=[f"{annotation_name}"])
-    # print(df)
-    rs = encode_matrix_fbs(df, col_idx=df.columns, row_idx=None)
-    # Use BytesIO to handle the binary stream
-    buffer = io.BytesIO(rs)
-    return StreamingResponse(
-        buffer, media_type="application/octet-stream", headers={"Content-Type": "application/octet-stream"}
-    )
-
-
-# @router.get("/api/GetObsAnnotationInfo", description="annotation" )
-# def get_annotation_info(dataset_id: int, annotation_name: str,path, ctx: ResearcherContext = Depends()):
-#     import io
-#     import pandas as pd
-#     from app.common.test_data_visualization.test_data_visualization import encode_matrix_fbs
-#     check_dataset_exists(ctx.db, dataset_id)
-#     dataset_file_dict = dataset_vis_file_path(dataset_id, path)
-#     #
-#     data_json_info = get_data_from_oss(bucket_auth(), remove_extension2json(dataset_file_dict))
-#
-#     # buffer = data2bytes(data_json_info, annotation_name)
-#     result = data_json_info.get(annotation_name)
-#     # print(result)
-#     df = pd.DataFrame(result, columns=[f"{annotation_name}"])
-#     # print(df)
-#     rs = encode_matrix_fbs(df, col_idx=df.columns, row_idx=None)
-#     # Use BytesIO to handle the binary stream
-#     buffer = io.BytesIO(rs)
-#     return StreamingResponse(
-#         buffer,
-#         media_type="application/octet-stream",
-#         headers={"Content-Type": "application/octet-stream"},
-#     )

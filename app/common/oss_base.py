@@ -3,15 +3,13 @@ import json
 import logging
 import os
 from datetime import datetime
-from pathlib import Path, PurePath, PurePosixPath
 from typing import BinaryIO
 from urllib.parse import quote
 
 import numpy as np
 import oss2
 import pandas as pd
-from fastapi import UploadFile
-from oss2 import SizedFileAdapter, determine_part_size
+from oss2 import determine_part_size
 from oss2.models import PartInfo
 
 from app.common.config import config
@@ -266,7 +264,6 @@ def get_oss_object(bucket, remote_fp: str):
         json_str = content.decode("utf-8")
 
         # 将 JSON 字符串解析为字典
-        # data = json.loads(json_str)
         return json_str
     except:
         raise ServiceError.remote_service_error(f"fail to access")
@@ -298,27 +295,14 @@ def get_data_from_oss(bucket, remote_fp: str) -> dict:
 def data2bytes(json_info, layout_name: str):
     try:
         data = json_info.get(layout_name)
-
-        # print(layout_name)
-        # print(type(np.shape(data)))
         if len(np.shape(data)) == 2:
             tsne_array = np.array(data)
-            # print(tsne_array)
-            # layout_data = []
-            # layout_data.append(pd.DataFrame(tsne_array, columns=[f"{layout_name}_0", f"{layout_name}_1"]))
-            # df = pd.concat(layout_data, axis=1, copy=False)
-            # print(np.shape(tsne_array)[1])
             df = pd.DataFrame(tsne_array, columns=[f"{layout_name}_0", f"{layout_name}_1"])
-            # print(df)
-
         elif len(np.shape(data)) == 1:
-            # print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             df = pd.DataFrame(data, columns=[f"{layout_name}"])
-
         else:
             raise ServiceError.params_error(layout_name)
         rs = encode_matrix_fbs(df, col_idx=df.columns, row_idx=None)
-        # print(rs)
         return io.BytesIO(rs)
 
     except:

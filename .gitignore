@@ -9,5 +9,7 @@ __pycache__/
 
 # Test
 .debug_data/
+
+# Environments
 .env
 

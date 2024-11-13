@@ -94,6 +94,5 @@ class Config(BaseSettings):
     # OSS_FILE_DIR: Path = Path("exampledir/")
 
 
-
 config = Config()
 logger.info(config.json())
