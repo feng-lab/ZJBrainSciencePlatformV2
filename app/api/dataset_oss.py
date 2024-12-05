@@ -83,12 +83,24 @@ def get_dataset_size_oss(dataset_id: int, from_table: bool = True, ctx: HumanSub
 
 @router.get("/api/getAllDatasetSizeOss", description="获取oss所有数据集大小", response_model=Response[float])
 @wrap_api_response
-def get_all_datasets_size_oss(from_table: bool = True, ctx: HumanSubjectContext = Depends()) -> float:
+def get_all_datasets_size_oss(
+    category: str = None, from_table: bool = True, ctx: HumanSubjectContext = Depends()
+) -> float:
     if from_table:
-        dataset_size = crud.get_sizes_all(ctx.db)
+        dataset_size = crud.get_sizes_all(ctx.db, category)
     else:
-        oss_path = str(PurePosixPath(config.OSS_FILE_DIR / ""))
-        dataset_size = object_size_Byte(bucket_auth(), remote_fp=oss_path)
+        # 获取相应的id
+        if category:
+            dataset_size = 0
+            ids = common_crud.get_all_ids(ctx.db, Dataset, [Dataset.data_type == category])
+            for id_ in ids:
+                oss_path = dataset_file_path(id_, "/")
+
+                data_size = object_size_Byte(bucket_auth(), remote_fp=oss_path)
+                dataset_size = dataset_size + data_size
+        else:
+            oss_path = str(PurePosixPath(config.OSS_FILE_DIR / ""))
+            dataset_size = object_size_Byte(bucket_auth(), remote_fp=oss_path)
         dataset_size = dataset_size / 1024 / 1024 / 1024
     return dataset_size
 
@@ -96,13 +108,13 @@ def get_all_datasets_size_oss(from_table: bool = True, ctx: HumanSubjectContext 
 @router.get("/api/getGroupDatasetSizeOss", description="获取oss分组数据集大小", response_model=Response[dict])
 @wrap_api_response
 def get_group_dataset_size_oss(
-    search: str, from_table: bool = True, ctx: HumanSubjectContext = Depends()
+    search: str, category: str = None, from_table: bool = True, ctx: HumanSubjectContext = Depends()
 ) -> list[dict[str, int]]:
     if from_table:
-        fin_size = crud.get_species_cells_mapping_oss(ctx.db, search)
+        fin_size = crud.get_species_cells_mapping_oss(ctx.db, search, category)
     else:
         fin_size = []
-        species_id_mapping = crud.get_species_ids_mapping(ctx.db, search)
+        species_id_mapping = crud.get_species_ids_mapping(ctx.db, search, category)
         for key, dataset_ids in species_id_mapping.items():
             species_counts = len(dataset_ids)
             dataset_size = 0
