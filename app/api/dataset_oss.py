@@ -112,6 +112,7 @@ def get_group_dataset_size_oss(
 ) -> list[dict[str, int]]:
     if from_table:
         fin_size = crud.get_species_cells_mapping_oss(ctx.db, search, category)
+
     else:
         fin_size = []
         species_id_mapping = crud.get_species_ids_mapping(ctx.db, search, category)
@@ -123,6 +124,22 @@ def get_group_dataset_size_oss(
                 files_size = files_size / 1024 / 1024 / 1024
                 dataset_size += files_size
             fin_size.append({"name": key, "dataset_size": dataset_size, "counts": species_counts})
+
+    total_cells = 0
+    total_sizes = 0.0
+    total_counts = 0
+    for entry in fin_size:
+        total_cells += int(entry['cells'])
+        total_sizes += float(entry['sizes'])
+        total_counts += int(entry['counts'])
+
+    all_species = {
+        'species': 'All',
+        'cells': str(total_cells),
+        'sizes': str(total_sizes),
+        'counts': str(total_counts)
+    }
+    fin_size.append(all_species)
     return fin_size
 
 
