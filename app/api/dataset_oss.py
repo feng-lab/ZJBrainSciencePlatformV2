@@ -123,8 +123,9 @@ def get_group_dataset_size_oss(
                 files_size = object_size_Byte(bucket_auth(), remote_fp=dataset_file_path(dataset_id, "/"))
                 files_size = files_size / 1024 / 1024 / 1024
                 dataset_size += files_size
-            fin_size.append({"name": key, "dataset_size": dataset_size, "counts": species_counts})
+            fin_size.append({search: key, "sizes": dataset_size, "counts": species_counts})
 
+    # print(fin_size[0].keys()[0])
     total_cells = 0
     total_sizes = 0.0
     total_counts = 0
@@ -134,7 +135,7 @@ def get_group_dataset_size_oss(
         total_counts += int(entry['counts'])
 
     all_species = {
-        'species': 'All',
+        search: 'All',
         'cells': str(total_cells),
         'sizes': str(total_sizes),
         'counts': str(total_counts)
