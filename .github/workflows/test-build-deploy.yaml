@@ -46,7 +46,7 @@ jobs:
         run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
 
       - name: 运行Pytest
-        run: DEBUG_MODE=on ENABLE_KEYCLOAK = False LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
+        run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
 
       - name: 生成测试结果报告
         uses: test-summary/action@v2
