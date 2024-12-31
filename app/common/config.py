@@ -13,8 +13,9 @@ class Config(BaseSettings):
 
     # 是否开启用户权限验证
     ENABLE_AUTH: bool = True
+    
     # 通过keycloak验证
-    ENABLE_KEYCLOAK: bool = False
+    ENABLE_KEYCLOAK: bool = True
     # 时区，默认
     TIMEZONE: str = "Asia/Shanghai"
 
