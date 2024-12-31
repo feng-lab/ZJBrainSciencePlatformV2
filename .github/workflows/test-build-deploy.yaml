@@ -22,6 +22,15 @@ jobs:
           MYSQL_PASSWORD: zjlab2022
           MYSQL_DATABASE: zj_brain_science_platform
           TZ: Asia/Shanghai
+      keycloak:
+        image: quay.io/keycloak/keycloak:latest
+        ports:
+          - 8080:8080
+        env:
+          KEYCLOAK_ADMIN: admin
+          KEYCLOAK_ADMIN_PASSWORD: admin
+          KC_HOSTNAME: localhost
+
 
     steps:
       - name: 切换到推送的分支
