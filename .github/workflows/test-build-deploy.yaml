@@ -43,7 +43,7 @@ jobs:
         run: mkdir -p "${HOME}/log" "${HOME}/file"
 
       - name: 运行alembic
-        run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
+        run: DEBUG_MODE=on ENABLE_KEYCLOAK = False LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
 
       - name: 运行Pytest
         run: DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
