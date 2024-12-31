@@ -8,7 +8,7 @@ from starlette.testclient import TestClient
 
 from app.main import app
 from app.model.response import LoginResponse, Response
-from app.common.config import config
+
 RM = TypeVar("RM")
 
 
@@ -61,23 +61,11 @@ client = CustomTestClient(app)
 
 
 def login(username: str, password: str) -> dict[str, str]:
-
-    if config.ENABLE_KEYCLOAK:
-        login_form = {"grant_type": "password", "username": username, "password": password}
-        r = client.post("/api/login", data=login_form)
-        assert r.is_success
-        ro = LoginResponse(**r.json())
-        assert ro.token_type == "bearer"
-        token = ro.access_token
-        assert token
-        return {"Authorization": f"Bearer {token}"}
-    else:
-        login_form = {"grant_type": "password", "username": "admin", "password": "admin"}
-        r = client.post("/api/login_keycloak", data=login_form)
-        assert r.status_code == 200
-        ro = Response(**r.json())
-        return ro.data["access_token"]
-        # assert ro.token_type == "bearer"
-        # token = ro.access_token
-        # assert token
-        # return {"Authorization": f"Bearer {token}"}
+    login_form = {"grant_type": "password", "username": username, "password": password}
+    r = client.post("/api/login", data=login_form)
+    assert r.is_success
+    ro = LoginResponse(**r.json())
+    assert ro.token_type == "bearer"
+    token = ro.access_token
+    assert token
+    return {"Authorization": f"Bearer {token}"}
