@@ -77,8 +77,8 @@ def oos_file_upload(bucket, remote_fp: str, reader: BinaryIO, file_size: int) ->
 
 
 def stream_download(bucket, remote_fp: str):
-    # print(remote_fp)
     remote_fp = str(remote_fp)
+
     filename = os.path.basename(remote_fp)
     filetype = os.path.splitext(remote_fp)[-1]
     params = {
@@ -86,7 +86,7 @@ def stream_download(bucket, remote_fp: str):
         "Accept-Encoding": "gzip",
         "Content-Type": filetype or "text/plain",
     }  # , '
-    object_stream = bucket.get_object(quote(remote_fp), params=params)
+    object_stream = bucket.get_object(remote_fp, params=params)
 
     return object_stream
 

@@ -40,7 +40,7 @@ def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[D
     return query_pages(db, base_stmt, search.offset, search.limit)
 
 
-def get_species_ids_mapping(db: Session, type: str= None, category: str = None) -> dict:
+def get_species_ids_mapping(db: Session, type: str = None, category: str = None) -> dict:
     if type == "species":
         query_type = Dataset.species
     if type == "data_type":

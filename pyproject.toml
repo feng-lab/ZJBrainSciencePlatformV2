@@ -26,6 +26,8 @@ oss2 = "^2.18.6"
 bcrypt = "4.0.1"
 cellxgene = "^1.2.0"
 numpy = "1.26.4"
+fastapi-keycloak = "^1.0.11"
+python-keycloak = "^5.1.1"
 
 [tool.poetry.group.alembic.dependencies]
 alembic = "^1.11.3"

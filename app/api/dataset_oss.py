@@ -109,7 +109,7 @@ def get_all_datasets_size_oss(
 @wrap_api_response
 def get_group_dataset_size_oss(
     search: str, category: str = None, from_table: bool = True, ctx: HumanSubjectContext = Depends()
-) -> list[dict[str, int]]:
+) -> list[dict[str, int]]:  # testALLContest
     if from_table:
         fin_size = crud.get_species_cells_mapping_oss(ctx.db, search, category)
 
@@ -130,16 +130,11 @@ def get_group_dataset_size_oss(
     total_sizes = 0.0
     total_counts = 0
     for entry in fin_size:
-        total_cells += int(entry['cells'])
-        total_sizes += float(entry['sizes'])
-        total_counts += int(entry['counts'])
+        total_cells += int(entry["cells"])
+        total_sizes += float(entry["sizes"])
+        total_counts += int(entry["counts"])
 
-    all_species = {
-        search: 'All',
-        'cells': str(total_cells),
-        'sizes': str(total_sizes),
-        'counts': str(total_counts)
-    }
+    all_species = {search: "All", "cells": str(total_cells), "sizes": str(total_sizes), "counts": str(total_counts)}
     fin_size.append(all_species)
     return fin_size
 
@@ -251,6 +246,7 @@ def download_dataset_file_oss(
 ) -> StreamingResponse:
     check_dataset_exists(ctx.db, dataset_id)
     file_path = dataset_file_path(dataset_id, path)
+    # print(file_path)
     file_server_response = stream_download(bucket_auth(), remote_fp=file_path)
     file_name = file_server_response.headers["Content-Disposition"]
     content_type = file_server_response.headers["Content-Type"] or "text/plain"
@@ -328,7 +324,6 @@ def update_dataset_file(request: UpdateDatasetFileRequest, ctx: ResearcherContex
 @router.get("/api/GetH5adInfo", description="oss cellxgene预览展示")
 @wrap_api_response
 def get_h5ad_info(dataset_id: int, keys: str, path: str, ctx: ResearcherContext = Depends()):
-
     check_dataset_exists(ctx.db, dataset_id)
     dataset_file_dict = dataset_vis_file_path(dataset_id, path)
     data_json_info = get_data_from_oss(bucket_auth(), remove_extension2json(dataset_file_dict))

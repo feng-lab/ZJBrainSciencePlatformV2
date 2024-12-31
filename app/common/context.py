@@ -4,24 +4,51 @@ from sqlalchemy.orm import Session
 
 from app.common.config import config
 from app.common.exception import ServiceError
-from app.common.user_auth import AccessLevel, oauth2_scheme, verify_current_user
+from app.common.user_auth import AccessLevel, oauth2_scheme, verify_current_user,verify_keycloak_user
 from app.db import get_db_session
 from app.db.cache import get_redis
 
+class testContext:
+    def __init__(self, db: Session, token: str| None,api_access_level: int | None ):
+        # print("Testing",token)
+        self.db: Session = db
+        self.token : str| None = token
+        self.api_access_level: int = api_access_level
+
+        if not config.ENABLE_AUTH:
+            self.user_id = 1
+        elif token is None:
+            raise ServiceError.not_login()
+        # else:
+        #     self.user_id: str | None = verify_keycloak_user(token)
+        # 如果禁用认证，默认用户 ID 为 1
+
+
+# 继承 testContext 的类，用于依赖注入
 
 class Context:
-    def __init__(self, db: Session, token: str | None, api_access_level: int | None):
+    def __init__(self, db: Session, token: str | None, api_access_level: int | None ):
         self.db: Session = db
         self.cache: Redis = get_redis()
+        # self.token: str | None = token
         if not config.ENABLE_AUTH:
             self.user_id = 1
         elif token is None and api_access_level is None:
             self.user_id: int | None = None
         elif token is None:
             raise ServiceError.not_login()
-        else:
+        # else:
+        #     self.user_id: int | None = verify_current_user(db, self.cache, token, api_access_level)
+        elif not config.ENABLE_KEYCLOAK:
             self.user_id: int | None = verify_current_user(db, self.cache, token, api_access_level)
+        else:
+            self.user_id: str | None = verify_keycloak_user(token)
 
+
+
+class LogoutALLContest(testContext):
+    def __init__(self, db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)):
+        super().__init__(db, token,  AccessLevel.MINIMUM)
 
 class NotLogonContext(Context):
     def __init__(self, db: Session = Depends(get_db_session)):
@@ -46,3 +73,11 @@ class ResearcherContext(Context):
 class AdministratorContext(Context):
     def __init__(self, db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)):
         super().__init__(db, token, AccessLevel.ADMINISTRATOR)
+
+
+
+# 上下文类：管理用户令牌和用户 ID
+
+
+
+

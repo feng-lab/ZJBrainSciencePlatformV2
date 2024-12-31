@@ -9,11 +9,12 @@ logger = logging.getLogger(__name__)
 
 class Config(BaseSettings):
     # 是否处于开发环境
-    DEBUG_MODE: bool = False
+    DEBUG_MODE: bool = True
 
     # 是否开启用户权限验证
     ENABLE_AUTH: bool = True
-
+    # 通过keycloak验证
+    ENABLE_KEYCLOAK: bool = True
     # 时区，默认
     TIMEZONE: str = "Asia/Shanghai"
 
@@ -92,6 +93,11 @@ class Config(BaseSettings):
     # 文件目录
     OSS_FILE_DIR: Path = PurePosixPath("zjdata_storage", "ZJBrainSciencePlatform/file-server/file/")
     # OSS_FILE_DIR: Path = Path("exampledir/")
+    # keycloak
+    KEYCLOAK_SERVER_URL: str = "http://10.15.56.125:8080/"
+    KEYCLOAK_CLIENT_ID: str = "dataplatform-api"
+    KEYCLOAK_REALM_NAME: str = "Test"
+    KEYCLOAK_SECRET_KEY: str = "oaErLxN7JWHjJU3fs5gdikaiFiPmtITP"
 
 
 config = Config()
