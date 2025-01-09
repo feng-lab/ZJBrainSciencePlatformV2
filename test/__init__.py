@@ -5,7 +5,6 @@ from httpx._client import USE_CLIENT_DEFAULT, TimeoutTypes, UseClientDefault
 from httpx._types import AuthTypes, CookieTypes, HeaderTypes, QueryParamTypes, URLTypes
 from pydantic import Json
 from starlette.testclient import TestClient
-
 from app.main import app
 from app.model.response import LoginResponse, Response
 

@@ -16,7 +16,13 @@ jobs:
         image: caitaozjlab/zjbs-database:latest
         ports:
           - 8100:3306
+      keycloak:
+        image: jboss/keycloak:latest
+        ports:
+          - 8080:8080
         env:
+          KEYCLOAK_USER: admin
+          KEYCLOAK_PASSWORD: admin
           MYSQL_ROOT_PASSWORD: zjlab2022root
           MYSQL_USER: zjlab
           MYSQL_PASSWORD: zjlab2022
