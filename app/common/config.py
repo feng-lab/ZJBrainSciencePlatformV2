@@ -15,7 +15,7 @@ class Config(BaseSettings):
     ENABLE_AUTH: bool = True
     
     # 通过keycloak验证
-    ENABLE_KEYCLOAK: bool = False
+    ENABLE_KEYCLOAK: bool = True
     # 时区，默认
     TIMEZONE: str = "Asia/Shanghai"
 
@@ -95,10 +95,10 @@ class Config(BaseSettings):
     OSS_FILE_DIR: Path = PurePosixPath("zjdata_storage", "ZJBrainSciencePlatform/file-server/file/")
     # OSS_FILE_DIR: Path = Path("exampledir/")
     # keycloak
-    KEYCLOAK_SERVER_URL: str = "http://10.15.56.125:8080/"
-    KEYCLOAK_CLIENT_ID: str = "dataplatform-api"
-    KEYCLOAK_REALM_NAME: str = "Test"
-    KEYCLOAK_SECRET_KEY: str = "oaErLxN7JWHjJU3fs5gdikaiFiPmtITP"
+    KEYCLOAK_SERVER_URL: str = "https://login.aigene.org.cn"
+    KEYCLOAK_CLIENT_ID: str = "dataplatform"
+    KEYCLOAK_REALM_NAME: str = "test"
+    KEYCLOAK_SECRET_KEY: str = "0p9jizKBOrahVzZKzhgW"
 
 
 config = Config()

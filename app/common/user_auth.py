@@ -5,7 +5,7 @@ from typing import NoReturn
 
 from fastapi.security import OAuth2PasswordBearer
 from jose import ExpiredSignatureError, JWTError, jwt
-from keycloak import KeycloakOpenID
+from keycloak.exceptions import KeycloakAuthenticationError
 from passlib.context import CryptContext
 from redis import Redis
 from sqlalchemy.orm import Session
@@ -89,8 +89,17 @@ def verify_password(db: Session, staff_id: str, password: str) -> int | None:
 
 def verify_keycloak_user(token: str) -> int:
     try:
-        userinfo = keycloak_openid.userinfo(token)
-        user_id = userinfo["sub"]
+        # userinfo = keycloak_openid.userinfo(token)
+        token_payload = keycloak_openid.decode_token(token)
+        # print(token_payload['sub'])
+        user_id = token_payload['sub']
+        user_id =1
         return user_id
+    except KeycloakAuthenticationError as e:
+        # token过期
+        token_payload = keycloak_openid.decode_token(token,validate = False)
+        logger.info(f"token expired, {token_payload=}")
+        raise e
     except JWTError:
         logger.exception(f"invalid token")
+        raise_unauthorized_exception(token=token)

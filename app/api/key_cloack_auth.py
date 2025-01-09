@@ -15,7 +15,7 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
     try:
         token = keycloak_openid.token(form.username, form.password)
         access_token = token["access_token"]
-        refresh_token = token["refresh_token"]
+        # refresh_token = token["refresh_token"]
         return LoginResponse(access_token=access_token, token_type="Bearer")
     except KeycloakAuthenticationError:
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -27,7 +27,7 @@ def logout(ctx: LogoutALLContest = Depends()) -> None:
     try:
         # ex_token = keycloak_openid.exchange_token(
         #     token=ctx.token,  # ctx.token 是你现有的 access_token
-        #     subject_token_type="urn:ietf:params:oauth:token-type:access_token",  # 这部分你可能不需要指定，通常直接传 access_token 即可
+        #     subject_token_type="urn:ietf:params:oauth:token-type:access_token",  #
         #     requested_token_type="urn:ietf:params:oauth:token-type:refresh_token", # 请求一个新的 refresh_token
         # )
         # print(ex_token)
