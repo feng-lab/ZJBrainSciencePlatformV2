@@ -31,3 +31,19 @@ def test_logout_unauthorized():
     assert r.status_code == 401
     ro = NoneResponse(**r.json())
     assert ro.code == 3
+
+
+@pytest.mark.parametrize(
+    "username,password",
+    [("not_exists_user", "some_password"), ("valid_user", "wrong_password")],
+)
+def test_login_wrong_username_or_password(username: str, password: str):
+
+    login_form = {"grant_type": "password", "username": username, "password": password}
+    response = client.post("/api/login_keycloak", data=login_form)
+
+    # 检查登录失败的情况
+    assert response.status_code == 401, "Expected 401 for invalid credentials"
+    error_response = response.json()
+    assert "detail" in error_response, "Error response should contain 'detail'"
+    assert error_response["detail"] == "Invalid credentials", "Expected 'Invalid credentials' error"
