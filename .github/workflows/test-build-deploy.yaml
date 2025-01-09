@@ -28,7 +28,7 @@ jobs:
           MYSQL_PASSWORD: zjlab2022
           MYSQL_DATABASE: zj_brain_science_platform
           TZ: Asia/Shanghai
-
+        options: --health-cmd="mysqladmin ping -h localhost -u zjlab -pzjlab2022" --health-interval=10s --health-timeout=5s --health-retries=10
     steps:
       - name: 切换到推送的分支
         uses: actions/checkout@v4
