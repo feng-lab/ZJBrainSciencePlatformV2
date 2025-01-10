@@ -73,4 +73,3 @@ def login(username: str, password: str) -> dict[str, str]:
     token = ro.access_token
     assert token
     return {"Authorization": f"Bearer {token}"}
-http://gitlab.zhejianglab.com/research-center-for-life-sciences-computing/platform-infrastructure-group/lscp/zjbrainscience-front.git

@@ -1,0 +1,40 @@
+stages:
+  - test
+  - build
+
+variables:
+  LOG_ROOT: "${CI_PROJECT_DIR}/log"
+  FILE_ROOT: "${CI_PROJECT_DIR}/file"
+  DEBUG_MODE: "on"
+  MYSQL_ROOT_PASSWORD: "zjlab2022root"
+  MYSQL_USER: "zjlab"
+  MYSQL_PASSWORD: "zjlab2022"
+  MYSQL_DATABASE: "zj_brain_science_platform"
+  TZ: "Asia/Shanghai"
+  KEYCLOAK_URL: "http://keycloak:8080/auth"
+  KEYCLOAK_REALM: "test"
+  KEYCLOAK_CLIENT_ID: "dataplatform"
+  KEYCLOAK_CLIENT_SECRET: "0p9jizKBOrahVzZKzhgW"
+
+services:
+  - name: redis:7-alpine
+    alias: cache
+  - name: caitaozjlab/zjbs-database:latest
+    alias: database
+  - name: quay.io/keycloak/keycloak:latest
+    alias: keycloak
+
+pytest:
+  stage: test
+  image: python:3.11
+  before_script:
+    - pip install pipx
+    - pipx install poetry
+    - poetry install --without dev
+    - mkdir -p "${LOG_ROOT}" "${FILE_ROOT}"
+  script:
+    - poetry run alembic upgrade head
+    - poetry run pytest --junitxml=pytest_report.xml
+  artifacts:
+    reports:
+      junit: pytest_report.xml
