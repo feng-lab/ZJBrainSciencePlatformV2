@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from keycloak.exceptions import KeycloakAuthenticationError
 
 from app.api import wrap_api_response
-from app.common.context import LogoutALLContest,AllUserContext
+from app.common.context import LogoutALLContest
 from app.common.keycloak_user_auth import keycloak_openid
 from app.model.response import LoginResponse, NoneResponse
 
@@ -16,7 +16,7 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
         token = keycloak_openid.token(form.username, form.password)
         access_token = token["access_token"]
         # refresh_token = token["refresh_token"]
-        return LoginResponse(access_token=access_token, token_type="Bearer")
+        return LoginResponse(access_token=access_token, token_type="bearer")
     except KeycloakAuthenticationError:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
@@ -35,5 +35,5 @@ def logout(ctx: LogoutALLContest = Depends()) -> None:
         return {"message": "Logged out successfully"}
 
     except Exception as e:
-        print(e)
+
         raise HTTPException(status_code=500, detail="Failed to logout from Keycloak")

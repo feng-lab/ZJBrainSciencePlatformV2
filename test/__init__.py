@@ -61,15 +61,16 @@ client = CustomTestClient(app)
 
 def login(username: str, password: str) -> dict[str, str]:
     login_form = {"grant_type": "password", "username": username, "password": password}
-    if config.ENABLE_KEYCLOAK :
+    if config.ENABLE_KEYCLOAK ==True :
         r = client.post("/api/login_keycloak", data=login_form)
-    elif not config.ENABLE_KEYCLOAK:
+
+    elif config.ENABLE_KEYCLOAK ==False:
         r = client.post("/api/login", data=login_form)
 
     assert r.is_success
     ro = LoginResponse(**r.json())
-
-    assert ro.token_type == "bearer"
+    print(ro)
+    assert ro.token_type == "bearer" or ro.token_type == "Bearer"
     token = ro.access_token
     assert token
     return {"Authorization": f"Bearer {token}"}

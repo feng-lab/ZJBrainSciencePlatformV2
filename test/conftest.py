@@ -25,7 +25,7 @@ def run_alembic_upgrade_head() -> None:
 @pytest.fixture(scope="session")
 def logon_root_headers(request,run_alembic_upgrade_head, run_app_startup_shutdown) -> dict[str, str]:
 
-    if config.ENABLE_KEYCLOAK :
+    if config.ENABLE_KEYCLOAK == False:
         return login(ROOT_USERNAME, encrypt_password(ROOT_PASSWORD))
-    elif config.ENABLE_KEYCLOAK:
+    elif config.ENABLE_KEYCLOAK ==True:
         return login("data-management", "0p9jizKBOrahVzZKzhgW")

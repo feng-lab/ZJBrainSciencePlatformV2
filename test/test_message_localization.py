@@ -29,6 +29,7 @@ def test_no_content_language_header(logon_root_headers: dict[str, str]) -> None:
 @pytest.mark.parametrize(["locale", "expect_message"], [("zh-CN", "用户不存在"), ("en-US", "user cannot be found")])
 def test_not_found(logon_root_headers: dict[str, str], locale: str, expect_message: str) -> None:
     headers = logon_root_headers | {"Content-Language": locale}
+    print(logon_root_headers,headers)
     r = client.get("/api/getUserInfo", params={"id": 114514}, headers=headers)
     assert r.status_code == 200
     ro = NoneResponse(**r.json())
