@@ -30,6 +30,7 @@ pytest:
   before_script:
     - pip install pipx
     - pipx install poetry
+    - export PATH=$PATH:/root/.local/bin  # 添加 poetry 到 PATH
     - poetry install --without dev
     - mkdir -p "${LOG_ROOT}" "${FILE_ROOT}"
   script:
