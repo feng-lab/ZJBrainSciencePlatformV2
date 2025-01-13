@@ -1,6 +1,18 @@
 stages:
   - test
   - build
+
+variables:
+  MYSQL_ROOT_PASSWORD: "zjlab2022root"
+  MYSQL_USER: "zjlab"
+  MYSQL_PASSWORD: "zjlab2022"
+  MYSQL_DATABASE: "zj_brain_science_platform"
+  TZ: "Asia/Shanghai"
+  KEYCLOAK_URL: "http://keycloak:8080/auth"
+  KEYCLOAK_REALM: "test"
+  KEYCLOAK_CLIENT_ID: "dataplatform"
+  KEYCLOAK_CLIENT_SECRET: "0p9jizKBOrahVzZKzhgW"
+
 variables:
   MYSQL_ROOT_PASSWORD: "zjlab2022root"
   MYSQL_USER: "zjlab"
@@ -15,27 +27,10 @@ variables:
 services:
   - name: redis:7-alpine
     alias: cache
-    ports:
-      - "8200:6379"
   - name: caitaozjlab/zjbs-database:latest
     alias: database
-    ports:
-      - "8100:3306"
-    env:
-      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
-      MYSQL_USER: "${MYSQL_USER}"
-      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-      MYSQL_DATABASE: "${MYSQL_DATABASE}"
-      TZ: "${TZ}"
   - name: quay.io/keycloak/keycloak:latest
     alias: keycloak
-    ports:
-      - "8080:8080"
-    env:
-      KEYCLOAK_URL: "${KEYCLOAK_URL}"
-      KEYCLOAK_REALM: "${KEYCLOAK_REALM}"
-      KEYCLOAK_CLIENT_ID: "${KEYCLOAK_CLIENT_ID}"
-      KEYCLOAK_CLIENT_SECRET: "${KEYCLOAK_CLIENT_SECRET}"
 
 pytest:
   stage: test
@@ -46,49 +41,43 @@ pytest:
     - export PATH="$PATH:/root/.local/bin"
     - which poetry
     - poetry install --without dev
-    - export DB_HOST="localhost"
+    - export DB_HOST="database"
+    - export MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD}"
+    - export MYSQL_USER="${MYSQL_USER}"
+    - export MYSQL_PASSWORD="${MYSQL_PASSWORD}"
+    - export MYSQL_DATABASE="${MYSQL_DATABASE}"
+    - export TZ="${TZ}"
+    - export KEYCLOAK_URL="${KEYCLOAK_URL}"
+    - export KEYCLOAK_REALM="${KEYCLOAK_REALM}"
+    - export KEYCLOAK_CLIENT_ID="${KEYCLOAK_CLIENT_ID}"
+    - export KEYCLOAK_CLIENT_SECRET="${KEYCLOAK_CLIENT_SECRET}"
   script:
     - poetry run alembic upgrade head
     - poetry run pytest --junitxml=pytest_report.xml
   artifacts:
     reports:
       junit: pytest_report.xml
-
-
-build-docker-image:
+      
+build_docker_image:
   stage: build
   image: docker:latest
-  needs: ["pytest"]
-  before_script:
-    - apk add --no-cache git bash
-    - echo "Asia/Shanghai" > /etc/timezone
+  services:
+    - docker:dind
   script:
-    - |
-      baseImageVersion=$(head -n 1 ./deploy/image-version/base.version)
-      baseImageTag="caitaozjlab/zjbs-base:${baseImageVersion}"
-      echo "Base Image Tag: ${baseImageTag}"
-    - |
-      dateTime=$(date +'%Y%m%d-%H%M%S')
-      gitHash=$(git rev-parse --short=8 HEAD)
-      imageVersion="${dateTime}-${gitHash}"
-      echo "Image Version: ${imageVersion}"
+    - apk add --no-cache bash
+    - baseImageVersion=$(head -n 1 ./deploy/image-version/base.version)
+    - baseImageTag="caitaozjlab/zjbs-base:${baseImageVersion}"
+    - dateTime=$(date +'%Y%m%d-%H%M%S')
+    - gitHash=$(git rev-parse --short=8 HEAD)
+    - imageVersion="${dateTime}-${gitHash}"
+    - echo "baseImageTag=${baseImageTag}"
+    - echo "imageVersion=${imageVersion}"
     - docker login -u caitaozjlab -p dckr_pat_3vHgyUohktPfh6AkThPE88CUzIs
-    - |
-      docker buildx build \
-        --build-arg BASE_IMAGE_TAG="${baseImageTag}" \
-        --file ./deploy/dockerfile/platform.Dockerfile \
-        --push \
-        --tag "caitaozjlab/zjbs-platform:${imageVersion}" \
-        --tag "caitaozjlab/zjbs-platform:latest" \
-        --cache-from type=registry,ref=caitaozjlab/zjbs-platform:latest \
-        --cache-to type=inline \
-        .
+    - docker build -t caitaozjlab/zjbs-platform:${imageVersion} -t caitaozjlab/zjbs-platform:latest -f ./deploy/dockerfile/platform.Dockerfile .
+    - docker push caitaozjlab/zjbs-platform:${imageVersion}
+    - docker push caitaozjlab/zjbs-platform:latest
   after_script:
-    - |
-      echo "# Docker 镜像版本" >> ${CI_PROJECT_DIR}/summary.md
-      echo "|Repo|Version|" >> ${CI_PROJECT_DIR}/summary.md
-      echo "|---|---|" >> ${CI_PROJECT_DIR}/summary.md
-      echo "|`caitaozjlab/zjbs-platform`|`${imageVersion}`|" >> ${CI_PROJECT_DIR}/summary.md
-  artifacts:
-    paths:
-      - summary.md
+    - echo '# Docker 镜像版本' >> docker_image_summary.md
+    - echo '|Repo|Version|' >> docker_image_summary.md
+    - echo '|---|---|' >> docker_image_summary.md
+    - echo '|`caitaozjlab/zjbs-platform`|`${imageVersion}`|' >> docker_image_summary.md
