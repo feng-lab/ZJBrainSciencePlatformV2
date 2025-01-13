@@ -1,11 +1,7 @@
 stages:
   - test
   - build
-
 variables:
-  LOG_ROOT: "${CI_PROJECT_DIR}/log"
-  FILE_ROOT: "${CI_PROJECT_DIR}/file"
-  DEBUG_MODE: "on"
   MYSQL_ROOT_PASSWORD: "zjlab2022root"
   MYSQL_USER: "zjlab"
   MYSQL_PASSWORD: "zjlab2022"
@@ -15,17 +11,31 @@ variables:
   KEYCLOAK_REALM: "test"
   KEYCLOAK_CLIENT_ID: "dataplatform"
   KEYCLOAK_CLIENT_SECRET: "0p9jizKBOrahVzZKzhgW"
-  CACHE_PORT: "6379"
+
 services:
   - name: redis:7-alpine
     alias: cache
-
+    ports:
+      - "8200:6379"
   - name: caitaozjlab/zjbs-database:latest
     alias: database
-
+    ports:
+      - "8100:3306"
+    env:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      TZ: "${TZ}"
   - name: quay.io/keycloak/keycloak:latest
     alias: keycloak
-
+    ports:
+      - "8080:8080"
+    env:
+      KEYCLOAK_URL: "${KEYCLOAK_URL}"
+      KEYCLOAK_REALM: "${KEYCLOAK_REALM}"
+      KEYCLOAK_CLIENT_ID: "${KEYCLOAK_CLIENT_ID}"
+      KEYCLOAK_CLIENT_SECRET: "${KEYCLOAK_CLIENT_SECRET}"
 
 pytest:
   stage: test
@@ -33,16 +43,17 @@ pytest:
   before_script:
     - pip install pipx
     - pipx install poetry
-    - export PATH=$PATH:/root/.local/bin
+    - export PATH="$PATH:/root/.local/bin"
     - which poetry
     - poetry install --without dev
-    - mkdir -p "${LOG_ROOT}" "${FILE_ROOT}"
+    - export DB_HOST="localhost"
   script:
     - poetry run alembic upgrade head
     - poetry run pytest --junitxml=pytest_report.xml
   artifacts:
     reports:
       junit: pytest_report.xml
+
 
 build-docker-image:
   stage: build
