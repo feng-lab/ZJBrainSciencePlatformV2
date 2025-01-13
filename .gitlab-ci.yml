@@ -1,5 +1,6 @@
 stages:
   - test
+  - build
 
 variables:
   LOG_ROOT: "${CI_PROJECT_DIR}/log"
@@ -20,19 +21,10 @@ services:
     alias: cache
   - name: caitaozjlab/zjbs-database:latest
     alias: database
-    variables:
-      MYSQL_ROOT_PASSWORD: zjlab2022root
-      MYSQL_USER: zjlab
-      MYSQL_PASSWORD: zjlab2022
-      MYSQL_DATABASE: zj_brain_science_platform
-      TZ: Asia/Shanghai
+
   - name: quay.io/keycloak/keycloak:latest
     alias: keycloak
-    variables:
-      KEYCLOAK_URL: http://keycloak:8080/auth
-      KEYCLOAK_REALM: test
-      KEYCLOAK_CLIENT_ID: dataplatform
-      KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
+
 
 pytest:
   stage: test
@@ -51,43 +43,40 @@ pytest:
     reports:
       junit: pytest_report.xml
 
-
-
 build-docker-image:
   stage: build
   image: docker:latest
-  services:
-    - docker:dind
-  variables:
-    DOCKER_HUB_USERNAME: caitaozjlab
-    DOCKER_HUB_PASSWORD: dckr_pat_3vHgyUohktPfh6AkThPE88CUzIs
+  needs: ["pytest"]
+  before_script:
+    - apk add --no-cache git bash
+    - echo "Asia/Shanghai" > /etc/timezone
   script:
-    - apk add --no-cache bash
     - |
-      baseImageVersion="$(head -n 1 ./deploy/image-version/base.version)"
+      baseImageVersion=$(head -n 1 ./deploy/image-version/base.version)
       baseImageTag="caitaozjlab/zjbs-base:${baseImageVersion}"
-      echo "baseImageTag=${baseImageTag}"
+      echo "Base Image Tag: ${baseImageTag}"
     - |
-      dateTime="$(date +'%Y%m%d-%H%M%S')"
-      gitHash="$(git rev-parse --short=8 HEAD)"
+      dateTime=$(date +'%Y%m%d-%H%M%S')
+      gitHash=$(git rev-parse --short=8 HEAD)
       imageVersion="${dateTime}-${gitHash}"
-      echo "imageVersion=${imageVersion}"
-    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
+      echo "Image Version: ${imageVersion}"
+    - docker login -u caitaozjlab -p dckr_pat_3vHgyUohktPfh6AkThPE88CUzIs
     - |
       docker buildx build \
-        --build-arg BASE_IMAGE_TAG=${baseImageTag} \
+        --build-arg BASE_IMAGE_TAG="${baseImageTag}" \
         --file ./deploy/dockerfile/platform.Dockerfile \
         --push \
-        --tag caitaozjlab/zjbs-platform:${imageVersion} \
-        --tag caitaozjlab/zjbs-platform:latest \
+        --tag "caitaozjlab/zjbs-platform:${imageVersion}" \
+        --tag "caitaozjlab/zjbs-platform:latest" \
         --cache-from type=registry,ref=caitaozjlab/zjbs-platform:latest \
         --cache-to type=inline \
         .
+  after_script:
     - |
-      echo '# Docker 镜像版本' >> $CI_PROJECT_DIR/build_summary.md
-      echo '|Repo|Version|' >> $CI_PROJECT_DIR/build_summary.md
-      echo '|---|---|' >> $CI_PROJECT_DIR/build_summary.md
-      echo '|`caitaozjlab/zjbs-platform`|`${imageVersion}`|' >> $CI_PROJECT_DIR/build_summary.md
+      echo "# Docker 镜像版本" >> ${CI_PROJECT_DIR}/summary.md
+      echo "|Repo|Version|" >> ${CI_PROJECT_DIR}/summary.md
+      echo "|---|---|" >> ${CI_PROJECT_DIR}/summary.md
+      echo "|`caitaozjlab/zjbs-platform`|`${imageVersion}`|" >> ${CI_PROJECT_DIR}/summary.md
   artifacts:
     paths:
-      - build_summary.md
+      - summary.md
