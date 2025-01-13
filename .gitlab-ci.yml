@@ -12,17 +12,7 @@ variables:
   KEYCLOAK_REALM: "test"
   KEYCLOAK_CLIENT_ID: "dataplatform"
   KEYCLOAK_CLIENT_SECRET: "0p9jizKBOrahVzZKzhgW"
-
-variables:
-  MYSQL_ROOT_PASSWORD: "zjlab2022root"
-  MYSQL_USER: "zjlab"
-  MYSQL_PASSWORD: "zjlab2022"
-  MYSQL_DATABASE: "zj_brain_science_platform"
-  TZ: "Asia/Shanghai"
-  KEYCLOAK_URL: "http://keycloak:8080/auth"
-  KEYCLOAK_REALM: "test"
-  KEYCLOAK_CLIENT_ID: "dataplatform"
-  KEYCLOAK_CLIENT_SECRET: "0p9jizKBOrahVzZKzhgW"
+  CACHE_PORT: 6379
 
 services:
   - name: redis:7-alpine
@@ -57,7 +47,7 @@ pytest:
   artifacts:
     reports:
       junit: pytest_report.xml
-      
+
 build_docker_image:
   stage: build
   image: docker:latest
