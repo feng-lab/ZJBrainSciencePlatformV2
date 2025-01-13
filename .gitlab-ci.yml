@@ -3,76 +3,88 @@ stages:
   - build
 
 variables:
-  LOG_ROOT: "${CI_PROJECT_DIR}/log"
-  FILE_ROOT: "${CI_PROJECT_DIR}/file"
-  DEBUG_MODE: "on"
-  MYSQL_ROOT_PASSWORD: "zjlab2022root"
-  MYSQL_USER: "zjlab"
-  MYSQL_PASSWORD: "zjlab2022"
-  MYSQL_DATABASE: "zj_brain_science_platform"
-  TZ: "Asia/Shanghai"
-  KEYCLOAK_URL: "http://keycloak:8080/auth"
-  KEYCLOAK_REALM: "test"
-  KEYCLOAK_CLIENT_ID: "dataplatform"
-  KEYCLOAK_CLIENT_SECRET: "0p9jizKBOrahVzZKzhgW"
+  TEST_USERNAME: ci_test_user
+  TEST_PASSWORD: ci_test_password
+  CACHE_PORT: 6379
 
 services:
   - name: redis:7-alpine
     alias: cache
   - name: caitaozjlab/zjbs-database:latest
     alias: database
+    variables:
+      MYSQL_ROOT_PASSWORD: zjlab2022root
+      MYSQL_USER: zjlab
+      MYSQL_PASSWORD: zjlab2022
+      MYSQL_DATABASE: zj_brain_science_platform
+      TZ: Asia/Shanghai
   - name: quay.io/keycloak/keycloak:latest
     alias: keycloak
+    variables:
+      KEYCLOAK_URL: http://keycloak:8080/auth
+      KEYCLOAK_REALM: test
+      KEYCLOAK_CLIENT_ID: dataplatform
+      KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
 
 pytest:
   stage: test
   image: python:3.11
-  before_script:
+  script:
     - pip install pipx
     - pipx install poetry
-    - export PATH=$PATH:/root/.local/bin  # 添加 poetry 到 PATH
     - poetry install --without dev
-    - mkdir -p "${LOG_ROOT}" "${FILE_ROOT}"
-  script:
-    - poetry run alembic upgrade head
-    - poetry run pytest --junitxml=pytest_report.xml
+    - mkdir -p "${HOME}/log" "${HOME}/file"
+    - |
+      for i in {1..10}; do
+        if mysqladmin ping -h database -u zjlab -pzjlab2022 --silent; then
+          echo "Database is ready!"
+          break
+        else
+          echo "Waiting for database to start..."
+          sleep 5
+        fi
+      done
+    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
+    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
   artifacts:
-    reports:
-      junit: pytest_report.xml
+    paths:
+      - pytest_report.xml
+
 build-docker-image:
   stage: build
   image: docker:latest
-  needs: ["pytest"]
-  before_script:
-    - apk add --no-cache git bash
-    - echo "Asia/Shanghai" > /etc/timezone
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HUB_USERNAME: caitaozjlab
+    DOCKER_HUB_PASSWORD: dckr_pat_3vHgyUohktPfh6AkThPE88CUzIs
   script:
+    - apk add --no-cache bash
     - |
-      baseImageVersion=$(head -n 1 ./deploy/image-version/base.version)
+      baseImageVersion="$(head -n 1 ./deploy/image-version/base.version)"
       baseImageTag="caitaozjlab/zjbs-base:${baseImageVersion}"
-      echo "Base Image Tag: ${baseImageTag}"
+      echo "baseImageTag=${baseImageTag}"
     - |
-      dateTime=$(date +'%Y%m%d-%H%M%S')
-      gitHash=$(git rev-parse --short=8 HEAD)
+      dateTime="$(date +'%Y%m%d-%H%M%S')"
+      gitHash="$(git rev-parse --short=8 HEAD)"
       imageVersion="${dateTime}-${gitHash}"
-      echo "Image Version: ${imageVersion}"
-    - docker login -u caitaozjlab -p dckr_pat_3vHgyUohktPfh6AkThPE88CUzIs
+      echo "imageVersion=${imageVersion}"
+    - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
     - |
       docker buildx build \
-        --build-arg BASE_IMAGE_TAG="${baseImageTag}" \
+        --build-arg BASE_IMAGE_TAG=${baseImageTag} \
         --file ./deploy/dockerfile/platform.Dockerfile \
         --push \
-        --tag "caitaozjlab/zjbs-platform:${imageVersion}" \
-        --tag "caitaozjlab/zjbs-platform:latest" \
+        --tag caitaozjlab/zjbs-platform:${imageVersion} \
+        --tag caitaozjlab/zjbs-platform:latest \
         --cache-from type=registry,ref=caitaozjlab/zjbs-platform:latest \
         --cache-to type=inline \
         .
-  after_script:
     - |
-      echo "# Docker 镜像版本" >> ${CI_PROJECT_DIR}/summary.md
-      echo "|Repo|Version|" >> ${CI_PROJECT_DIR}/summary.md
-      echo "|---|---|" >> ${CI_PROJECT_DIR}/summary.md
-      echo "|`caitaozjlab/zjbs-platform`|`${imageVersion}`|" >> ${CI_PROJECT_DIR}/summary.md
+      echo '# Docker 镜像版本' >> $CI_PROJECT_DIR/build_summary.md
+      echo '|Repo|Version|' >> $CI_PROJECT_DIR/build_summary.md
+      echo '|---|---|' >> $CI_PROJECT_DIR/build_summary.md
+      echo '|`caitaozjlab/zjbs-platform`|`${imageVersion}`|' >> $CI_PROJECT_DIR/build_summary.md
   artifacts:
     paths:
-      - summary.md
+      - build_summary.md
