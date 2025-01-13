@@ -15,10 +15,11 @@ variables:
   KEYCLOAK_REALM: "test"
   KEYCLOAK_CLIENT_ID: "dataplatform"
   KEYCLOAK_CLIENT_SECRET: "0p9jizKBOrahVzZKzhgW"
-
+  CACHE_PORT: "6379"
 services:
   - name: redis:7-alpine
     alias: cache
+
   - name: caitaozjlab/zjbs-database:latest
     alias: database
 
