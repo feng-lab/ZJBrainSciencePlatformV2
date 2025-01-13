@@ -29,23 +29,17 @@ services:
 pytest:
   stage: test
   image: python:3.11
-  script:
+  before_script:
     - pip install pipx
     - pipx install poetry
+    - export PATH=$PATH:/root/.local/bin  # 手动添加 poetry 到 PATH
+    - which poetry  # 检查 poetry 是否在 PATH 中
     - poetry install --without dev
-    - mkdir -p "${HOME}/log" "${HOME}/file"
-    - |
-      for i in {1..10}; do
-        if mysqladmin ping -h database -u zjlab -pzjlab2022 --silent; then
-          echo "Database is ready!"
-          break
-        else
-          echo "Waiting for database to start..."
-          sleep 5
-        fi
-      done
-    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
-    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
+    - mkdir -p "${LOG_ROOT}" "${FILE_ROOT}"
+  script:
+    - poetry run alembic upgrade head
+    - poetry run pytest --junitxml=pytest_report.xml
+
   artifacts:
     paths:
       - pytest_report.xml
