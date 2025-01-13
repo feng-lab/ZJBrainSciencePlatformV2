@@ -1,11 +1,19 @@
 stages:
   - test
-  - build
 
 variables:
-  TEST_USERNAME: ci_test_user
-  TEST_PASSWORD: ci_test_password
-  CACHE_PORT: 6379
+  LOG_ROOT: "${CI_PROJECT_DIR}/log"
+  FILE_ROOT: "${CI_PROJECT_DIR}/file"
+  DEBUG_MODE: "on"
+  MYSQL_ROOT_PASSWORD: "zjlab2022root"
+  MYSQL_USER: "zjlab"
+  MYSQL_PASSWORD: "zjlab2022"
+  MYSQL_DATABASE: "zj_brain_science_platform"
+  TZ: "Asia/Shanghai"
+  KEYCLOAK_URL: "http://keycloak:8080/auth"
+  KEYCLOAK_REALM: "test"
+  KEYCLOAK_CLIENT_ID: "dataplatform"
+  KEYCLOAK_CLIENT_SECRET: "0p9jizKBOrahVzZKzhgW"
 
 services:
   - name: redis:7-alpine
@@ -32,17 +40,18 @@ pytest:
   before_script:
     - pip install pipx
     - pipx install poetry
-    - export PATH=$PATH:/root/.local/bin  # 手动添加 poetry 到 PATH
-    - which poetry  # 检查 poetry 是否在 PATH 中
+    - export PATH=$PATH:/root/.local/bin
+    - which poetry
     - poetry install --without dev
     - mkdir -p "${LOG_ROOT}" "${FILE_ROOT}"
   script:
     - poetry run alembic upgrade head
     - poetry run pytest --junitxml=pytest_report.xml
-
   artifacts:
-    paths:
-      - pytest_report.xml
+    reports:
+      junit: pytest_report.xml
+
+
 
 build-docker-image:
   stage: build
