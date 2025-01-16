@@ -1,44 +1,77 @@
 stages:
   - test
-
-services:
-  - name: redis:7-alpine
-    alias: redis
-    command: ["sh", "-c", "redis-server --port 8200"]
-
-  - name: caitaozjlab/zjbs-database:latest
-    alias: datasbase
-    variables:
-      MYSQL_ROOT_PASSWORD: zjlab2022root
-      MYSQL_USER: zjlab
-      MYSQL_PASSWORD: zjlab2022
-      MYSQL_DATABASE: zj_brain_science_platform
-      TZ: Asia/Shanghai
-
-    command: ["sh", "-c", "docker-entrypoint.sh mysqld --skip-networking=false --port=8800"]
-
-  - name: quay.io/keycloak/keycloak:latest
-    alias: keycloak
-    variables:
-      EYCLOAK_URL: http://keycloak:8080/auth
-      KEYCLOAK_REALM: test
-      KEYCLOAK_CLIENT_ID: dataplatform
-      KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
-
-install_dependencies:
-
+  - build
+test:
+  tags: [saas-shared-runner-manager-4]
   stage: test
+  services:
+    - name: redis:7-alpine
+      alias: redis
+      command: ["sh", "-c", "redis-server --port 8200"]
+
+    - name: caitaozjlab/zjbs-database:latest
+      alias: datasbase
+      variables:
+        MYSQL_ROOT_PASSWORD: zjlab2022root
+        MYSQL_USER: zjlab
+        MYSQL_PASSWORD: zjlab2022
+        MYSQL_DATABASE: zj_brain_science_platform
+        TZ: Asia/Shanghai
+
+      command: ["sh", "-c", "docker-entrypoint.sh mysqld --skip-networking=false --port=8800"]
+
+    - name: quay.io/keycloak/keycloak:latest
+      alias: keycloak
+      variables:
+        EYCLOAK_URL: http://keycloak:8080/auth
+        KEYCLOAK_REALM: test
+        KEYCLOAK_CLIENT_ID: dataplatform
+        KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
+
+#  install_dependencies:
+#    stage: test
   image: python:3.11
+  cache:
+    paths:
+      - .cache/poetry
   before_script:
 
     - pip install poetry  # 安装 Poetry
     - pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple poetry
     - mkdir -p "${HOME}/log" "${HOME}/file"
-  cache:
-    paths:
-      - .cache/poetry
+
   script:
     - poetry source add tsinghua-pypi https://pypi.tuna.tsinghua.edu.cn/simple
     - poetry install --without dev
     - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
     - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
+  artifacts:
+    paths:
+      - pytest_report.xml
+    when: always
+  after_script:
+    - |
+      echo "Test Results:"
+      cat pytest_report.xml
+docker_build:
+  stage: build
+  image: docker:20.10.16
+  variables:
+    DOCKER_DRIVER: overlay2
+    IMAGE_NAME: my-python-app
+    ALIYUN_ACR_USERNAME: 'data-management.acr.robot@zjlab_life_science'
+    ALIYUN_ACR_IMAGES_REGISTRY: 'mixbio-images-registry-1-registry.cn-hangzhou.cr.aliyuncs.com'
+    DOCKER_REGISTRY_MIRROR: 'https://qdyhe98e.mirror.aliyuncs.com'
+    DOCKER_CLIENT_TIMEOUT: 300
+    DOCKER_TIMEOUT: 300
+  services:
+    - docker:20.10.16-dind
+#      command: ['--registry-mirror', $DOCKER_REGISTRY_MIRROR]
+
+  before_script:
+    - docker login -u $ALIYUN_ACR_USERNAME $ALIYUN_ACR_IMAGES_REGISTRY -p $ALIYUN_ACR_ACCESS_KEY
+
+  script:
+    - echo $ALIYUN_ACR_USERNAME
+#    - docker build -t $ALIYUN_ACR_IMAGES_REGISTRY/ops/frontend-example:$CI_COMMIT_SHA ./frontend
+#    - docker push $ALIYUN_ACR_IMAGES_REGISTRY/ops/frontend-example:$CI_COMMIT_SHA
