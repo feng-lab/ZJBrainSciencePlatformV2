@@ -2,7 +2,7 @@ stages:
   - test
   - build
 test:
-  tags: [saas-shared-runner-manager-4]
+#  tags: [saas-shared-runner-manager-4]
   stage: test
   services:
     - name: redis:7-alpine
