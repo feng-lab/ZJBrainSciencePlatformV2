@@ -36,7 +36,7 @@ install_dependencies:
     - mkdir -p "${HOME}/log" "${HOME}/file"
   cache:
     paths:
-      - .cache/pypoetry
+      - .cache/poetry
   script:
     - poetry source add tsinghua-pypi https://pypi.tuna.tsinghua.edu.cn/simple
     - poetry install --without dev
