@@ -30,7 +30,7 @@ install_dependencies:
   script:
     - poetry install --without dev
 migrate_database:
-  stage: migrate
+  stage: install
   image: python:3.11
   script:
     - mkdir -p "${HOME}/log" "${HOME}/file"
