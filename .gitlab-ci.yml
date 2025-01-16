@@ -1,6 +1,6 @@
 stages:
   - test
-
+tag:
 
 services:
   - name: redis:7-alpine
