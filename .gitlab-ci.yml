@@ -1,27 +1,36 @@
 stages:
   - test
   
-pytest:
+
+services:
+  - name: redis:7-alpine
+    alias: redis
+    command: ["sh", "-c", "redis-server --port 8200"]    
+    
+  - name: caitaozjlab/zjbs-database:latest
+    alias: datasbase
+    command: ["sh", "-c", "docker-entrypoint.sh mysqld --skip-networking=false --port=8800"]
+
+  - name: quay.io/keycloak/keycloak:latest
+    alias: keycloak
+    variables:
+      EYCLOAK_URL: http://keycloak:8080/auth
+      KEYCLOAK_REALM: test
+      KEYCLOAK_CLIENT_ID: dataplatform
+      KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
+
+install_dependencies:
   stage: test
-  services:
-    - name: redis:7-alpine
-      alias: redis
-      command: ["sh", "-c", "redis-server --port 8200"]    
-      
-    - name: caitaozjlab/zjbs-database:latest
-      alias: datasbase
-      command: ["sh", "-c", "docker-entrypoint.sh mysqld --skip-networking=false --port=8800"]
-
-    - name: quay.io/keycloak/keycloak:latest
-      alias: keycloak
-      variables:
-        EYCLOAK_URL: http://keycloak:8080/auth
-        KEYCLOAK_REALM: test
-        KEYCLOAK_CLIENT_ID: dataplatform
-        KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
-
+  image: python:3.11
   before_script:
     - pipx install poetry
-    - poetry stall --without dev
+    - pip install poetry  # 安装 Poetry
+    
     - mkdir -p "${HOME}/log" "${HOME}/file"
+  cache:
+    paths:
+      - .cache/pypoetry
+  script:
+    - poetry install --without dev 
+    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
 
