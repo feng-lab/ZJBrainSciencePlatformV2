@@ -6,8 +6,9 @@ services:
     alias: redis
     command: ["sh", "-c", "redis-server --port 8200"]    
     
-  - name: mysql:latest
+  - name: caitaozjlab/zjbs-database:latest
     alias: mysql
+    command: ["sh", "-c", "docker-entrypoint.sh mysqld --skip-networking=false --port=8800"]
 
 variables:
   MYSQL_ROOT_PASSWORD: zjlab2022root
@@ -17,15 +18,6 @@ variables:
   TZ: Asia/Shanghai
   DOCKER_TLS_CERTDIR: "/certs"
 
-before_script:
-  # Start Docker service for MySQL container and Redis container
-  - docker info # this will check Docker is available
-  
-  # Start MySQL container
-  - docker run -d -p 8800:3306 --name mysql-container -e MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD -e MYSQL_USER=$MYSQL_USER -e MYSQL_PASSWORD=$MYSQL_PASSWORD -e MYSQL_DATABASE=$MYSQL_DATABASE -e TZ=$TZ caitaozjlab/zjbs-database:latest
-
-  # Start Redis container
-  - docker run -d -p 8200:6379 --name redis-container redis:7-alpine redis-server --port 6379
 
 pytest:
   stage: test
