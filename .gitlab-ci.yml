@@ -9,6 +9,13 @@ services:
     
   - name: caitaozjlab/zjbs-database:latest
     alias: datasbase
+    variables:
+      MYSQL_ROOT_PASSWORD: zjlab2022root
+      MYSQL_USER: zjlab
+      MYSQL_PASSWORD: zjlab2022
+      MYSQL_DATABASE: zj_brain_science_platform
+      TZ: Asia/Shanghai
+
     command: ["sh", "-c", "docker-entrypoint.sh mysqld --skip-networking=false --port=8800"]
 
   - name: quay.io/keycloak/keycloak:latest
@@ -20,6 +27,7 @@ services:
       KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
 
 install_dependencies:
+  tags: 
   stage: test
   image: python:3.11
   before_script:
