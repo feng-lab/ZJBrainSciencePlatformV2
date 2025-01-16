@@ -23,7 +23,7 @@ install_dependencies:
   stage: test
   image: python:3.11
   before_script:
-    - pipx install poetry
+    
     - pip install poetry  # 安装 Poetry
     
     - mkdir -p "${HOME}/log" "${HOME}/file"
