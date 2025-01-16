@@ -1,10 +1,11 @@
 stages:
   - test
-
+image: docker:20.10.16
 services:
   - name: redis:7-alpine
     alias: redis
-    command: ["sh", "-c", "redis-server --port 8200"]
+    command: ["sh", "-c", "redis-server --port 8200"]    
+    
   - name: mysql:latest
     alias: mysql
 
