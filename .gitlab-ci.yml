@@ -1,37 +1,27 @@
 stages:
   - test
-  - install
-image: ubuntu-latest
-services:
-  - name: redis:7-alpine
-    alias: redis
-    command: ["sh", "-c", "redis-server --port 8200"]    
-    
-  - name: caitaozjlab/zjbs-database:latest
-    alias: mysql
-    command: ["sh", "-c", "docker-entrypoint.sh mysqld --skip-networking=false --port=8800"]
+  
+pytest:
+  stage: test
+  services:
+    - name: redis:7-alpine
+      alias: redis
+      command: ["sh", "-c", "redis-server --port 8200"]    
+      
+    - name: caitaozjlab/zjbs-database:latest
+      alias: datasbase
+      command: ["sh", "-c", "docker-entrypoint.sh mysqld --skip-networking=false --port=8800"]
 
-variables:
-  MYSQL_ROOT_PASSWORD: zjlab2022root
-  MYSQL_USER: zjlab
-  MYSQL_PASSWORD: zjlab2022
-  MYSQL_DATABASE: zj_brain_science_platform
-  TZ: Asia/Shanghai
-  DOCKER_TLS_CERTDIR: "/certs"
+    - name: quay.io/keycloak/keycloak:latest
+      alias: keycloak
+      variables:
+        EYCLOAK_URL: http://keycloak:8080/auth
+        KEYCLOAK_REALM: test
+        KEYCLOAK_CLIENT_ID: dataplatform
+        KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
 
-before_script:
-  - apt-get update -y && apt-get install -y python3-pip
-  - pip install pipx
-  - pipx install poetry
-
-install_dependencies:
-  stage: install
-  image: python:3.11
-  script:
-    - poetry install --without dev
-migrate_database:
-  stage: install
-  image: python:3.11
-  script:
+  before_script:
+    - pipx install poetry
+    - poetry stall --without dev
     - mkdir -p "${HOME}/log" "${HOME}/file"
-    - poetry run alembic upgrade head
+
