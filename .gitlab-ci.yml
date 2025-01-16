@@ -39,6 +39,7 @@ install_dependencies:
     paths:
       - .cache/pypoetry
   script:
+    - poetry source add tsinghua-pypi https://pypi.tuna.tsinghua.edu.cn/simple
     - poetry install --without dev 
     - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
 
