@@ -8,7 +8,7 @@ variables:
   MYSQL_ROOT_PASSWORD: "zjlab2022root"
   MYSQL_USER: "zjlab"
   MYSQL_PASSWORD: "zjlab2022"
-
+  MYSQL_HOST: mysql
   # Timezone
   TZ: "Asia/Shanghai"
 
@@ -20,14 +20,31 @@ variables:
 
   # Cache Configuration
   CACHE_PORT: 6379
+image : caitaozjlab/zjbs-database:latest
+
 
 services:
-  - name: mysql:latest
-    alias: database
   - name: redis:7-alpine
     alias: cache
+  - name: caitaozjlab/zjbs-database:latest
+    alias: database
+    variables:
+      MYSQL_ROOT_PASSWORD: zjlab2022root
+      MYSQL_USER: zjlab
+      MYSQL_PASSWORD: zjlab2022
+      MYSQL_DATABASE: zj_brain_science_platform
+      MYSQL_HOST: mysql
+      TZ: Asia/Shanghai
   - name: quay.io/keycloak/keycloak:latest
     alias: keycloak
+    variables:
+      KEYCLOAK_URL: http://keycloak:8080/auth
+      KEYCLOAK_REALM: test
+      KEYCLOAK_CLIENT_ID: dataplatform
+      KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
+
+
+
 
 pytest:
   stage: test
@@ -49,9 +66,7 @@ pytest:
     - export KEYCLOAK_CLIENT_ID="${KEYCLOAK_CLIENT_ID}"
     - export KEYCLOAK_CLIENT_SECRET="${KEYCLOAK_CLIENT_SECRET}"
     - export CACHE_PORT="${CACHE_PORT}"
-    # 等待数据库服务启动
-    - pip install wait-for-it
-    - wait-for-it database:3306 -t 60
+
   script:
     - poetry run alembic upgrade head
     - poetry run pytest --junitxml=pytest_report.xml
