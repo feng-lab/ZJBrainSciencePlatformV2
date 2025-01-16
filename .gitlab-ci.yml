@@ -33,7 +33,7 @@ install_dependencies:
   before_script:
     
     - pip install poetry  # 安装 Poetry
-    
+    - pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple poetry
     - mkdir -p "${HOME}/log" "${HOME}/file"
   cache:
     paths:
