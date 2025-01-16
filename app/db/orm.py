@@ -450,5 +450,5 @@ class CumulativeDatasetSize(Base, ModelMixin):
     __table_args__ = {"comment": "数据总量"}
 
     date: Mapped[date] = mapped_column(Date, nullable=False, comment="日期")
-    full_data_size: Mapped[float] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
-    full_data_count: Mapped[float] = mapped_column(Float, nullable=True, comment="数据条目")
+    full_data_size: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
+    full_data_count: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据条目")
