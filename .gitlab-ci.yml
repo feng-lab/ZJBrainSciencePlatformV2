@@ -1,6 +1,7 @@
 stages:
   - test
-image: docker:20.10.16
+  - install
+image: ubuntu-latest
 services:
   - name: redis:7-alpine
     alias: redis
@@ -18,17 +19,19 @@ variables:
   TZ: Asia/Shanghai
   DOCKER_TLS_CERTDIR: "/certs"
 
+before_script:
+  - apt-get update -y && apt-get install -y python3-pip
+  - pip install pipx
+  - pipx install poetry
 
-pytest:
-  stage: test
-  image: python:3.8
-  services:
-    - name: redis:7-alpine
-      alias: redis
-    - name: mysql
-      alias: mysql
+install_dependencies:
+  stage: install
+  image: python:3.11
   script:
-    - apt-get update -y
-    - apt-get install -y python3-pip
-    - pip install pytest
-    - pytest tests/
+    - poetry install --without dev
+migrate_database:
+  stage: migrate
+  image: python:3.11
+  script:
+    - mkdir -p "${HOME}/log" "${HOME}/file"
+    - poetry run alembic upgrade head
