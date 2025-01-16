@@ -1,100 +1,45 @@
 stages:
   - test
-  - build
-
-variables:
-  # MySQL Configuration
-  MYSQL_DATABASE: "zj_brain_science_platform"
-  MYSQL_ROOT_PASSWORD: "zjlab2022root"
-  MYSQL_USER: "zjlab"
-  MYSQL_PASSWORD: "zjlab2022"
-  MYSQL_HOST: mysql
-  # Timezone
-  TZ: "Asia/Shanghai"
-
-  # Keycloak Configuration
-  KEYCLOAK_URL: "http://keycloak:8080/auth"
-  KEYCLOAK_REALM: "test"
-  KEYCLOAK_CLIENT_ID: "dataplatform"
-  KEYCLOAK_CLIENT_SECRET: "0p9jizKBOrahVzZKzhgW"
-
-  # Cache Configuration
-  CACHE_PORT: 6379
-image : caitaozjlab/zjbs-database:latest
 
 
 services:
   - name: redis:7-alpine
-    alias: cache
+    alias: redis
+    command: ["sh", "-c", "redis-server --port 8200"]
+
   - name: caitaozjlab/zjbs-database:latest
-    alias: database
+    alias: datasbase
     variables:
       MYSQL_ROOT_PASSWORD: zjlab2022root
       MYSQL_USER: zjlab
       MYSQL_PASSWORD: zjlab2022
       MYSQL_DATABASE: zj_brain_science_platform
-      MYSQL_HOST: mysql
       TZ: Asia/Shanghai
+
+    command: ["sh", "-c", "docker-entrypoint.sh mysqld --skip-networking=false --port=8800"]
+
   - name: quay.io/keycloak/keycloak:latest
     alias: keycloak
     variables:
-      KEYCLOAK_URL: http://keycloak:8080/auth
+      EYCLOAK_URL: http://keycloak:8080/auth
       KEYCLOAK_REALM: test
       KEYCLOAK_CLIENT_ID: dataplatform
       KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
 
-
-
-
-pytest:
+install_dependencies:
+  tags:
   stage: test
   image: python:3.11
   before_script:
-    - pip install pipx
-    - pipx install poetry
-    - export PATH="$PATH:/root/.local/bin"
-    - which poetry
+
+    - pip install poetry  # 安装 Poetry
+    - pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple poetry
+    - mkdir -p "${HOME}/log" "${HOME}/file"
+  cache:
+    paths:
+      - .cache/pypoetry
+  script:
+    - poetry source add tsinghua-pypi https://pypi.tuna.tsinghua.edu.cn/simple
     - poetry install --without dev
-    - export DB_HOST="database"
-    - export MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD}"
-    - export MYSQL_USER="${MYSQL_USER}"
-    - export MYSQL_PASSWORD="${MYSQL_PASSWORD}"
-    - export MYSQL_DATABASE="${MYSQL_DATABASE}"
-    - export TZ="${TZ}"
-    - export KEYCLOAK_URL="${KEYCLOAK_URL}"
-    - export KEYCLOAK_REALM="${KEYCLOAK_REALM}"
-    - export KEYCLOAK_CLIENT_ID="${KEYCLOAK_CLIENT_ID}"
-    - export KEYCLOAK_CLIENT_SECRET="${KEYCLOAK_CLIENT_SECRET}"
-    - export CACHE_PORT="${CACHE_PORT}"
+    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
 
-  script:
-    - poetry run alembic upgrade head
-    - poetry run pytest --junitxml=pytest_report.xml
-  artifacts:
-    reports:
-      junit: pytest_report.xml
-
-
-build_docker_image:
-  stage: build
-  image: docker:latest
-  services:
-    - docker:dind
-  script:
-    - apk add --no-cache bash
-    - baseImageVersion=$(head -n 1 ./deploy/image-version/base.version)
-    - baseImageTag="caitaozjlab/zjbs-base:${baseImageVersion}"
-    - dateTime=$(date +'%Y%m%d-%H%M%S')
-    - gitHash=$(git rev-parse --short=8 HEAD)
-    - imageVersion="${dateTime}-${gitHash}"
-    - echo "baseImageTag=${baseImageTag}"
-    - echo "imageVersion=${imageVersion}"
-    - docker login -u caitaozjlab -p dckr_pat_3vHgyUohktPfh6AkThPE88CUzIs
-    - docker build -t caitaozjlab/zjbs-platform:${imageVersion} -t caitaozjlab/zjbs-platform:latest -f ./deploy/dockerfile/platform.Dockerfile .
-    - docker push caitaozjlab/zjbs-platform:${imageVersion}
-    - docker push caitaozjlab/zjbs-platform:latest
-  after_script:
-    - echo '# Docker 镜像版本' >> docker_image_summary.md
-    - echo '|Repo|Version|' >> docker_image_summary.md
-    - echo '|---|---|' >> docker_image_summary.md
-    - echo '|`caitaozjlab/zjbs-platform`|`${imageVersion}`|' >> docker_image_summary.md
