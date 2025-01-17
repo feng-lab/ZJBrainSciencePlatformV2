@@ -73,13 +73,22 @@ docker_build:
     DOCKER_REGISTRY_MIRROR: 'https://qdyhe98e.mirror.aliyuncs.com'
     DOCKER_CLIENT_TIMEOUT: 300
     DOCKER_TIMEOUT: 300
+    BASE_IMAGE_FILE: ./deploy/image-version/base.version
+    DOCKERFILE_PATH: ./deploy/dockerfile/platform.Dockerfile
   services:
     - docker:20.10.16-dind
 #      command: ['--registry-mirror', $DOCKER_REGISTRY_MIRROR]
 
   before_script:
     - docker login -u $ALIYUN_ACR_USERNAME $ALIYUN_ACR_IMAGES_REGISTRY -p $ALIYUN_ACR_ACCESS_KEY
+    - echo "切换到推送的分支"
+    - echo "设置时区"
+    - apk add --no-cache tzdata && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo "Asia/Shanghai" > /etc/timezone
 
+    - echo "获取base镜像tag"
+    - export baseImageVersion=$(head -n 1 $BASE_IMAGE_FILE)
+    - export baseImageTag="caitaozjlab/zjbs-base:${baseImageVersion}"
+    - echo "baseImageTag=${baseImageTag}"
   script:
     - echo $ALIYUN_ACR_USERNAME
 #    - docker build -t $ALIYUN_ACR_IMAGES_REGISTRY/ops/frontend-example:$CI_COMMIT_SHA ./frontend
