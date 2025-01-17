@@ -121,6 +121,9 @@ setup_docker_buildx:
   image: docker:latest
   services:
     - docker:19.03.12-dind
+  variables:
+    ALIYUN_ACR_USERNAME: 'data-management.acr.robot@zjlab_life_science'
+    ALIYUN_ACR_IMAGES_REGISTRY: 'mixbio-images-registry-1-registry.cn-hangzhou.cr.aliyuncs.com'
   script:
     - docker version
     - docker buildx version
