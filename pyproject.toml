@@ -30,7 +30,7 @@ fastapi-keycloak = "^1.0.11"
 python-keycloak = "^5.1.1"
 
 [tool.poetry.group.alembic.dependencies]
-alembic = "^1.11.3, <1.14"
+alembic = "1.13.2" #"^1.11.3, <1.14"
 mysqlclient = "^2.2.0"
 
 [tool.poetry.group.dev.dependencies]
