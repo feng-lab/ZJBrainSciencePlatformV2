@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import BigInteger, Boolean, Date, DateTime, Double, Enum, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Double, Enum, Float, ForeignKey, Integer, String, Text, func,text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
@@ -450,5 +450,7 @@ class CumulativeDatasetSize(Base, ModelMixin):
     __table_args__ = {"comment": "数据总量"}
 
     date: Mapped[date] = mapped_column(Date, nullable=False, comment="日期")
-    full_data_size: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
-    full_data_count: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据条目")
+    full_data_size: Mapped[float] = mapped_column(Float, nullable=True, server_default=text("0.0"),
+                                                  comment="数据总量(GB)")
+    full_data_count: Mapped[float] = mapped_column(Float, nullable=True, server_default=text("0.0"), comment="数据条目")
+
