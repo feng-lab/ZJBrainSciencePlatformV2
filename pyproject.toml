@@ -9,7 +9,7 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.11"
 fastapi = "^0.101.1"
-sqlalchemy = { extras = ["pymysql"], version = "^2.0.20" }
+sqlalchemy = { extras = ["pymysql"], version = "^2.0.20,<2.0.28" }
 pydantic = "^1.10.12"
 passlib = { extras = ["bcrypt"], version = "^1.7.4" }
 python-jose = "^3.3.0"
@@ -31,7 +31,7 @@ python-keycloak = "^5.1.1"
 
 [tool.poetry.group.alembic.dependencies]
 alembic = "1.13.2" #"^1.11.3, <1.14"
-mysqlclient = "^2.2.0"
+mysqlclient = "^2.2.0, <2.2.5"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"

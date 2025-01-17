@@ -1,7 +1,7 @@
 from datetime import date, datetime
 
 from sqlalchemy import BigInteger, Boolean, Date, DateTime, Double, Enum, Float, ForeignKey, Integer, String, Text, \
-    func, text, sql
+    func,  sql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
