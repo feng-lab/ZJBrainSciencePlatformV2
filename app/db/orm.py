@@ -26,7 +26,7 @@ class ModelMixin:
     gmt_create: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), comment="创建时间")
     gmt_modified: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), comment="修改时间")
     is_deleted: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=expression.false(), comment="该行是否被删除"
+        Boolean, nullable=False, default=False, server_default="0", comment="该行是否被删除"
     )
 
 
