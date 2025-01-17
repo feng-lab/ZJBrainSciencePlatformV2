@@ -128,3 +128,14 @@ setup_docker_buildx:
     - docker version
     - docker buildx version
     - docker login -u $ALIYUN_ACR_USERNAME $ALIYUN_ACR_IMAGES_REGISTRY -p $ALIYUN_ACR_ACCESS_KEY
+    - docker login -u $ALIYUN_ACR_
+
+docker_build_push:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:19.03.12-dind
+  script:
+    - docker buildx create --use
+    - docker buildx build --file ./deploy/dockerfile/platform.Dockerfile --build-arg BASE_IMAGE_TAG=${BASE_IMAGE_TAG} --tag caitaozjlab/zjbs-platform:${IMAGE_VERSION} --tag caitaozjlab/zjbs-platform:latest --push --cache-from type=registry,ref=caitaozjlab/zjbs-platform:latest --cache-to type=inline .
+
