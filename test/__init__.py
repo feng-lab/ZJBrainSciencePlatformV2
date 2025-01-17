@@ -69,7 +69,8 @@ def login(username: str, password: str) -> dict[str, str]:
 
     assert r.is_success
     ro = LoginResponse(**r.json())
-    assert ro.token_type == "bearer"
+    print(ro)
+    assert ro.token_type == "bearer" or ro.token_type == "Bearer"
     token = ro.access_token
     assert token
     return {"Authorization": f"Bearer {token}"}

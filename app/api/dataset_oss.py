@@ -88,7 +88,6 @@ def get_all_datasets_size_oss(
 ) -> float:
     if from_table:
         dataset_size = crud.get_sizes_all(ctx.db, category)
-        print("done")
     else:
         # 获取相应的id
         if category:

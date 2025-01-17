@@ -8,9 +8,8 @@ from app.api import encrypt_password
 from app.model.response import NoneResponse, Page, Response
 from app.model.schema import UserResponse
 
-
-@pytest.fixture(scope="module")
 @pytest.mark.skipif(config.ENABLE_KEYCLOAK, reason="跳过测试，因为 key_cloak 为 True")
+@pytest.fixture(scope="module")
 def created_user(logon_root_headers) -> dict[str, Any]:
     create_user = {
         "username": "test_username",
