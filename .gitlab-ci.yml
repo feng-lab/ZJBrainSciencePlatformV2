@@ -82,7 +82,7 @@ docker_build:
   before_script:
     - docker login -u $ALIYUN_ACR_USERNAME $ALIYUN_ACR_IMAGES_REGISTRY -p $ALIYUN_ACR_ACCESS_KEY
     - echo "设置时区"
-    - timedatectl set-timezone Asia/Shanghai
+#    - timedatectl set-timezone Asia/Shanghai
 
     - echo "获取base镜像tag"
     - export baseImageVersion=$(head -n 1 $BASE_IMAGE_FILE)
