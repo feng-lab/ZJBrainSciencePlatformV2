@@ -4,15 +4,16 @@ from sqlalchemy.orm import Session
 
 from app.common.config import config
 from app.common.exception import ServiceError
-from app.common.user_auth import AccessLevel, oauth2_scheme, verify_current_user,verify_keycloak_user
+from app.common.user_auth import AccessLevel, oauth2_scheme, verify_current_user, verify_keycloak_user
 from app.db import get_db_session
 from app.db.cache import get_redis
 
+
 class testContext:
-    def __init__(self, db: Session, token: str| None,api_access_level: int | None ):
+    def __init__(self, db: Session, token: str | None, api_access_level: int | None):
         # print("Testing",token)
         self.db: Session = db
-        self.token : str| None = token
+        self.token: str | None = token
         self.api_access_level: int = api_access_level
 
         if not config.ENABLE_AUTH:
@@ -26,8 +27,9 @@ class testContext:
 
 # 继承 testContext 的类，用于依赖注入
 
+
 class Context:
-    def __init__(self, db: Session, token: str | None, api_access_level: int | None ):
+    def __init__(self, db: Session, token: str | None, api_access_level: int | None):
         self.db: Session = db
         self.cache: Redis = get_redis()
         # self.token: str | None = token
@@ -45,10 +47,10 @@ class Context:
             self.user_id: str | None = verify_keycloak_user(token)
 
 
-
 class LogoutALLContest(testContext):
     def __init__(self, db: Session = Depends(get_db_session), token: str = Depends(oauth2_scheme)):
-        super().__init__(db, token,  AccessLevel.MINIMUM)
+        super().__init__(db, token, AccessLevel.MINIMUM)
+
 
 class NotLogonContext(Context):
     def __init__(self, db: Session = Depends(get_db_session)):
@@ -75,9 +77,4 @@ class AdministratorContext(Context):
         super().__init__(db, token, AccessLevel.ADMINISTRATOR)
 
 
-
 # 上下文类：管理用户令牌和用户 ID
-
-
-
-

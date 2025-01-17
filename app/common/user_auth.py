@@ -92,12 +92,12 @@ def verify_keycloak_user(token: str) -> int:
         # userinfo = keycloak_openid.userinfo(token)
         token_payload = keycloak_openid.decode_token(token)
         # print(token_payload['sub'])
-        user_id = token_payload['sub']
-        user_id =1
+        user_id = token_payload["sub"]
+        user_id = 1
         return user_id
     except KeycloakAuthenticationError as e:
         # token过期
-        token_payload = keycloak_openid.decode_token(token,validate = False)
+        token_payload = keycloak_openid.decode_token(token, validate=False)
         logger.info(f"token expired, {token_payload=}")
         raise e
     except JWTError:

@@ -1,10 +1,12 @@
 from test import client
-from app.common.config import config
+
 import pytest
 
 from app.api import encrypt_password
 from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
+from app.common.config import config
 from app.model.response import NoneResponse
+
 
 @pytest.mark.skipif(config.ENABLE_KEYCLOAK, reason="当前模式不支持登出")
 @pytest.mark.parametrize(
@@ -18,13 +20,15 @@ def test_login_wrong_username_or_password(username: str, password: str):
     ro = NoneResponse(**r.json())
     assert ro.code == 3
 
+
 @pytest.mark.skipif(config.ENABLE_KEYCLOAK, reason="当前模式不支持登出")
 def test_logout(logon_root_headers: dict[str, str]):
     r = client.post("/api/logout", headers=logon_root_headers)
- # 调试信息
+    # 调试信息
     assert r.is_success, f"登出失败，状态码: {r.status_code}"
     ro = NoneResponse(**r.json())
     assert ro.code == 0
+
 
 @pytest.mark.skipif(config.ENABLE_KEYCLOAK, reason="当前模式不支持登出")
 def test_logout_unauthorized():
@@ -35,10 +39,7 @@ def test_logout_unauthorized():
 
 
 @pytest.mark.skipif(not config.ENABLE_KEYCLOAK, reason="当前模式不支持登出")
-@pytest.mark.parametrize(
-    "username,password",
-    [("not_exists_user", "some_password"), ("valid_user", "wrong_password")],
-)
+@pytest.mark.parametrize("username,password", [("not_exists_user", "some_password"), ("valid_user", "wrong_password")])
 def test_login_wrong_username_or_password(username: str, password: str):
 
     login_form = {"grant_type": "password", "username": username, "password": password}
@@ -49,6 +50,7 @@ def test_login_wrong_username_or_password(username: str, password: str):
 
     ro = NoneResponse(**response.json())
     assert ro.code == 1
+
 
 @pytest.mark.skipif(not config.ENABLE_KEYCLOAK, reason="当前模式不支持登出")
 def test_logout_unauthorized():

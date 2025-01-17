@@ -2,12 +2,14 @@ import asyncio
 from test import login
 
 import pytest
-from app.common.config import config
+
 import alembic.command
 import alembic.config
 from app.api import encrypt_password
 from app.api.user import ROOT_PASSWORD, ROOT_USERNAME
+from app.common.config import config
 from app.main import app
+
 
 @pytest.fixture(scope="session")
 def run_app_startup_shutdown() -> None:
@@ -23,9 +25,9 @@ def run_alembic_upgrade_head() -> None:
 
 
 @pytest.fixture(scope="session")
-def logon_root_headers(request,run_alembic_upgrade_head, run_app_startup_shutdown) -> dict[str, str]:
+def logon_root_headers(request, run_alembic_upgrade_head, run_app_startup_shutdown) -> dict[str, str]:
 
     if config.ENABLE_KEYCLOAK == False:
         return login(ROOT_USERNAME, encrypt_password(ROOT_PASSWORD))
-    elif config.ENABLE_KEYCLOAK ==True:
+    elif config.ENABLE_KEYCLOAK == True:
         return login("data-management", "0p9jizKBOrahVzZKzhgW")

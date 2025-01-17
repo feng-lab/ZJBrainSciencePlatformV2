@@ -1,7 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import BigInteger, Boolean, Date, DateTime, Double, Enum, Float, ForeignKey, Integer, String, Text, \
-    func,  sql
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Double, Enum, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
@@ -24,12 +23,10 @@ VarChar: String = String(255)
 
 class ModelMixin:
     id: Mapped[int] = mapped_column(Integer, nullable=False, primary_key=True, autoincrement=True, comment="主键")
-    gmt_create: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(),
-                                                 comment="创建时间")
-    gmt_modified: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(),
-                                                   comment="修改时间")
+    gmt_create: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), comment="创建时间")
+    gmt_modified: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), comment="修改时间")
     is_deleted: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=sql.true(), comment="该行是否被删除"
+        Boolean, nullable=False, server_default=expression.false(), comment="该行是否被删除"
     )
 
 
@@ -56,8 +53,7 @@ class Notification(Base, ModelMixin):
     )
     type: Mapped[NotificationType] = mapped_column(Enum(NotificationType), nullable=False, comment="消息类型")
     creator: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, comment="消息发送者ID")
-    receiver: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, index=True,
-                                          comment="消息接收者ID")
+    receiver: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False, index=True, comment="消息接收者ID")
     status: Mapped[NotificationStatus] = mapped_column(Enum(NotificationStatus), nullable=False, comment="消息状态")
     content: Mapped[str] = mapped_column(Text, nullable=False, comment="消息内容")
 
@@ -135,7 +131,7 @@ class Experiment(Base, ModelMixin):
         "Paradigm",
         viewonly=True,
         primaryjoin="and_(Experiment.id == Paradigm.experiment_id, Paradigm.is_deleted == False, "
-                    "Experiment.is_deleted == False)",
+        "Experiment.is_deleted == False)",
     )
 
 
@@ -172,7 +168,7 @@ class VirtualFile(Base, ModelMixin):
     exist_storage_files: Mapped[list[StorageFile]] = relationship(
         StorageFile,
         primaryjoin="and_(VirtualFile.id == StorageFile.virtual_file_id, StorageFile.is_deleted == False, "
-                    "VirtualFile.is_deleted == False)",
+        "VirtualFile.is_deleted == False)",
         viewonly=True,
     )
 
@@ -191,7 +187,7 @@ class Paradigm(Base, ModelMixin):
         VirtualFile,
         viewonly=True,
         primaryjoin="and_(Paradigm.id == VirtualFile.paradigm_id, VirtualFile.is_deleted == False, "
-                    "Paradigm.is_deleted == False)",
+        "Paradigm.is_deleted == False)",
     )
     creator_obj: Mapped[User] = relationship("User")
 
@@ -454,6 +450,5 @@ class CumulativeDatasetSize(Base, ModelMixin):
     __table_args__ = {"comment": "数据总量"}
 
     date: Mapped[date] = mapped_column(Date, nullable=False, comment="日期")
-    full_data_size: Mapped[float | None] = mapped_column(Float, nullable=True,
-                                                         comment="数据总量(GB)")
+    full_data_size: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
     full_data_count: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据条目")
