@@ -29,38 +29,38 @@ test:
         KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
 #  test_sql:
 #    stage: test
-  script:
-    - apt-get update && apt-get install -y mysql-client  # 安装MySQL客户端
-    - until mysql -h mysql -u root -proot -e 'SELECT 1'; do echo "Waiting for MySQL..."; sleep 5; done
+#  script:
+#    - apt-get update && apt-get install -y mysql-client  # 安装MySQL客户端
+#    - until mysql -h mysql -u root -proot -e 'SELECT 1'; do echo "Waiting for MySQL..."; sleep 5; done
 #  install_dependencies:
 #    stage: test
-#  image: python:3.11
-#  cache:
-#    paths:
-#      - .cache/poetry
-#  before_script:
-#
-#    - pip install poetry  # 安装 Poetry
-#    - pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple poetry
-#    - mkdir -p "${HOME}/log" "${HOME}/file"
-#
-#  script:
-#    - poetry source add tsinghua-pypi https://pypi.tuna.tsinghua.edu.cn/simple
-#    - poetry lock
-#    - poetry install --without dev
-#    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
-#    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
-#  artifacts:
-#    paths:
-#      - pytest_report.xml
-#    when: always
-#  after_script:
-#    - |
-#      echo "Test Results:"
-#      cat pytest_report.xml
-#
-#  allow_failure: true
-#  when: manual
+  image: python:3.11
+  cache:
+    paths:
+      - .cache/poetry
+  before_script:
+
+    - pip install poetry  # 安装 Poetry
+    - pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple poetry
+    - mkdir -p "${HOME}/log" "${HOME}/file"
+
+  script:
+    - poetry source add tsinghua-pypi https://pypi.tuna.tsinghua.edu.cn/simple
+    - poetry lock
+    - poetry install --without dev
+    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
+    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
+  artifacts:
+    paths:
+      - pytest_report.xml
+    when: always
+  after_script:
+    - |
+      echo "Test Results:"
+      cat pytest_report.xml
+
+  allow_failure: true
+  when: manual
 
 docker_build:
   stage: build
