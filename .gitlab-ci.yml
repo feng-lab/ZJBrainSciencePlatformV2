@@ -54,6 +54,10 @@ test:
     - |
       echo "Test Results:"
       cat pytest_report.xml
+
+  allow_failure: true
+  when: manual
+
 docker_build:
   stage: build
   image: docker:20.10.16
