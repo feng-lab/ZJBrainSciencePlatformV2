@@ -20,7 +20,7 @@ class ServiceError(Exception):
         self.format_args: Sequence[Any] = [] if format_args is None else format_args
 
     @staticmethod
-    def not_found(entity: Entity):
+    def not_found(entity: Entity) -> object:
         entity_value = translate_entity(entity)
         return ServiceError(
             status_code=HTTP_200_OK, code=ResponseCode.PARAMS_ERROR, message_id="not found", format_args=(entity_value,)

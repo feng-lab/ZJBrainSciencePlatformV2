@@ -30,7 +30,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     success = common_crud.update_row(db, User, {"last_login_time": now()}, id_=user_id, commit=True)
     if not success:
         raise ServiceError.database_fail()
-
+    print("TOKEN_TYPE:", TOKEN_TYPE)
     return LoginResponse(access_token=access_token, token_type=TOKEN_TYPE)
 
 

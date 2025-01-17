@@ -17,11 +17,13 @@ from app.api.algorithm import router as algorithm_router
 from app.api.atlas import router as atlas_router
 from app.api.auth import router as auth_router
 from app.api.dataset import router as dataset_router
+from app.api.dataset_oss import router as dataset_oss_router
 from app.api.device import router as device_router
 from app.api.eegdata import router as eeg_data_router
 from app.api.experiment import router as experiment_router
 from app.api.file import router as file_router
 from app.api.human_subject import router as human_subject_router
+from app.api.key_cloack_auth import router as key_cloack_router
 from app.api.notification import router as notification_router
 from app.api.paradigm import router as paradigm_router
 from app.api.species import router as species_router
@@ -62,6 +64,7 @@ app = FastAPI(
         {"name": "dataset"},
         {"name": "eeg_data"},
         {"name": "species"},
+        {"name": "dataset_oss"},
     ],
     debug=config.DEBUG_MODE,
 )
@@ -80,6 +83,10 @@ app.include_router(atlas_router)
 app.include_router(dataset_router)
 app.include_router(eeg_data_router)
 app.include_router(species_router)
+app.include_router(dataset_oss_router)
+
+app.include_router(key_cloack_router)
+
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )

@@ -1,11 +1,11 @@
-from typing import Sequence
+from typing import Any, Sequence
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.crud import query_pages
-from app.db.orm import Dataset
-from app.model.schema import DatasetSearch
+from app.db.orm import CumulativeDatasetSize, Dataset
+from app.model.schema import DatasetSearch, PageParm
 
 
 def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[Dataset]]:
@@ -28,4 +28,167 @@ def search_datasets(db: Session, search: DatasetSearch) -> tuple[int, Sequence[D
         base_stmt = base_stmt.where(Dataset.development_stage.icontains(search.development_stage))
     if not search.include_deleted:
         base_stmt = base_stmt.where(Dataset.is_deleted == False)
+    if search.id is not None:
+        base_stmt = base_stmt.where(Dataset.id == search.id)
+    if search.description is not None:
+        base_stmt = base_stmt.where(Dataset.description.icontains(search.description))
+    if search.data_type is not None:
+        base_stmt = base_stmt.where(Dataset.data_type.icontains(search.data_type))
+    if search.source is not None:
+        base_stmt = base_stmt.where(Dataset.source.icontains(search.source))
+
     return query_pages(db, base_stmt, search.offset, search.limit)
+
+
+def get_species_ids_mapping(db: Session, type: str = None, category: str = None) -> dict:
+    if type == "species":
+        query_type = Dataset.species
+    if type == "data_type":
+        query_type = Dataset.data_type
+    if type == "source":
+        query_type = Dataset.source
+    if type == "data_publisher":
+        query_type = Dataset.data_publisher
+
+    stem = select(query_type, Dataset.id).where(Dataset.is_deleted == False)
+    if category:
+        stem = stem.where(Dataset.data_type == category)
+    col_ids = db.execute(stem).unique().all()
+    col_ids_id_mapping = {}
+
+    for species, id_ in col_ids:
+        if species not in col_ids_id_mapping:
+            col_ids_id_mapping[species] = []
+        col_ids_id_mapping[species].append(id_)
+
+    return col_ids_id_mapping
+
+
+def get_species_cells_mapping(db: Session, type: str):
+    if type == "species":
+        query_type = Dataset.species
+    if type == "data_type":
+        query_type = Dataset.data_type
+    if type == "source":
+        query_type = Dataset.source
+    if type == "data_publisher":
+        query_type = Dataset.data_publisher
+
+    stem = select(query_type, Dataset.cell_count).where(Dataset.is_deleted == False)
+    col_cells = db.execute(stem).all()
+    col_ids_id_mapping = {}
+    for species, cells in col_cells:
+        if species not in col_ids_id_mapping:
+            col_ids_id_mapping[species] = []
+        col_ids_id_mapping[species].append(cells)
+    col_species_cells = [
+        {"name": key, "value": sum(cell for cell in cells if cell is not None)}
+        for key, cells in col_ids_id_mapping.items()
+    ]
+    return col_species_cells
+
+
+def get_species_cells_mapping_oss(db: Session, type: str, category: str = None):
+    if type == "species":
+        query_type = Dataset.species
+    if type == "data_type":
+        query_type = Dataset.data_type
+    if type == "source":
+        query_type = Dataset.source
+    if type == "data_publisher":
+        query_type = Dataset.data_publisher
+
+    stem = select(query_type).distinct().where(Dataset.is_deleted == False)
+    if category:
+        stem = stem.where(Dataset.data_type == category)
+    species_list = db.execute(stem).fetchall()
+
+    species_totals = []
+    for species in species_list:
+        species_name = species[0]
+
+        stem_size = select(func.sum(Dataset.file_acquired_size_gb)).where(
+            Dataset.is_deleted == False, query_type == species_name
+        )
+
+        stem_cells = select(func.sum(Dataset.cell_count)).where(Dataset.is_deleted == False, query_type == species_name)
+        stem_counts = select(func.count()).where(Dataset.is_deleted == False, query_type == species_name)
+        if category:
+            stem_size = stem_size.where(Dataset.data_type == category)
+            stem_cells = stem_cells.where(Dataset.data_type == category)
+            stem_counts = stem_counts.where(Dataset.data_type == category)
+        sizes = db.execute(stem_size).scalar() or 0
+        cells = db.execute(stem_cells).scalar() or 0
+        counts = db.execute(stem_counts).scalar()
+        species_totals.append({type: species_name, "cells": str(cells), "sizes": str(sizes), "counts": str(counts)})
+    return species_totals
+
+
+def get_dataset_collection_info(db: Session, search: PageParm, is_order: bool = True) -> tuple[int, Sequence[Any]]:
+    stem_base = select(
+        Dataset.id,
+        Dataset.description,
+        Dataset.planed_download_per_month,
+        Dataset.title,
+        Dataset.planed_finish_date,
+        Dataset.download_started_date,
+        Dataset.file_total_size_gb,
+    ).where(Dataset.is_deleted == False)
+    if is_order:
+        stem_base = stem_base.order_by(Dataset.planed_finish_date.desc())
+    stem = stem_base.offset(search.offset).limit(search.limit)
+    col_cells = db.execute(stem).fetchall()
+    total_stmt = stem_base.with_only_columns(func.count())
+    total = db.execute(total_stmt).scalar()
+    return total, col_cells
+
+
+def get_dataset_collection_info_oss_table(
+    db: Session, search: PageParm, is_order: bool = True
+) -> tuple[int, Sequence[Any]]:
+    stem_base = select(
+        Dataset.id,
+        Dataset.description,
+        Dataset.planed_download_per_month,
+        Dataset.title,
+        Dataset.planed_finish_date,
+        Dataset.download_started_date,
+        Dataset.file_total_size_gb,
+        Dataset.file_acquired_size_gb,
+    ).where(Dataset.is_deleted == False)
+    if is_order:
+        stem_base = stem_base.order_by(Dataset.planed_finish_date.desc())
+    stem = stem_base.offset(search.offset).limit(search.limit)
+    col_cells = db.execute(stem).fetchall()
+    total_stmt = stem_base.with_only_columns(func.count())
+    total = db.execute(total_stmt).scalar()
+    return total, col_cells
+
+
+def get_dataset_size_month(db: Session) -> tuple[int, Sequence[Any]]:
+    stem = select(
+        CumulativeDatasetSize.id,
+        CumulativeDatasetSize.date,
+        CumulativeDatasetSize.full_data_size,
+        CumulativeDatasetSize.full_data_count,
+    ).where(CumulativeDatasetSize.is_deleted == False)
+    data_size_month = db.execute(stem).fetchall()
+    total_stmt = stem.with_only_columns(func.count())
+    total = db.execute(total_stmt).scalar()
+    return total, data_size_month
+
+
+def get_size_by_id(db: Session, dataset_id: int) -> float:
+    stem_base = select(Dataset.file_acquired_size_gb).where(Dataset.is_deleted == False, Dataset.id == dataset_id)
+    col_cells = db.execute(stem_base).scalar()
+
+    return col_cells if col_cells else 0
+
+
+def get_sizes_all(db: Session, search: str = None) -> float:
+    stem_base = select(Dataset.file_acquired_size_gb).where(Dataset.is_deleted == False)
+    if search:
+        stem_base = stem_base.where(Dataset.data_type == search)
+    results = db.execute(stem_base).fetchall()
+    size_sum = sum(row[0] for row in results if row[0] or 0)
+    return size_sum

@@ -42,6 +42,29 @@ def get_row(
         return row
 
 
+def get_all_ids(
+    db: Session,
+    table: type[OrmModel],
+    where: list[WhereHavingRole] | None = None,
+    raise_on_fail: bool = False,
+    not_found_entity: Entity | None = None,
+) -> list | None:
+    stmt = select(table.id).where(table.is_deleted == False, *(where or []))
+    try:
+        results = db.execute(stmt)
+    except DBAPIError as e:
+        logger.error(f"get row from table {table.__name__} error, msg={e}")
+        if raise_on_fail:
+            raise ServiceError.database_fail()
+    else:
+        if results is None and raise_on_fail:
+            assert not_found_entity is not None
+            raise ServiceError.not_found(not_found_entity)
+
+        dataset_ids = [result.id for result in results]
+        return dataset_ids
+
+
 def exists_row(
     db: Session,
     table: type[OrmModel],

@@ -377,7 +377,7 @@ class Dataset(Base, ModelMixin):
     data_update_year: Mapped[date | None] = mapped_column(Date, nullable=True, comment="数据更新年份")
     file_count: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="文件数量")
     file_total_size_gb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
-    file_acquired_size_gb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="已获取数据(GB)")
+    file_acquired_size_gb: Mapped[float | None] = mapped_column(Float, nullable=True, comment="已获取数据量(GB)")
     associated_diseases: Mapped[str | None] = mapped_column(Text, nullable=True, comment="相关疾病")
     organ: Mapped[str | None] = mapped_column(Text, nullable=True, comment="器官")
     cell_count: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="细胞数")
@@ -385,6 +385,15 @@ class Dataset(Base, ModelMixin):
     experiment_platform: Mapped[str | None] = mapped_column(Text, nullable=True, comment="实验、测序平台")
     fetch_url: Mapped[str | None] = mapped_column(Text, nullable=True, comment="下载路径")
     project: Mapped[str | None] = mapped_column(Text, nullable=True, comment="项目")
+    source: Mapped[str | None] = mapped_column(Text, nullable=True, comment="数据来源")
+    download_started_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="开始获取的日期")
+    planed_finish_date: Mapped[date | None] = mapped_column(Date, nullable=True, comment="计划完成日期")
+    contactor: Mapped[str | None] = mapped_column(Text, nullable=True, comment="联系人")
+    is_public: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否公开")
+    other_species: Mapped[str | None] = mapped_column(Text, nullable=True, comment="其他物种名称")
+    title: Mapped[str | None] = mapped_column(Text, nullable=True, comment="数据集名称")
+    planed_download_per_month: Mapped[float | None] = mapped_column(Float, nullable=True, comment="每月计划下载量")
+    is_cleaned: Mapped[bool | None] = mapped_column(Boolean, nullable=True, comment="是否清洗过数据")
 
     steps: Mapped[list["DatasetFile"]] = relationship("DatasetFile", viewonly=True)
 
@@ -396,7 +405,25 @@ class DatasetFile(Base, ModelMixin):
     dataset_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("dataset.id"), nullable=False, index=True, comment="数据集id"
     )
-    path: Mapped[str] = mapped_column(Text, nullable=False, comment="文件路径")
+    oss_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="oss文件路径")
+    file_size: Mapped[float] = mapped_column(Float, nullable=False, comment="文件大小")
+    file_format: Mapped[str] = mapped_column(Text, nullable=False, comment="文件格式")
+    other_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="其他存储路径")
+    backup_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="备份存储路径")
+
+
+class DatasetFileVisualization(Base, ModelMixin):
+    __tablename__ = "dataset_file_visualization"
+    __table_args__ = {"comment": "数据集可视化文件"}
+
+    datafile_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("dataset_file.id"), nullable=False, index=True, comment="数据文件id"
+    )
+
+    umap_data_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="存储UMAP数据路径")
+    umap_img_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="存储UMAP图像路径")
+    qc_data_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="存储QC数据路径")
+    qc_img_path: Mapped[str | None] = mapped_column(Text, nullable=True, comment="存储QC图像路径")
 
 
 class EEGData(Base, ModelMixin):
@@ -416,3 +443,12 @@ class Species(Base, ModelMixin):
     chinese_name: Mapped[str] = mapped_column(Text, nullable=False, comment="中文名称")
     english_name: Mapped[str] = mapped_column(Text, nullable=False, comment="英文名称")
     latin_name: Mapped[str] = mapped_column(VarChar, nullable=False, unique=True, comment="拉丁文名称")
+
+
+class CumulativeDatasetSize(Base, ModelMixin):
+    __tablename__ = "cumulative_data_per_month"
+    __table_args__ = {"comment": "数据总量"}
+
+    date: Mapped[date] = mapped_column(Date, nullable=False, comment="日期")
+    full_data_size: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据总量(GB)")
+    full_data_count: Mapped[float | None] = mapped_column(Float, nullable=True, comment="数据条目")

@@ -1,5 +1,5 @@
 import logging
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from pydantic import BaseSettings
@@ -14,6 +14,8 @@ class Config(BaseSettings):
     # 是否开启用户权限验证
     ENABLE_AUTH: bool = True
 
+    # 通过keycloak验证
+    ENABLE_KEYCLOAK: bool = True
     # 时区，默认
     TIMEZONE: str = "Asia/Shanghai"
 
@@ -73,6 +75,30 @@ class Config(BaseSettings):
 
     # 文件服务器地址
     FILE_SERVER_URL: str = "http://localhost:8300"
+
+    # oss key id
+    ACCESS_KEY_ID: str = "tC8qZsagYHc1nCK1"
+
+    # oss_Key_secret
+    ACCESS_KEY_SECRET: str = "wETxBpzgozGxOMKqEfQ6L69D2Q5jFF"
+
+    # oss_end_point
+    ENDPOINT_URL: str = "http://oss-cn-hangzhou-zjy-d01-a.ops.cloud.zhejianglab.com/"
+
+    # bucket_name
+    BUCKET_NAME: str = "data-huada"
+
+    # # oss_base_file_dir
+    # OSS_LOG_DIR: Path = Path("zjdata_storage", "ZJBrainSciencePlatform/file-server/log/")
+
+    # 文件目录
+    OSS_FILE_DIR: Path = PurePosixPath("zjdata_storage", "ZJBrainSciencePlatform/file-server/file/")
+    # OSS_FILE_DIR: Path = Path("exampledir/")
+    # keycloak
+    KEYCLOAK_SERVER_URL: str = "https://login.aigene.org.cn"
+    KEYCLOAK_CLIENT_ID: str = "dataplatform"
+    KEYCLOAK_REALM_NAME: str = "test"
+    KEYCLOAK_SECRET_KEY: str = "0p9jizKBOrahVzZKzhgW"
 
 
 config = Config()

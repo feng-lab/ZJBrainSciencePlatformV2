@@ -1,0 +1,141 @@
+stages:
+  - test
+  - build
+test:
+#
+  stage: test
+  services:
+    - name: redis:7-alpine
+      alias: redis
+      command: ["sh", "-c", "redis-server --port 8200"]
+
+    - name: caitaozjlab/zjbs-database:latest
+      alias: datasbase
+      variables:
+        MYSQL_ROOT_PASSWORD: zjlab2022root
+        MYSQL_USER: zjlab
+        MYSQL_PASSWORD: zjlab2022
+        MYSQL_DATABASE: zj_brain_science_platform
+        TZ: Asia/Shanghai
+        HTTPS_PROXY: "https://localhost:8090"
+      command: ["sh", "-c", "docker-entrypoint.sh mysqld --skip-networking=false --port=8800"]
+
+    - name: quay.io/keycloak/keycloak:latest
+      alias: keycloak
+      variables:
+        EYCLOAK_URL: http://keycloak:8080/auth
+        KEYCLOAK_REALM: test
+        KEYCLOAK_CLIENT_ID: dataplatform
+        KEYCLOAK_CLIENT_SECRET: 0p9jizKBOrahVzZKzhgW
+#  test_sql:
+#    stage: test
+#  script:
+#    - apt-get update && apt-get install -y mysql-client  # 安装MySQL客户端
+#    - until mysql -h mysql -u root -proot -e 'SELECT 1'; do echo "Waiting for MySQL..."; sleep 5; done
+#  install_dependencies:
+#    stage: test
+  image: python:3.11
+  cache:
+    paths:
+      - .cache/poetry
+  before_script:
+
+    - pip install poetry  # 安装 Poetry
+    - pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple poetry
+    - mkdir -p "${HOME}/log" "${HOME}/file"
+
+  script:
+    - poetry source add tsinghua-pypi https://pypi.tuna.tsinghua.edu.cn/simple
+    - poetry lock
+    - poetry install --without dev
+    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
+    - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
+  artifacts:
+    paths:
+      - pytest_report.xml
+    when: always
+  after_script:
+    - |
+      echo "Test Results:"
+      cat pytest_report.xml
+
+  allow_failure: true
+  when: manual
+
+docker_build:
+  stage: build
+  image: docker:20.10.16
+  variables:
+    DOCKER_DRIVER: overlay2
+    IMAGE_NAME: my-python-app
+    ALIYUN_ACR_USERNAME: 'data-management.acr.robot@zjlab_life_science'
+    ALIYUN_ACR_IMAGES_REGISTRY: 'mixbio-images-registry-1-registry.cn-hangzhou.cr.aliyuncs.com'
+    DOCKER_REGISTRY_MIRROR: 'https://qdyhe98e.mirror.aliyuncs.com'
+    DOCKER_CLIENT_TIMEOUT: 300
+    DOCKER_TIMEOUT: 300
+    BASE_IMAGE_FILE: ./deploy/image-version/base.version
+    DOCKERFILE_PATH: ./deploy/dockerfile/platform.Dockerfile
+  services:
+    - docker:20.10.16-dind
+#      command: ['--registry-mirror', $DOCKER_REGISTRY_MIRROR]
+
+  before_script:
+    - docker login -u $ALIYUN_ACR_USERNAME $ALIYUN_ACR_IMAGES_REGISTRY -p $ALIYUN_ACR_ACCESS_KEY
+    - echo "设置时区"
+#    - timedatectl set-timezone Asia/Shanghai
+
+    - echo "获取base镜像tag"
+    - export baseImageVersion=$(head -n 1 $BASE_IMAGE_FILE)
+    - export baseImageTag="caitaozjlab/zjbs-base:${baseImageVersion}"
+    - echo "baseImageTag=${baseImageTag}"
+  script:
+    - echo $ALIYUN_ACR_USERNAME
+#    - docker build -t $ALIYUN_ACR_IMAGES_REGISTRY/ops/frontend-example:$CI_COMMIT_SHA ./frontend
+#    - docker push $ALIYUN_ACR_IMAGES_REGISTRY/ops/frontend-example:$CI_COMMIT_SHA
+get_base_image_tag:
+  stage: build
+  script:
+    - export BASE_IMAGE_TAG=$(head -n 1 ./deploy/image-version/base.version)
+    - echo "baseImageTag=${BASE_IMAGE_TAG}"
+  artifacts:
+    expire_in: 1 hour
+    reports:
+      dotenv: .env
+
+# 生成镜像版本
+generate_image_version:
+  stage: build
+  script:
+    - export DATE_TIME=$(date +'%Y%m%d-%H%M%S')
+    - export GIT_HASH=$(git rev-parse --short=8 HEAD)
+    - export IMAGE_VERSION="${DATE_TIME}-${GIT_HASH}"
+    - echo "imageVersion=${IMAGE_VERSION}"
+  artifacts:
+    expire_in: 1 hour
+    reports:
+      dotenv: .env
+
+# 设置 Docker Buildx
+setup_docker_buildx:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:19.03.12-dind
+  variables:
+    ALIYUN_ACR_USERNAME: 'data-management.acr.robot@zjlab_life_science'
+    ALIYUN_ACR_IMAGES_REGISTRY: 'mixbio-images-registry-1-registry.cn-hangzhou.cr.aliyuncs.com'
+  script:
+    - docker version
+    - docker buildx version
+    - docker login -u $ALIYUN_ACR_USERNAME $ALIYUN_ACR_IMAGES_REGISTRY -p $ALIYUN_ACR_ACCESS_KEY
+    - docker login -u $ALIYUN_ACR_
+
+docker_build_push:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:19.03.12-dind
+  script:
+    - docker buildx create --use
+    - docker buildx build --file ./deploy/dockerfile/platform.Dockerfile --build-arg BASE_IMAGE_TAG=${BASE_IMAGE_TAG} --tag caitaozjlab/zjbs-platform:${IMAGE_VERSION} --tag caitaozjlab/zjbs-platform:latest --push --cache-from type=registry,ref=caitaozjlab/zjbs-platform:latest --cache-to type=inline .
+

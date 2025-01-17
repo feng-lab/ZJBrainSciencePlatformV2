@@ -5,10 +5,12 @@ from typing import Any
 import pytest
 
 from app.api import encrypt_password
+from app.common.config import config
 from app.model.response import NoneResponse, Page, Response
 from app.model.schema import UserResponse
 
 
+@pytest.mark.skipif(config.ENABLE_KEYCLOAK, reason="跳过测试，因为 key_cloak 为 True")
 @pytest.fixture(scope="module")
 def created_user(logon_root_headers) -> dict[str, Any]:
     create_user = {
@@ -34,6 +36,7 @@ def created_user(logon_root_headers) -> dict[str, Any]:
     assert ro.code == 0
 
 
+@pytest.mark.skipif(config.ENABLE_KEYCLOAK, reason="跳过测试，因为 key_cloak 为 True")
 def test_get_current_user_info(created_user: dict[str, Any]):
     r = client.get("/api/getCurrentUserInfo", headers=created_user["headers"])
     assert r.is_success
@@ -43,6 +46,7 @@ def test_get_current_user_info(created_user: dict[str, Any]):
     assert ro.data.staff_id == created_user["staff_id"]
 
 
+@pytest.mark.skipif(config.ENABLE_KEYCLOAK, reason="跳过测试，因为 key_cloak 为 True")
 def test_get_user_info(created_user: dict[str, Any], logon_root_headers: dict[str, str]):
     params = {"id": created_user["id"]}
     r = client.get("/api/getUserInfo", headers=logon_root_headers, params=params)
@@ -53,6 +57,7 @@ def test_get_user_info(created_user: dict[str, Any], logon_root_headers: dict[st
     assert ro.data.staff_id == created_user["staff_id"]
 
 
+@pytest.mark.skipif(config.ENABLE_KEYCLOAK, reason="跳过测试，因为 key_cloak 为 True")
 @pytest.mark.parametrize(
     "params",
     [
@@ -72,6 +77,7 @@ def test_get_users_by_page(params: dict[str, str], logon_root_headers: dict[str,
     assert "root" in [user.staff_id for user in ro.data.items]
 
 
+@pytest.mark.skipif(config.ENABLE_KEYCLOAK, reason="跳过测试，因为 key_cloak 为 True")
 def test_update_access_level(created_user: dict[str, Any], logon_root_headers: dict[str, str]):
     new_access_level = 7
     body = {"id": created_user["id"], "access_level": new_access_level}
@@ -87,6 +93,7 @@ def test_update_access_level(created_user: dict[str, Any], logon_root_headers: d
     assert ro.data.access_level == new_access_level
 
 
+@pytest.mark.skipif(config.ENABLE_KEYCLOAK, reason="跳过测试，因为 key_cloak 为 True")
 def test_update_password(created_user: dict[str, Any]):
     new_password = encrypt_password("new password")
     body = {"old_password": created_user["password"], "new_password": new_password}

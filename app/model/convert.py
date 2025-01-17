@@ -10,7 +10,9 @@ from app.db.orm import (
     AtlasParadigmClass,
     AtlasRegion,
     AtlasRegionLink,
+    CumulativeDatasetSize,
     Dataset,
+    DatasetFileVisualization,
     Device,
     EEGData,
     Experiment,
@@ -34,6 +36,9 @@ from app.model.schema import (
     AtlasRegionLinkInfo,
     AtlasRegionTreeInfo,
     AtlasRegionTreeNode,
+    CumulativeDatasetSizeInfo,
+    DatasetCollection,
+    DatasetFileVisualizationInfo,
     DatasetInfo,
     DeviceInfo,
     DeviceInfoWithIndex,
@@ -317,9 +322,51 @@ def dataset_orm_2_info(dataset: Dataset) -> DatasetInfo:
     return DatasetInfo.from_orm(dataset)
 
 
+def dataset_collection_2_info(input_data: tuple = (Dataset, int)) -> DatasetCollection:
+    dataset, dataset_size = input_data
+    return DatasetCollection(
+        id=dataset.id,
+        description=dataset.description,
+        title=dataset.title,
+        planed_download_per_month=dataset.planed_download_per_month,
+        planed_finish_date=dataset.planed_finish_date,
+        download_started_date=dataset.download_started_date,
+        file_total_size_gb=dataset.file_total_size_gb,
+        dataset_size=dataset_size,
+    )
+
+
+def dataset_collection_oss_table_2_info(dataset: Dataset) -> DatasetCollection:
+    return DatasetCollection(
+        id=dataset.id,
+        description=dataset.description,
+        title=dataset.title,
+        planed_download_per_month=dataset.planed_download_per_month,
+        planed_finish_date=dataset.planed_finish_date,
+        download_started_date=dataset.download_started_date,
+        file_total_size_gb=dataset.file_total_size_gb,
+        dataset_size=dataset.file_acquired_size_gb,
+    )
+
+
+def cumulative_dataset_size_2_info(cumulativeDatasetSize: CumulativeDatasetSize) -> CumulativeDatasetSizeInfo:
+    return CumulativeDatasetSizeInfo(
+        id=cumulativeDatasetSize.id,
+        date=cumulativeDatasetSize.date,
+        full_data_size=cumulativeDatasetSize.full_data_size,
+        full_data_count=cumulativeDatasetSize.full_data_count,
+    )
+
+
 def EEGData_orm_2_info(eegdata: EEGData) -> EEGDataInfo:
     return EEGDataInfo.from_orm(eegdata)
 
 
 def species_orm_2_info(species: Species) -> SpeciesInfo:
     return SpeciesInfo.from_orm(species)
+
+
+def dataset_file_visualization_orm_2_info(
+    datasetfilevisualization: DatasetFileVisualization,
+) -> DatasetFileVisualizationInfo:
+    return DatasetFileVisualizationInfo.from_orm(datasetfilevisualization)

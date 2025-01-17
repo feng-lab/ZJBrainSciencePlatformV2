@@ -5,12 +5,15 @@ from typing import NoReturn
 
 from fastapi.security import OAuth2PasswordBearer
 from jose import ExpiredSignatureError, JWTError, jwt
+from keycloak.exceptions import KeycloakAuthenticationError
 from passlib.context import CryptContext
 from redis import Redis
 from sqlalchemy.orm import Session
 
 import app.db.crud.user as crud_user
+from app.common.config import config
 from app.common.exception import ServiceError
+from app.common.keycloak_user_auth import keycloak_openid
 from app.common.util import utc_now
 from app.db.cache import get_user_access_level
 from app.model.response import AccessTokenData
@@ -22,7 +25,10 @@ TOKEN_TYPE = "bearer"
 SECRET_KEY = "4ebcc6180a124d9f3a618e48d97c32a6d99085d5cfdf25a6368d1e0ff3943bd0"
 ALGORITHM = "HS256"
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login", auto_error=False)
+if config.ENABLE_KEYCLOAK:
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login_keycloak", auto_error=False)
+else:
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login", auto_error=False)
 
 
 class AccessLevel(IntEnum):
@@ -79,3 +85,21 @@ def verify_password(db: Session, staff_id: str, password: str) -> int | None:
     if user_auth is not None and crypt_context.verify(password, user_auth.hashed_password):
         return user_auth.id
     return None
+
+
+def verify_keycloak_user(token: str) -> int:
+    try:
+        # userinfo = keycloak_openid.userinfo(token)
+        token_payload = keycloak_openid.decode_token(token)
+        # print(token_payload['sub'])
+        user_id = token_payload["sub"]
+        user_id = 1
+        return user_id
+    except KeycloakAuthenticationError as e:
+        # token过期
+        token_payload = keycloak_openid.decode_token(token, validate=False)
+        logger.info(f"token expired, {token_payload=}")
+        raise e
+    except JWTError:
+        logger.exception(f"invalid token")
+        raise_unauthorized_exception(token=token)
