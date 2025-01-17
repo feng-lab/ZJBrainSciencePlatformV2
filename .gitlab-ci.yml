@@ -17,7 +17,7 @@ test:
         MYSQL_PASSWORD: zjlab2022
         MYSQL_DATABASE: zj_brain_science_platform
         TZ: Asia/Shanghai
-
+        HTTPS_PROXY: "https://localhost:8090"
       command: ["sh", "-c", "docker-entrypoint.sh mysqld --skip-networking=false --port=8800"]
 
     - name: quay.io/keycloak/keycloak:latest
@@ -42,7 +42,6 @@ test:
 
   script:
     - poetry source add tsinghua-pypi https://pypi.tuna.tsinghua.edu.cn/simple
-    - poetry lock
     - poetry install --without dev
     - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run alembic upgrade head
     - DEBUG_MODE=on LOG_ROOT="${HOME}/log" FILE_ROOT="${HOME}/file" poetry run pytest --junitxml=pytest_report.xml
