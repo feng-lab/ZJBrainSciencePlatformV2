@@ -81,9 +81,8 @@ docker_build:
 
   before_script:
     - docker login -u $ALIYUN_ACR_USERNAME $ALIYUN_ACR_IMAGES_REGISTRY -p $ALIYUN_ACR_ACCESS_KEY
-    - echo "切换到推送的分支"
     - echo "设置时区"
-    - apk add --no-cache tzdata && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo "Asia/Shanghai" > /etc/timezone
+    - timedatectl set-timezone Asia/Shanghai
 
     - echo "获取base镜像tag"
     - export baseImageVersion=$(head -n 1 $BASE_IMAGE_FILE)
@@ -93,3 +92,36 @@ docker_build:
     - echo $ALIYUN_ACR_USERNAME
 #    - docker build -t $ALIYUN_ACR_IMAGES_REGISTRY/ops/frontend-example:$CI_COMMIT_SHA ./frontend
 #    - docker push $ALIYUN_ACR_IMAGES_REGISTRY/ops/frontend-example:$CI_COMMIT_SHA
+get_base_image_tag:
+  stage: build
+  script:
+    - export BASE_IMAGE_TAG=$(head -n 1 ./deploy/image-version/base.version)
+    - echo "baseImageTag=${BASE_IMAGE_TAG}"
+  artifacts:
+    expire_in: 1 hour
+    reports:
+      dotenv: .env
+
+# 生成镜像版本
+generate_image_version:
+  stage: build
+  script:
+    - export DATE_TIME=$(date +'%Y%m%d-%H%M%S')
+    - export GIT_HASH=$(git rev-parse --short=8 HEAD)
+    - export IMAGE_VERSION="${DATE_TIME}-${GIT_HASH}"
+    - echo "imageVersion=${IMAGE_VERSION}"
+  artifacts:
+    expire_in: 1 hour
+    reports:
+      dotenv: .env
+
+# 设置 Docker Buildx
+setup_docker_buildx:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:19.03.12-dind
+  script:
+    - docker version
+    - docker buildx version
+    - docker login -u $ALIYUN_ACR_USERNAME $ALIYUN_ACR_IMAGES_REGISTRY -p $ALIYUN_ACR_ACCESS_KEY
