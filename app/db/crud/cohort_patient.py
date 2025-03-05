@@ -1,11 +1,11 @@
 from typing import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import select,exists
 from sqlalchemy.orm import Session
 
 from app.db import common_crud
 from app.db.crud import query_pages
-from app.db.orm import CohortPatient, CohortPatientCTherapyDetail, CohortPatientFromData, CohortPatientMemo
+from app.db.orm import CohortPatient, CohortPatientCTherapyDetail, CohortPatientFromData, CohortPatientMemo,DomainUser
 from app.model.schema import CohortPatientIdSearch, CohortPatientSearch
 
 
@@ -114,3 +114,16 @@ def update_patient_c_therapy_detail(patient_id: int, new_c_therapy_details: list
     ]
     insert_success = common_crud.bulk_insert_rows(db, CohortPatientCTherapyDetail, temp_dict, commit=False)
     return delete_success and insert_success
+
+
+def check_dataset_access(db, user_id: int, domain_id: int) -> bool:
+    query = select(
+        exists().where(
+            (DomainUser.user_id == user_id) &
+            (DomainUser.domain_id == domain_id)
+        )
+    )
+    result = db.execute(query)
+    # print(result.scalar())
+    return bool(result.scalar())
+

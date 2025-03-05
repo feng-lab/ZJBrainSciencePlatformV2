@@ -9,3 +9,4 @@ __pycache__/
 
 # Test
 .debug_data/
+.env

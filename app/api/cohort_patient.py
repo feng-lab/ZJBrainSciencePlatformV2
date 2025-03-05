@@ -49,17 +49,15 @@ router = APIRouter(tags=["cohort_patient"])
 @wrap_api_response
 def create_cohort_patient(request: CreateCohortPatient, ctx: ResearcherContext = Depends()) -> int:
     cohort_patient_dict = request.dict()
+    exists = common_crud.exists_row(
+        ctx.db, CohortPatient, where=[CohortPatient.identity_id == request.identity_id]
+    )
+    if exists:
+        raise ServiceError.database_fail()
+
     cohort_patient_id = common_crud.insert_row(ctx.db, CohortPatient, cohort_patient_dict, commit=False)
     if cohort_patient_id is None:
         raise ServiceError.database_fail()
-
-    with Client(config.FILE_SERVER_URL) as client:
-        file_server_response = client.inner.post(
-            "/create-directory", params={"path": dataset_file_path(cohort_patient_id, "/"), "exists_ok": True}
-        )
-        if not file_server_response.is_success:
-            raise ServiceError.remote_service_error(file_server_response.reason_phrase)
-
     ctx.db.commit()
     return cohort_patient_id
 
@@ -71,6 +69,20 @@ def dataset_file_path(cohort_patient_id: int, *parts: str) -> PurePosixPath:
     return file_path
 
 
+def patient_file_path(cohort_patient_id: int | None, type:str,*parts: str) -> str:
+    file_path =PurePosixPath(config.PATIENT_FILE_DIR,type,f"cohort_patient_{cohort_patient_id}")
+    for part in parts:
+        file_path = file_path / part.lstrip("/")
+    if part.endswith("/"):
+        file_path = file_path.as_posix() + "/"
+    return file_path
+
+
+
+
+
+
+
 @router.post("/api/getCohortPatientInfo", description="获取病人信息详情", response_model=Response[CohortPatientInfo])
 @wrap_api_response
 def get_cohort_patient_info(cohort_patient_id: int, ctx: HumanSubjectContext = Depends()) -> CohortPatientInfo:
@@ -79,8 +91,13 @@ def get_cohort_patient_info(cohort_patient_id: int, ctx: HumanSubjectContext = D
     if orm_cohort_patient is None:
         raise ServiceError.not_found(Entity.cohort_patient)
     cohort_patient_info = convert.cohort_patient_orm_2_info(orm_cohort_patient)
+
     orm_user = common_crud.get_row_by_id(ctx.db, User, ctx.user_id)
-    if orm_user.access_level != 1000:
+    print("user_id,patient",ctx.user_id,cohort_patient_id)
+    user_accesss = crud.check_dataset_access(ctx.db,ctx.user_id,cohort_patient_info.domain_id)
+    print(orm_user.access_level != 1000 or not user_accesss)
+    #domain id
+    if orm_user.access_level != 1000 and not user_accesss:
         cohort_patient_info.identity_id = None
         cohort_patient_info.family_address_street = None
         cohort_patient_info.phone_number = None

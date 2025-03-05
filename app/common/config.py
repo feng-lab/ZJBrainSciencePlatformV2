@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class Config(BaseSettings):
     # 是否处于开发环境
-    DEBUG_MODE: bool = False
+    DEBUG_MODE: bool = True
 
     # 是否开启用户权限验证
     ENABLE_AUTH: bool = True
@@ -18,9 +18,7 @@ class Config(BaseSettings):
     TIMEZONE: str = "Asia/Shanghai"
 
     # 数据库URL
-    # DATABASE_URL: str = "mysql+pymysql://zjlab:zjlab2022@localhost:8100/zj_brain_science_platform"
-    # DATABASE_URL: str = "mysql+pymysql://zjlab:J8ILKg0MnVRmgRwLsT4F@rm-bp127f6l8d5xs74264o.rwlb.rds.aliyuncs.com/zj_brain_science_platform"
-    DATABASE_URL: str = "mysql+pymysql://zjlab:J8ILKg0MnVRmgRwLsT4F@rm-bp127f6l8d5xs7426.rwlb.rds.aliyuncs.com/zj_brain_science_platform" # 内网
+    DATABASE_URL: str = "mysql+pymysql://zjlab:zjlab2022@localhost:8100/zj_brain_science_platform"
 
     # 数据库配置，JSON格式
     DATABASE_CONFIG: dict[str, Any] = {"echo": True}
@@ -95,7 +93,7 @@ class Config(BaseSettings):
     # 文件目录
     OSS_FILE_DIR: Path = PurePosixPath("zjdata_storage", "ZJBrainSciencePlatform/file-server/file/")
     # OSS_FILE_DIR: Path = Path("exampledir/")
-
+    PATIENT_FILE_DIR: Path = PurePosixPath("zjdata_storage", "ZJBrainSciencePlatform/file-server/")
 
 config = Config()
 logger.info(config.json())
